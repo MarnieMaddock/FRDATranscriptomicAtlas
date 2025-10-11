@@ -1,0 +1,254 @@
+#logo img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  position: absolute;
+  top: 1px;
+  left: 5px;
+
+  /* Clip-path for a hexagon shape */
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+
+#logo2 img {
+  width: 220px;
+  height: 70px;
+  object-fit: cover; /* Ensures the image covers the area without losing its aspect ratio */
+  /* Additional styles for positioning*/
+  position: absolute;
+  top: 1px;
+  right: 1px;
+}
+
+#footer img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+}
+
+a {
+  color: #005249;
+}
+
+a:hover {
+  color: black;
+}
+
+
+h1 {
+  color: black;
+  font-size: 2.5rem;
+}
+
+
+body {
+  background-color: white; /* Light gray background */
+  color: black;
+}
+
+.nav-tabs .nav-link{
+  color: #005249;
+  border-bottom: 1.5px solid #005249;
+}
+
+.nav-tabs .nav-link:hover{
+  color: #005249;
+  border-bottom: 1.5px solid white;
+}
+
+.nav-tabs{
+  background-color: white;
+}
+
+.nav-tabs .nav-link.active:focus {
+    border-bottom: 1.5px solid #005249;
+}
+
+.nav-tabs .nav-link.active {
+    color: white;
+    background-color: #005249;
+    border-bottom: 1.5px solid #005249;
+}
+
+.progress-bar {
+  background-color: #005249;
+}
+
+a.page-link {
+    color: #005249;
+    background-color: white;
+    border-color: #fff;
+}
+
+a.page-link:hover {
+
+    color: #fff;
+    background-color: #005249;
+    border-color: #005249;
+}
+
+
+
+.nav-pagination .page-item.active .page-link,
+.page-item.active > .page-link,
+.page-item.active > a.page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #005249;
+    border-color: #005249;
+}
+
+input[type='text']:hover,
+textarea:hover {
+  border-color: #005249;
+}
+
+.shiny-input-number.form-control.shiny-bound-input:focus {
+  border-color: #005249;
+}
+
+/* Change the border color to yellow when the text box is focused */
+input[type="text"]:focus {
+    border-color: #005249; /* Yellow */
+    outline-color: #005249; /* Yellow */
+}
+
+/* Optional: if you also want to change the text box border while clicking (active state) */
+input[type="text"]:active {
+    border-color: #005249; /* Yellow */
+}
+
+
+/* Default state */
+#save_btn,
+#save_ddcq_data,
+#download_processed_data-download,
+#download_filtered_data-download,
+#download_rep_avg_data-download,
+#download_rep_avg_filtered_data-download,
+#download_ddcq_data-download,
+#download_ddcq_avg_data-download,
+#downloadGraph,
+#downloadStats,
+#downloadGraphOptions {
+    background-color: white; /* Light blue background by default */
+    color: #17141fff; /* Text color */
+    border-color: #d3d3d3ff;
+    transition: background-color 0.5s ease-in-out; /* Smooth transition for the background color */
+}
+
+/* Hover state - optional change to indicate hover */
+#save_btn:hover,
+#save_ddcq_data:hover,
+#download_processed_data-download:hover,
+#download_filtered_data-download:hover,
+#download_rep_avg_data-download:hover,
+#download_rep_avg_filtered_data-download:hover,
+#download_ddcq_data-download:hover,
+#download_ddcq_avg_data-download:hover,
+#downloadGraph:hover,
+#downloadStats:hover,
+#downloadGraphOptions:hover {
+    background-color: #005249; /* Slightly different or the same as the default state */
+    /*text colour*/
+    color: white;
+    border-color: #005249;
+}
+
+/* Active state - when the button is clicked */
+#save_ddcq_data:active,
+#save_btn:active,
+#download_processed_data-download:active,
+#download_filtered_data-download:active,
+#download_rep_avg_data-download:active,
+#download_rep_avg_filtered_data-download:active,
+#download_ddcq_data-download:active,
+#download_ddcq_avg_data-download:active,
+#downloadGraph:active,
+#downloadStats:active,
+#downloadGraphOptions:active {
+    background-color: #005249; /* Darker blue when clicked */
+    color: white;
+}
+
+/* Focus state - optional, if you want to maintain a style after clicking */
+#save_btn:focus,
+#save_ddcq_data:focus,
+#download_processed_data-download:focus,
+#download_filtered_data-download:focus,
+#download_rep_avg_data-download:focus,
+#download_rep_avg_filtered_data-download:focus,
+#download_ddcq_data-download:focus,
+#download_ddcq_avg_data-download:focus,
+#downloadGraph:focus,
+#downloadStats:focus,
+#downloadGraphOptions:focus {
+    background-color: #005249; /* This could match the default or be a unique style */
+    color: white;
+}
+
+/* dropdown box color*/
+.selectize-input.focus {
+  border-color: #005249 !important;
+  box-shadow: 0 0 5px #005249 !important;
+}
+
+
+/* Change the color of the hovered item */
+.selectize-dropdown-content .option:hover {
+  background-color: #005249; /* Your desired hover color */
+  color: white;
+}
+
+/* If you need to keep the selected item a certain color even after hover */
+.selectize-dropdown-content .option.selected {
+    background-color: #005249;
+  color: white; /* Color for selected item */
+}
+
+/* To address an item remaining highlighted after hover */
+.selectize-dropdown-content .option.active {
+    background-color: #005249;
+  color: white; /* Same color as your hover color */
+}
+
+/*Search bar of tables colour */
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: #005249;
+}
+
+.btn:active {
+  background-color: #005249;
+  border-color: #005249; /* If the border color also needs to change */
+}
+
+.selectize-control.multi .selectize-input > div.active {
+    background: #005249;
+    color: white;
+    border: 0px solid rgba(0, 0, 0, 0); /* This remains unchanged */
+}
+
+
+
+/* Change button color to blue when it's focused (clicked) */
+/* Apply to all action buttons */
+.action-button:focus,
+.btn:focus {
+  background-color: #7CA9FF !important;
+  border-color: #7CA9FF !important;
+  color: white !important;
+}
+/* Change button color to dark blue when hovered */
+.action-button:hover,
+.btn:hover {
+  background-color: #005249 !important;
+  border-color: #005249 !important;
+  color: white !important;
+}
+
+
+
+
