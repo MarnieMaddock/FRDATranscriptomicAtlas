@@ -20,7 +20,8 @@ Imports:
     ggtext,
     stringr,
     shinyjs,
-    shinycssloaders
+    shinycssloaders,
+    DESeq2
 RoxygenNote: 7.3.3
 URL: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas
 BugReports: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/issues

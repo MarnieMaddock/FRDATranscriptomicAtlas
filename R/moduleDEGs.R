@@ -65,26 +65,35 @@ degTablesMainUI <- function(id) {
   )
 }
 
-# R/mod_deg_tables_server.R
-
-#' Server logic for DEG-by-dataset
+#' Server logic for DEG-by-dataset (simplified & fast)
 #' @noRd
 degTablesServer <- function(id, pkg = utils::packageName()) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # --- cache reads to speed repeat views
+    # ---------- one-time loads ----------
+    deg_dir_genes       <- system.file("extdata/deg/genes",       package = pkg, mustWork = FALSE)
+    deg_dir_transcripts <- system.file("extdata/deg/transcripts", package = pkg, mustWork = FALSE)
+
+    tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
+    tx2 <- if (nzchar(tx2_path) && file.exists(tx2_path)) {
+      readr::read_tsv(tx2_path, col_types = "ccc") |> dplyr::distinct()
+    } else NULL
+
+    gene_map <- if (!is.null(tx2)) {
+      dplyr::select(tx2, gene_id, gene_name) |>
+        dplyr::distinct() |>
+        dplyr::rename(symbol = gene_name)
+    } else NULL
+
     read_cached <- memoise::memoise(readRDS)
 
-    # --- Build a manifest of available files (once per session) ---
-    manifest <- reactiveVal({
-      roots <- list(
-        genes       = system.file("extdata/deg/genes",       package = pkg, mustWork = FALSE),
-        transcripts = system.file("extdata/deg/transcripts", package = pkg, mustWork = FALSE)
+    # ---------- manifest of DEG files ----------
+    manifest <- reactive({
+      files <- c(
+        if (nzchar(deg_dir_genes))       list.files(deg_dir_genes,       full.names = TRUE) else character(0),
+        if (nzchar(deg_dir_transcripts)) list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
       )
-      files <- unlist(lapply(roots, function(p) if (nzchar(p)) list.files(p, full.names = TRUE) else character()),
-                      use.names = FALSE)
-
       if (!length(files)) return(dplyr::tibble())
 
       rx <- "^.*/DESEQ2_res_(.+)_(0\\.[0-9]+)_all_(genes|transcripts)\\.rds$"
@@ -93,127 +102,138 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
         dplyr::mutate(p = as.numeric(p_str))
     })
 
-    # ---- Update dataset list when level changes ----
+    # ---------- dataset dropdown ----------
+
+    pretty_map <- c(
+      "Erwin"             = "Erwin (Lymphoblastoid Cells)",
+      "Indelicato"        = "Indelicato (Skeletal Muscle)",
+      "Lai_iPSC"          = "Lai (iPSCs)",
+      "Lai_CNS"           = "Lai (CNS neurons)",
+      "Lai_PNS"           = "Lai (PNS neurons)",
+      "Lees_FA1"          = "Lees (Cardiomyocytes) - FA1",
+      "Lees_FA2"          = "Lees (Cardiomyocytes) - FA2",
+      "Lees_FA3"          = "Lees (Cardiomyocytes) - FA3",
+      "Maddock_LMN_FA2"   = "Maddock (Lower Motor Neurons) - FA2",
+      "Maddock_SN_FA1"    = "Maddock (Sensory Neurons) - FA1",
+      "Maddock_SN_FA2"    = "Maddock (Sensory Neurons) - FA2",
+      "Maddock_NCC_FA1"   = "Maddock (Neural Crest Cells) - FA1",
+      "Maddock_NCC_FA2"   = "Maddock (Neural Crest Cells) - FA2",
+      "Mishra_223"        = "Mishra (Neurons) - 223",
+      "Mishra_850"        = "Mishra (Neurons) - 850",
+      "Mishra_FF1"        = "Mishra (Neurons) - FF1",
+      "Mishra_FF2"        = "Mishra (Neurons) - FF2",
+      "Napierala"         = "Napierala (Fibroblasts)",
+      "Vilema"            = "Vilema-Enriquez (Fibroblasts)"
+    )
+
+
     observe({
       m <- manifest()
       lvl <- input$feature_level %||% "genes"
-      ds <- sort(unique(m$dataset[m$level == lvl]))
-      updateSelectizeInput(session, "dataset", choices = ds, selected = if (length(ds)) ds[1] else NULL, server = TRUE)
+      avail_ids <- sort(unique(m$dataset[m$level == lvl]))
+      # keep only ids we actually have files for
+      pm_sub <- pretty_map[avail_ids]                         # names = ids, values = labels
+      # Build a named vector: names = labels (shown), values = ids (returned)
+      labelled_choices <- stats::setNames(avail_ids, pm_sub)
+
+      # Fallback for any ids that have no pretty name
+      missing_ids <- setdiff(avail_ids, names(pretty_map))
+      if (length(missing_ids)) {
+        add <- stats::setNames(missing_ids, missing_ids)
+        labelled_choices <- c(labelled_choices, add)
+      }
+      updateSelectizeInput(session, "dataset",
+                           choices = labelled_choices,
+                           selected = if (length(avail_ids)) avail_ids[1] else NULL,
+                           server = TRUE
+      )
     })
 
+    # ---------- file selection ----------
+    file_sel <- reactive({
+      req(input$dataset, input$feature_level)
+      m <- manifest()
+      cand <- dplyr::filter(m, dataset == input$dataset, level == input$feature_level)
+      if (nrow(cand)) cand$path[1] else NULL
+    })
 
-    # Locate the correct file for the current selections
-      # file selection: ignore p threshold; just take any for dataset+level
-      file_sel <- reactive({
-        req(input$dataset, input$feature_level)
-        m <- manifest()
-        cand <- dplyr::filter(m, dataset == input$dataset, level == input$feature_level)
-        if (nrow(cand)) cand$path[1] else NULL   # or pick by max/min p, doesn’t matter
-      })
+    # ---------- main data reactive ----------
+    dat <- reactive({
+      fp <- file_sel()
+      validate(need(!is.null(fp) && file.exists(fp), "No results file found."))
 
-    # --- load optional gene symbol map once ---
-      # Load tx2gene once (ENST -> ENSG + symbol)
-      tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
-      tx2 <- if (nzchar(tx2_path) && file.exists(tx2_path)) {
-        readr::read_tsv(tx2_path, col_types = "ccc") |>  # transcript_id, gene_id, gene_name
-          dplyr::distinct()
-      } else NULL
+      x <- read_cached(fp)
+      if (!is.data.frame(x)) x <- as.data.frame(x)
 
-      # Build gene-level map from tx2gene (ENSG -> symbol)
-      gene_map <- if (!is.null(tx2)) {
-        dplyr::select(tx2, gene_id, gene_name) |>
-          dplyr::distinct() |>
-          dplyr::rename(symbol = gene_name)
-      } else NULL
+      # ID column by level
+      lvl <- input$feature_level %||% "genes"
+      id_col <- if (identical(lvl, "genes")) "ensembl_gene_id" else "transcript_id"
 
-    # Load table
-      dat <- reactive({
-        fp <- file_sel()
-        validate(need(!is.null(fp) && file.exists(fp), "No results file found."))
+      if (!(id_col %in% names(x)) && !is.null(rownames(x))) {
+        x <- tibble::rownames_to_column(x, var = id_col)
+      }
 
-        x <- readRDS(fp)
-        x <- as.data.frame(x)
+      # Fix occasional mislabeled IDs
+      if (identical(lvl, "transcripts") &&
+          ("ensembl_gene_id" %in% names(x)) && !("transcript_id" %in% names(x)) &&
+          any(grepl("^ENST", head(x$ensembl_gene_id, 20)))) {
+        x <- dplyr::rename(x, transcript_id = ensembl_gene_id)
+      }
+      if (identical(lvl, "genes") &&
+          ("transcript_id" %in% names(x)) && !("ensembl_gene_id" %in% names(x)) &&
+          any(grepl("^ENSG", head(x$transcript_id, 20)))) {
+        x <- dplyr::rename(x, ensembl_gene_id = transcript_id)
+      }
 
-        # --- decide which ID we need (genes vs transcripts) ---
-        lvl <- input$feature_level %||% "genes"
-        id_col <- if (identical(lvl, "genes")) "ensembl_gene_id" else "transcript_id"
+      # standardize columns
+      if (!"log2FoldChange" %in% names(x)) {
+        if ("log2FC" %in% names(x))    x <- dplyr::rename(x, log2FoldChange = log2FC)
+        else if ("beta" %in% names(x)) x <- dplyr::rename(x, log2FoldChange = beta)
+      }
+      if (!"padj" %in% names(x) && "qvalue" %in% names(x)) x <- dplyr::rename(x, padj = qvalue)
 
-        # --- promote rownames to the correct ID column (BEFORE any other renames/joins) ---
-        if (!(id_col %in% names(x)) && !is.null(rownames(x))) {
-          x <- tibble::rownames_to_column(x, var = id_col)
+      # p-value filter
+      thr <- suppressWarnings(as.numeric(input$p_filter_mode))
+      if (!is.na(thr) && "padj" %in% names(x)) {
+        x <- x[!is.na(x$padj) & x$padj <= thr, , drop = FALSE]
+      }
+
+      # |log2FC| + direction
+      lfc_min <- input$lfc_min %||% 0
+      dir     <- input$direction %||% "both"
+      if ("log2FoldChange" %in% names(x)) {
+        if (identical(dir, "up"))   x <- x[x$log2FoldChange >=  lfc_min, , drop = FALSE]
+        if (identical(dir, "down")) x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
+        if (identical(dir, "both")) x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
+      }
+
+      # symbols
+      if (identical(lvl, "genes")) {
+        if (!is.null(gene_map) && "ensembl_gene_id" %in% names(x)) {
+          x <- dplyr::left_join(x, gene_map, by = c("ensembl_gene_id" = "gene_id")) |>
+            dplyr::relocate(ensembl_gene_id, symbol, .before = dplyr::everything())
         }
-
-        # If the wrong ID column contains the right IDs (e.g., ENST in ensembl_gene_id), fix it:
-        if (identical(lvl, "transcripts") &&
-            ("ensembl_gene_id" %in% names(x)) &&
-            !("transcript_id" %in% names(x)) &&
-            any(grepl("^ENST", head(x$ensembl_gene_id, 20)))) {
-          x <- dplyr::rename(x, transcript_id = ensembl_gene_id)
+      } else {
+        if (!is.null(tx2) && "transcript_id" %in% names(x)) {
+          x <- dplyr::left_join(x, tx2, by = "transcript_id") |>
+            dplyr::rename(symbol = gene_name) |>
+            dplyr::relocate(transcript_id, gene_id, symbol, .before = dplyr::everything())
         }
-        if (identical(lvl, "genes") &&
-            ("transcript_id" %in% names(x)) &&
-            !("ensembl_gene_id" %in% names(x)) &&
-            any(grepl("^ENSG", head(x$transcript_id, 20)))) {
-          x <- dplyr::rename(x, ensembl_gene_id = transcript_id)
-        }
+      }
 
-        # --- standardize column names we filter on ---
-        if (!"log2FoldChange" %in% names(x)) {
-          if ("log2FC" %in% names(x))    x <- dplyr::rename(x, log2FoldChange = log2FC)
-          else if ("beta" %in% names(x)) x <- dplyr::rename(x, log2FoldChange = beta)
-        }
-        if (!"padj" %in% names(x) && "qvalue" %in% names(x)) x <- dplyr::rename(x, padj = qvalue)
-
-        # --- apply p-value + LFC filters ---
-        thr <- suppressWarnings(as.numeric(input$p_filter_mode))
-        if (!is.na(thr) && "padj" %in% names(x)) x <- x[!is.na(x$padj) & x$padj <= thr, , drop = FALSE]
-
-        lfc_min <- input$lfc_min %||% 0
-        dir     <- input$direction %||% "both"
-        if ("log2FoldChange" %in% names(x)) {
-          if (dir == "up")   x <- x[x$log2FoldChange >=  lfc_min, , drop = FALSE]
-          if (dir == "down") x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
-          if (dir == "both") x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
-        }
-
-        # --- join symbols ---
-        # If you have tx2gene.tsv (transcripts → gene_id + gene_name) as you showed:
-        tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
-        tx2 <- if (nzchar(tx2_path) && file.exists(tx2_path)) readr::read_tsv(tx2_path, col_types = "ccc") else NULL
-
-        if (identical(lvl, "genes")) {
-          # Build a gene map from tx2 if you don't also ship a separate gene map RDS
-          gene_map <- if (!is.null(tx2)) {
-            dplyr::select(tx2, gene_id, gene_name) |>
-              dplyr::distinct() |>
-              dplyr::rename(symbol = gene_name)
-          } else NULL
-
-          if (!is.null(gene_map) && "ensembl_gene_id" %in% names(x)) {
-            x <- dplyr::left_join(x, gene_map, by = c("ensembl_gene_id" = "gene_id")) |>
-              dplyr::relocate(ensembl_gene_id, symbol, .before = dplyr::everything())
-          }
-
-        } else { # transcripts
-          if (!is.null(tx2) && "transcript_id" %in% names(x)) {
-            x <- dplyr::left_join(x, tx2, by = "transcript_id") |>
-              dplyr::rename(symbol = gene_name) |>
-              dplyr::relocate(transcript_id, gene_id, symbol, .before = dplyr::everything())
-          }
-        }
-
-        x
-      })
-
+      x
+    })
 
     # Summary bar
+    pretty_label <- function(id) pretty_map[[id]] %||% id
+
     output$summary_bar <- renderUI({
       req(dat())
       x <- dat()
       tags$div(
         class = "alert alert-info",
-        sprintf("Level: %s | Dataset: %s | p ≤ %s | |log2FC| ≥ %s | Rows: %s",
-                input$feature_level, input$dataset,
+        sprintf("Level: %s | Dataset: %s | p ≤ %s | |log2FC| ≥ %s | Numer of Results: %s",
+                input$feature_level, pretty_label(input$dataset),
                 input$p_filter_mode, input$lfc_min, format(nrow(x), big.mark=",")))
     })
 

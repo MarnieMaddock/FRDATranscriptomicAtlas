@@ -10,7 +10,7 @@ app_server <- function(input, output, session) {
   #data_r <- module_data_server("data_input")
   #module_plot_server("plot_output", data = data_r)
   degTablesServer("deg_tables")
-  genePlotsServer("gene_plots")
+  #genePlotsServer("gene_plots")
 
 
 }
