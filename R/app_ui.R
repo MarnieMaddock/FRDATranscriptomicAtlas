@@ -50,24 +50,14 @@ app_ui <- function() {
     sidebarLayout(
       sidebarPanel(
         style = "height: 85vh; overflow-y: auto;", # Set the sidebar height and add a scroll bar
-        conditionalPanel(condition = "input.tabselected==2 && input.subInput == 2.1",
-                         inputFileUI("file")
-        ), #insert csv file and check that it meets the required formatting, enter housekeeper names and save them
-        #Calculations tab: #Delta Cq tab
-        conditionalPanel(condition = "input.tabselected == 3 && input.subPanel == 3.1",
-                         wrangleDataSidebar("wrangleDataModule") #display delta Cq data, average housekeepers module
+        conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.1",
+                         degTablesSidebarUI("deg_tables")
         ),
-        conditionalPanel(condition = "input.tabselected == 3 && input.subPanel == 3.2 && input.subCalc2 == 3",
-                         ddcqSidebar("ddcqModule") #display ddcq data module
-        ),
-        # Statistics tab
-        # Suggested workflow tab
-        conditionalPanel(condition = "input.tabselected == 4",
-                         statsSidebar("statsModule") #display stats options module
-        ),
-        conditionalPanel(condition = "input.tabselected == 5",
-                         graphsSidebar("graphsModule") #display graphs options
-        ),
+        conditionalPanel(
+          condition = "input.tabselected == 6 && input.gene_plots == 6.1",
+          genePlotsSidebarUI("gene_plots")
+        )
+
       ), #sidebarPanel closing bracket
 
       mainPanel(
@@ -76,64 +66,69 @@ app_ui <- function() {
           id = "tabselected",
           selected = 1, # Default tab selected is 1
           tabPanel("About", icon = icon("home", lib = "font-awesome"), #display home icon in the tab
-                   textOutput("about"), value = 1,
-                   about_text
+                   #textOutput("about"),
+                   value = 1,
+                   #include daatsets info here
+                   #about_text
           ), #display about text from source("about.R")
-          tabPanel("Input Data", textOutput("inputdata"), value = 2,
+          tabPanel("DEGs",
+                   value = 2,
                    tabsetPanel(
-                     id = "subInput",
-                     selected = 2.1, #display inserted data by the user
-                     tabPanel("Data", value = 2.1,
-                              #Display uploaded data using DataTable (module_deltaCq.R)
-                              inputDataUI("inputDataModule"),
-                     ),
-                     tabPanel("Example Data", value = 2.2,
-                              exampleDataUI("exampleData")
-                     ) #demonstrates an example file
+                     id = "degs_tabs",
+                     type = "tabs",
+                     tabPanel("Explore by Dataset",
+                              value = 2.1,
+                              degTablesMainUI("deg_tables")
+                              ),
+                     tabPanel("Compare Datasets",
+                              value = 2.2,
+                              #degCompareUI("deg_compare")
+                              )
                    )
           ),
-          #calculations tab
-          tabPanel("Calculations", value = 3,
-                   tabsetPanel(
-                     id = "subPanel",
-                     selected = 3.1,
-                     tabPanel(HTML("2<sup>-(∆Cq)</sup>"), value = 3.1, #dcq tab
-                              tabsetPanel(
-                                id = "subCalc",
-                                selected = 1,
-                                tabPanel("All Data", value = 1, #dcq tab
-                                         wrangleDataUI("wrangleDataModule"), # Display delta Cq data here, and filtered data (module_deltaCq.R)
-                                         tags$br(),
-                                         tags$br()),
-                                #display biological replicate averages
-                                tabPanel("Biological Replicate", value = 2,
-                                         repDataUI("rep_data"),
-                                )
-                              )
-                     ),
-                     #delta delta cq tab
-                     tabPanel(HTML("2<sup>-(∆∆Cq)</sup>"), value = 3.2,
-                              tabsetPanel(
-                                id = "subCalc2",
-                                selected = 3,
-                                tabPanel("All Data", value = 3,
-                                         ddcqMain("ddcqModule")
-                                ), #display processed ddcq data
-                                tabPanel("Biological Replicate", value = 4,
-                                         DDCQrepMain("ddcqRep"),
-                                )
-                              ),
-                     ),
+          #PCA graphs
+          tabPanel("PCA", value = 3,
                    ),
-          ),
           #statistics tab
-          tabPanel("Statistics", value = 4,
-                   statsMain("statsModule")
+          tabPanel("Functional Enrichment", value = 4,
           ),
-          tabPanel("Graphs", value = 5,
-                   graphsMain("graphsModule")
-          )
+          tabPanel("Volcano Plots", value = 5,
+          ),
+          #Boxplots or violin plots per gene using {ggplotly} after user selects a gene.
+          tabPanel("Gene Plots", value = 6,
+                   #sub tab with forrest plots to compare across studies
+                   tabsetPanel(
+                     id = "gene_plots",
+                     type = "tabs",
+                     tabPanel("Explore by Dataset",
+                              value = 6.1,
+                              genePlotsMainUI("gene_plots")
+                     ),
+                     tabPanel("Compare Datasets",
+                              value = 6.2,
+                              #degCompareUI("deg_compare")
+                     )
+                   )
+
+          ),
+          tabPanel("DTU", value = 7,
+                   tabsetPanel(
+                     id = "DTU_tables",
+                     type = "tabs",
+                     tabPanel("Explore by Dataset",
+                              value = 7.1,
+                              #degTablesUI("deg_tables")
+                     ),
+                     tabPanel("Compare Datasets",
+                              value = 7.2,
+                              #degCompareUI("deg_compare")
+                     )
+                   )
+          ),
+          tabPanel("SwitchPlots", value = 8,
+          ),
         )
       ) #main panel close bracket
     ) #sidebarLayout close bracket
   ) #fluidPage close bracket
+}
