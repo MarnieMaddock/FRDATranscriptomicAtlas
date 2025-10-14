@@ -250,5 +250,9 @@ input[type="text"]:active {
 }
 
 
-
+.btn-primary {
+    color: #fff;
+    background-color: #005249;
+    border-color: #005249;
+}
 

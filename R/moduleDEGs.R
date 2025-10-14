@@ -232,7 +232,7 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
       x <- dat()
       tags$div(
         class = "alert alert-info",
-        sprintf("Level: %s | Dataset: %s | p ≤ %s | |log2FC| ≥ %s | Numer of Results: %s",
+        sprintf("Level: %s | Dataset: %s | p ≤ %s | |log2FC| ≥ %s | Number of Results: %s",
                 input$feature_level, pretty_label(input$dataset),
                 input$p_filter_mode, input$lfc_min, format(nrow(x), big.mark=",")))
     })

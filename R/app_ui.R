@@ -56,7 +56,12 @@ app_ui <- function() {
         conditionalPanel(
           condition = "input.tabselected == 6 && input.gene_plots == 6.1",
           genePlotsSidebarUI("gene_plots")
+        ),
+        conditionalPanel(
+          condition = "input.tabselected == 6 && input.gene_plots == 6.2",
+          forestPlotsUI("forest")
         )
+
 
       ), #sidebarPanel closing bracket
 
@@ -82,7 +87,7 @@ app_ui <- function() {
                               ),
                      tabPanel("Compare Datasets",
                               value = 2.2,
-                              #degCompareUI("deg_compare")
+
                               )
                    )
           ),
@@ -106,7 +111,7 @@ app_ui <- function() {
                      ),
                      tabPanel("Compare Datasets",
                               value = 6.2,
-                              #degCompareUI("deg_compare")
+                              forestPlotMainUI("forest")
                      )
                    )
 
