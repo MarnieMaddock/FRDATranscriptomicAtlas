@@ -18,7 +18,7 @@ get_logo_path <- function() {
   if (file.exists("inst/www/dottori_lab_pentagon.svg")) {
     return("inst/www/dottori_lab_pentagon.svg") #shinyapps.io
   } else {
-    return(system.file("www", "dottori_lab_pentagon.svg", package = "ProntoPCR")) #github
+    return(system.file("www", "dottori_lab_pentagon.svg", package = "FRDATranscriptomicAtlas")) #github
   }
 }
 
@@ -26,7 +26,7 @@ get_UOW_path <- function() {
   if (file.exists("inst/www/UOW.png")) {
     return("inst/www/UOW.png") #shinyapps.io
   } else {
-    return(system.file("www", "UOW.png", package = "ProntoPCR")) #github
+    return(system.file("www", "UOW.png", package = "FRDATranscriptomicAtlas")) #github
   }
 }
 
@@ -55,6 +55,10 @@ app_ui <- function() {
         ),
         conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.2",
                          degVennUI("deg_venn")
+        ),
+        conditionalPanel(
+          condition = "input.tabselected == 3",
+          volcanoSidebarUI("volc", pretty_map = pretty_map)
         ),
         conditionalPanel(
           condition = "input.tabselected == 6 && input.gene_plots == 6.1",
@@ -94,14 +98,13 @@ app_ui <- function() {
                               )
                    )
           ),
-          #PCA graphs
-          tabPanel("PCA", value = 3,
-                   ),
+          tabPanel("Volcano Plots", value = 3,
+                   volcanoMainUI("volc")
+          ),
           #statistics tab
           tabPanel("Functional Enrichment", value = 4,
           ),
-          tabPanel("Volcano Plots", value = 5,
-          ),
+
           #Boxplots or violin plots per gene using {ggplotly} after user selects a gene.
           tabPanel("Gene Plots", value = 6,
                    #sub tab with forrest plots to compare across studies

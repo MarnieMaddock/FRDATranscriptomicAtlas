@@ -13,5 +13,6 @@ app_server <- function(input, output, session) {
   degTablesServer("deg_tables")
   genePlotsServer("gene_plots")
   degVennServer("deg_venn", pkg = utils::packageName())
+  volcanoServer("volc", level = "genes", pkg = "FRDATranscriptomicAtlas", custom_loader = deseq_loader)
   forestPlotsServer("forest")
 }

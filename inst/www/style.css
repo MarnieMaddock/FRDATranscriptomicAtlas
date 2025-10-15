@@ -237,8 +237,8 @@ input[type="text"]:active {
 /* Apply to all action buttons */
 .action-button:focus,
 .btn:focus {
-  background-color: #00b4a0 !important;
-  border-color: #00b4a0 !important;
+  background-color: #99b9b6 !important;
+  border-color: #99b9b6 !important;
   color: white !important;
 }
 /* Change button color to dark blue when hovered */
