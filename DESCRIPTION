@@ -1,5 +1,5 @@
 Package: FRDATranscriptomicAtlas
-Title: What the Package Does (One Line, Title Case)
+Title: Explore FRDA RNA Sequencing Data
 Version: 0.0.0.9000
 Authors@R: c(person("Marnie", "Maddock", role = c("aut","cre"), email = "mmaddock@uow.edu.au"))
 Description: 
@@ -21,7 +21,6 @@ Imports:
     stringr,
     shinyjs,
     shinycssloaders,
-    DESeq2,
     shinyWidgets,
     upsetjs
 RoxygenNote: 7.3.3

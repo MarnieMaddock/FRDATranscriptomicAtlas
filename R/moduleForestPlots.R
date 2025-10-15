@@ -35,7 +35,7 @@ forestPlotsUI <- function(id) {
       tags$br(),
       shinycssloaders::withSpinner(
         verbatimTextOutput(ns("model_stats")),
-        type = 4, color = "#2C3E50", size = 0.6
+        type = 4, color = "#005249", size = 0.6
       )
     )
   )

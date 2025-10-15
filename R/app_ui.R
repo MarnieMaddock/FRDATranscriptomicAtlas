@@ -53,6 +53,9 @@ app_ui <- function() {
         conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.1",
                          degTablesSidebarUI("deg_tables")
         ),
+        conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.2",
+                         degVennUI("deg_venn")
+        ),
         conditionalPanel(
           condition = "input.tabselected == 6 && input.gene_plots == 6.1",
           genePlotsSidebarUI("gene_plots")
@@ -87,7 +90,8 @@ app_ui <- function() {
                               ),
                      tabPanel("Compare Datasets",
                               value = 2.2,
-
+                              degVennMainUI("deg_venn")
+                              #upsetDegUI("deg_compare")
                               )
                    )
           ),

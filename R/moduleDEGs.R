@@ -60,7 +60,7 @@ degTablesMainUI <- function(id) {
     uiOutput(ns("summary_bar")),
     shinycssloaders::withSpinner(
       DT::dataTableOutput(ns("deg_table"), width = "100%"),
-      type = 4
+      type = 4,  color = "#005249"
     )
   )
 }
