@@ -50,6 +50,7 @@ app_ui <- function() {
     sidebarLayout(
       sidebarPanel(
         style = "height: 85vh; overflow-y: auto;", # Set the sidebar height and add a scroll bar
+        id = "sidebar",
         conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.1",
                          degTablesSidebarUI("deg_tables")
         ),
@@ -72,7 +73,7 @@ app_ui <- function() {
 
       ), #sidebarPanel closing bracket
 
-      mainPanel(
+      mainPanel(id = "main_wrap",
         tabsetPanel(
           type = "tabs",
           id = "tabselected",
@@ -136,8 +137,16 @@ app_ui <- function() {
                      )
                    )
           ),
-          tabPanel("SwitchPlots", value = 8,
-          ),
+          tabPanel(
+            "SwitchPlots", value = 8,
+            fluidRow(
+              column(
+                width = 12,
+                switchplotsHelpUI("switchplots_help")   # your full-width module,
+              )
+            )
+          )
+
         )
       ) #main panel close bracket
     ) #sidebarLayout close bracket

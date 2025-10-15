@@ -256,3 +256,59 @@ input[type="text"]:active {
     border-color: #005249;
 }
 
+/* When we add .fullwidth to the main panel, override Bootstrap's col width */
+#main_wrap.fullwidth {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Some themes keep a left margin/padding on tab-content; zero it in fullwidth mode */
+#main_wrap.fullwidth .tab-content {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* Optional: when the sidebar is hidden via shinyjs (display:none),
+   also ensure the main panel stretches (belt-and-braces). */
+#sidebar_wrap[style*="display: none"] + #main_wrap {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* === Make slider track + selection green === */
+
+/* Bootstrap / shiny sliders */
+.irs-bar,
+.irs-bar-edge,
+.irs-single,
+.irs-from,
+.irs-to {
+  background-color: #2a776d !important;   /* dark green you already use */
+  border-color: #2a776d !important;
+}
+
+/* Active selection line (for modern themes) */
+.irs--shiny .irs-bar,
+.irs--flat .irs-bar {
+  background-color: #2a776d !important;
+}
+
+/* Handle (the draggable circle) */
+.irs-handle > i:first-child {
+  background-color: #2a776d !important;
+}
+
+/* Text bubble above the handle */
+.irs-single,
+.irs-from,
+.irs-to {
+  background: #2a776d !important;
+}
+
+/* Optional: make the track line lighter grey for contrast */
+.irs-line {
+  background: #ddd !important;
+}
+
