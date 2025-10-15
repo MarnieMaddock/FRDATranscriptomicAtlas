@@ -68,7 +68,11 @@ app_ui <- function() {
         conditionalPanel(
           condition = "input.tabselected == 6 && input.gene_plots == 6.2",
           forestPlotsUI("forest")
-        )
+        ),
+        conditionalPanel(
+          condition = "input.tabselected == 7 && input.DTU_tables == 7.1",
+          dtuResultsSidebarUI("dtu")
+        ),
 
 
       ), #sidebarPanel closing bracket
@@ -129,7 +133,7 @@ app_ui <- function() {
                      type = "tabs",
                      tabPanel("Explore by Dataset",
                               value = 7.1,
-                              #degTablesUI("deg_tables")
+                              dtuResultsMainUI("dtu")
                      ),
                      tabPanel("Compare Datasets",
                               value = 7.2,
