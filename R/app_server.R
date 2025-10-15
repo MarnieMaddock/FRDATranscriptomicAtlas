@@ -12,7 +12,6 @@ app_server <- function(input, output, session) {
   # --- Call modules -----------------------------------------------------
   degTablesServer("deg_tables")
   genePlotsServer("gene_plots")
-  #upsetDegServer("deg_compare", deg_long = deg_long_df)
   degVennServer("deg_venn", pkg = utils::packageName())
   forestPlotsServer("forest")
 }

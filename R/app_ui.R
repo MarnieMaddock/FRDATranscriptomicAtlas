@@ -91,7 +91,6 @@ app_ui <- function() {
                      tabPanel("Compare Datasets",
                               value = 2.2,
                               degVennMainUI("deg_venn")
-                              #upsetDegUI("deg_compare")
                               )
                    )
           ),

@@ -1,7 +1,5 @@
-#' Venn of shared DEGs / DEIs across datasets — UI
-#' @param id module id
-#' @noRd
-# Sidebar
+# --- UI -----------------------------------------------------------------------
+
 degVennUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -54,7 +52,6 @@ degVennMainUI <- function(id) {
       plotOutput(ns("venn_plot"), height = 720, width = 1100),
       type = 4, color = "#005249"
     ),
-    # ---- new: plot download row ----
     fluidRow(
       column(
         width = 12,
@@ -68,26 +65,19 @@ degVennMainUI <- function(id) {
     br(),
     h5("Total filtered genes/isoforms per dataset"),
     DT::dataTableOutput(ns("venn_totals")),
-    div(
-      class = "mb-2",
-      # download button for totals
-      downloadButton(ns("dl_totals_csv"), "Download totals (CSV)")
-    ),
+    div(class = "mb-2", downloadButton(ns("dl_totals_csv"), "Download totals (CSV)")),
     br(),
     h5("Shared genes/isoforms across datasets"),
     DT::dataTableOutput(ns("venn_overlaps")),
-    div(
-      class = "mb-2",
-      # download button for overlaps
-      downloadButton(ns("dl_overlaps_csv"), "Download overlaps (CSV)")
-    ),
+    div(class = "mb-2", downloadButton(ns("dl_overlaps_csv"), "Download overlaps (CSV)")),
+    br(),
+    DT::dataTableOutput(ns("overlap_items")),
+    div(class = "mb-2", downloadButton(ns("dl_overlap_items_csv"), "Download item list (CSV)"))
   )
 }
 
+# --- SERVER -------------------------------------------------------------------
 
-
-#' Venn of shared DEGs / DEIs across datasets — SERVER
-#' @noRd
 degVennServer <- function(id, pkg = utils::packageName()) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -102,6 +92,19 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     deg_dir_genes       <- system.file("extdata/deg/genes",       package = pkg, mustWork = FALSE)
     deg_dir_transcripts <- system.file("extdata/deg/transcripts", package = pkg, mustWork = FALSE)
     read_cached <- memoise::memoise(readRDS)
+
+    # --- maps (tx2gene) ---
+    tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
+    tx2gene <- if (nzchar(tx2_path) && file.exists(tx2_path)) {
+      readr::read_tsv(tx2_path, col_types = "ccc") |>
+        # expected cols: transcript_id, gene_id, gene_name
+        dplyr::mutate(
+          transcript_id = sub("\\.\\d+$","", transcript_id),
+          gene_id       = sub("\\.\\d+$","", gene_id)
+        )
+    } else NULL
+
+    norm_id <- function(x) sub("\\.\\d+$","", as.character(x))
 
     # --- manifest ---
     manifest <- reactive({
@@ -152,31 +155,129 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     }, ignoreInit = FALSE)
 
     # --- helper: read + filter IDs ---
-    one_set_ids <- function(dataset_id, lvl, thr, lfc_min, direction) {
+    # Return the filtered ID vector for one dataset (genes or transcripts)
+    one_set_ids <- function(dataset_id, lvl = c("genes","transcripts"),
+                            thr, lfc_min = 0, direction = c("both","up","down")) {
+      lvl       <- match.arg(lvl)
+      direction <- match.arg(direction)
+
+      # normalise Ensembl-style IDs: ENSGxxxx.xx -> ENSGxxxx
+      norm_id <- function(x) sub("\\.\\d+$", "", as.character(x))
+
       m <- manifest()
       f <- dplyr::filter(m, dataset == dataset_id, level == lvl)
       if (!nrow(f)) return(character(0))
+
+      # if multiple p-threshold files exist, pick the most permissive (min p)
       f <- f[which.min(f$p), , drop = FALSE]
+
       x <- read_cached(f$path[1]) |> as.data.frame()
 
+      # --- harmonise common column names ---
+      # log2FC
       if (!"log2FoldChange" %in% names(x)) {
-        if ("log2FC" %in% names(x)) x$log2FoldChange <- x$log2FC
-        else if ("beta" %in% names(x)) x$log2FoldChange <- x$beta
+        if ("log2FC" %in% names(x))        x$log2FoldChange <- x$log2FC
+        else if ("beta" %in% names(x))     x$log2FoldChange <- x$beta
       }
-      if (!"padj" %in% names(x) && "qvalue" %in% names(x)) x$padj <- x$qvalue
-
-      id_col <- if (lvl == "genes") "ensembl_gene_id" else "transcript_id"
-      if (!(id_col %in% names(x)) && !is.null(rownames(x))) x[[id_col]] <- rownames(x)
-
-      if (!is.na(thr) && "padj" %in% names(x))
-        x <- subset(x, !is.na(padj) & padj <= thr)
-      if ("log2FoldChange" %in% names(x)) {
-        if (direction == "up")   x <- subset(x, log2FoldChange >=  lfc_min)
-        if (direction == "down") x <- subset(x, log2FoldChange <= -lfc_min)
-        if (direction == "both") x <- subset(x, abs(log2FoldChange) >= lfc_min)
+      # padj
+      if (!"padj" %in% names(x)) {
+        if ("qvalue" %in% names(x))        x$padj <- x$qvalue
+        else if ("adj.P.Val" %in% names(x)) x$padj <- x$adj.P.Val
       }
-      unique(x[[id_col]][!is.na(x[[id_col]])])
+
+      # ID column per level (accept several variants; fallback to rownames)
+      id_candidates <- if (lvl == "genes") {
+        c("ensembl_gene_id", "gene_id", "EnsemblGeneID")
+      } else {
+        c("transcript_id", "ensembl_transcript_id", "tx_id")
+      }
+      id_col <- id_candidates[id_candidates %in% names(x)][1]
+      if (is.na(id_col) || is.null(id_col)) {
+        if (!is.null(rownames(x))) {
+          x[["__tmp_id"]] <- rownames(x)
+          id_col <- "__tmp_id"
+        } else {
+          return(character(0))
+        }
+      }
+
+      # --- apply filters ---
+      # p-value / FDR
+      thr_num <- suppressWarnings(as.numeric(thr))
+      if (!is.na(thr_num) && "padj" %in% names(x)) {
+        x <- subset(x, !is.na(padj) & padj <= thr_num)
+      }
+
+      # LFC / direction
+      if ("log2FoldChange" %in% names(x) && is.finite(lfc_min) && lfc_min >= 0) {
+        if (direction == "up") {
+          x <- subset(x, !is.na(log2FoldChange) & log2FoldChange >=  lfc_min)
+        } else if (direction == "down") {
+          x <- subset(x, !is.na(log2FoldChange) & log2FoldChange <= -lfc_min)
+        } else { # both
+          x <- subset(x, !is.na(log2FoldChange) & abs(log2FoldChange) >= lfc_min)
+        }
+      }
+
+      ids_raw <- x[[id_col]]
+      ids <- ids_raw[!is.na(ids_raw) & nzchar(ids_raw)]
+      unique(norm_id(ids))
     }
+
+
+    # --- NEW: build ID -> symbol map for current level ---
+    id_symbol_map <- reactive({
+      lvl <- input$feature_level %||% "genes"
+
+      # If we have tx2gene, build clean maps up front
+      if (!is.null(tx2gene)) {
+        if (lvl == "genes") {
+          # gene_id -> gene_name (HGNC symbol)
+          gm <- tx2gene |>
+            dplyr::distinct(gene_id, gene_name) |>
+            dplyr::rename(id = gene_id, symbol = gene_name)
+          return(gm)
+        } else {
+          # transcripts: map transcript_id -> gene_name (show gene symbol for each transcript)
+          tm <- tx2gene |>
+            dplyr::distinct(transcript_id, gene_name) |>
+            dplyr::rename(id = transcript_id, symbol = gene_name)
+          return(tm)
+        }
+      }
+
+      # ---- Fallback (if no tx2gene file available) ----
+      m <- manifest() |> dplyr::filter(level == lvl)
+      if (!nrow(m)) return(tibble::tibble(id = character(0), symbol = character(0)))
+
+      prefer_gene_syms <- c("gene_name","symbol","external_gene_name","hgnc_symbol")
+      prefer_tx_syms   <- c("transcript_name","tx_name")
+
+      maps <- lapply(m$path, function(p) {
+        df <- read_cached(p) |> as.data.frame()
+        if (lvl == "genes") {
+          id_col <- if ("ensembl_gene_id" %in% names(df)) "ensembl_gene_id"
+          else if (!is.null(rownames(df))) { df[["__tmp_id"]] <- rownames(df); "__tmp_id" }
+          else NA_character_
+          sym_col <- intersect(prefer_gene_syms, names(df))
+        } else {
+          id_col <- if ("transcript_id" %in% names(df)) "transcript_id"
+          else if (!is.null(rownames(df))) { df[["__tmp_id"]] <- rownames(df); "__tmp_id" }
+          else NA_character_
+          sym_col <- intersect(prefer_tx_syms, names(df))
+        }
+        if (is.na(id_col)) return(NULL)
+        ids <- norm_id(df[[id_col]])
+        sym <- if (length(sym_col)) df[[sym_col[1]]] else ids
+        tibble::tibble(id = ids, symbol = as.character(sym))
+      })
+
+      d <- dplyr::bind_rows(Filter(Negate(is.null), maps)) |>
+        dplyr::distinct(id, .keep_all = TRUE)
+      d[!is.na(d$id) & nzchar(d$id), , drop = FALSE]
+    })
+
+
 
     # --- reactive list of sets ---
     sets_list <- reactive({
@@ -193,7 +294,7 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       ids
     })
 
-    # --- overlap table helper ---
+    # --- overlap table helper (non-exclusive counts) ---
     venn_overlap_tbl <- function(s) {
       Universe <- unique(unlist(s, use.names = FALSE))
       M <- vapply(s, function(v) Universe %in% v, logical(length(Universe)))
@@ -232,11 +333,7 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       }
     })
 
-    # ======================
-    # New helpers + downloads
-    # ======================
-
-    # filenames
+    # --- filenames ---
     fname_prefix <- reactive({
       thr <- suppressWarnings(as.numeric(input$p_filter_mode))
       thr_txt <- if (is.na(thr)) "pnone" else sprintf("p%g", thr)
@@ -249,7 +346,7 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       )
     })
 
-    # tables as reactives (reused by DT + download)
+    # --- tables reused by DT + download ---
     totals_tbl <- reactive({
       s <- sets_list()
       data.frame(
@@ -267,22 +364,19 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       tbl
     })
 
-    # Venn ggplot object (NULL if > 6)
+    # --- Venn ggplot object (NULL if > 6) ---
     venn_plot_obj <- reactive({
       s <- sets_list()
       if (length(s) > 6) return(NULL)
-
       labs <- names(s)
       labs <- stringr::str_wrap(labs, width = 24)
       names(s) <- labs
-        ggVennDiagram::ggVennDiagram(s, label = "count", label_size = 8, set_size = 10) +
-          ggplot2::scale_fill_gradient(low = "#ccdcda", high = "#005249") +
-          ggplot2::theme_void(base_size = 30) +
-          ggplot2::theme(
-            legend.position = "right",
-            plot.margin = ggplot2::margin(60, 120, 60, 120)
-          ) +
-          ggplot2::coord_cartesian(clip = "off")
+      ggVennDiagram::ggVennDiagram(s, label = "count", label_size = 8, set_size = 10) +
+        ggplot2::scale_fill_gradient(low = "#ccdcda", high = "#005249") +
+        ggplot2::theme_void(base_size = 30) +
+        ggplot2::theme(legend.position = "right",
+                       plot.margin = ggplot2::margin(60, 120, 60, 120)) +
+        ggplot2::coord_cartesian(clip = "off")
     })
 
     # --- plot render ---
@@ -291,11 +385,11 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       if (is.null(p)) {
         plot.new(); text(0.5, 0.5, "Overlap tables shown below", cex = 1.6)
       } else {
-        print(p)
+        suppressWarnings(print(p))
       }
     })
 
-    # --- optionally disable plot download buttons when >6 datasets
+    # --- enable/disable plot download buttons when >6 datasets ---
     observe({
       have_plot <- !is.null(venn_plot_obj())
       if (requireNamespace("shinyjs", quietly = TRUE)) {
@@ -310,7 +404,7 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       tags$span(sprintf("Selected: %d dataset(s).", length(input$datasets)))
     })
 
-    # --- Totals table (paginated; no DT copy/csv buttons) ---
+    # --- Totals table ---
     output$venn_totals <- DT::renderDataTable({
       DT::datatable(
         totals_tbl(),
@@ -325,11 +419,12 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       )
     }, server = TRUE)
 
-    # --- Overlaps table (paginated; no DT copy/csv buttons) ---
+    # --- Overlaps table ---
     output$venn_overlaps <- DT::renderDataTable({
       DT::datatable(
         overlaps_tbl(),
         rownames = FALSE,
+        selection = "single",
         options = list(
           dom = "tip",
           pageLength = 10,
@@ -340,7 +435,74 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       )
     }, server = TRUE)
 
-    # --- downloads: Venn (SVG/PNG) ---
+    # keep combo list in sync with overlaps table
+    observe({
+      tbl <- overlaps_tbl()
+      combos <- tbl$`Dataset Combination`
+      updateSelectInput(session, "combo_pick", choices = combos,
+                        selected = combos[[1]] %||% character(0))
+    })
+
+    # also react to row click in the overlaps DT
+    observeEvent(input$venn_overlaps_rows_selected, {
+      idx <- input$venn_overlaps_rows_selected
+      tbl <- overlaps_tbl()
+      if (length(idx) && nrow(tbl) >= idx) {
+        updateSelectInput(session, "combo_pick",
+                          selected = tbl$`Dataset Combination`[idx])
+      }
+    })
+
+
+    combo_items <- reactive({
+      s <- sets_list(); req(length(s) >= 2)
+
+      # Universe + membership matrix
+      Universe <- unique(unlist(s, use.names = FALSE))
+      M <- vapply(s, function(v) Universe %in% v, logical(length(Universe)))
+      colnames(M) <- names(s)
+
+      # ID -> symbol mapping
+      map <- id_symbol_map()
+      sym <- map$symbol[match(Universe, map$id)]
+      sym[is.na(sym) | !nzchar(sym)] <- Universe
+
+      presence <- as.data.frame(M, stringsAsFactors = FALSE)
+      presence[] <- lapply(presence, as.integer)
+      presence$Sum <- rowSums(presence)
+
+      out <- data.frame(
+        ID = Universe,
+        Symbol = sym,
+        stringsAsFactors = FALSE,
+        check.names = FALSE
+      )
+      out <- dplyr::bind_cols(out, presence)
+      out <- out[, c("ID", "Symbol", "Sum", setdiff(names(out), c("ID","Symbol","Sum")))]
+      out <- dplyr::arrange(out, dplyr::desc(Sum))
+
+
+      out
+    })
+
+
+    # --- render items table ---
+    output$overlap_items <- DT::renderDataTable({
+      dat <- combo_items()
+      DT::datatable(
+        dat,
+        rownames = FALSE,
+        options = list(
+          dom = "tip",
+          pageLength = 25,
+          lengthMenu = list(c(25, 50, 100, 200), c("25", "50", "100", "200")),
+          deferRender = TRUE,
+          scrollX = TRUE
+        )
+      )
+    }, server = TRUE)
+
+    # --- downloads: plot + tables ---
     output$dl_venn_svg <- downloadHandler(
       filename = function() paste0(fname_prefix(), ".svg"),
       content = function(file) {
@@ -359,7 +521,6 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       }
     )
 
-    # --- downloads: tables (CSV) ---
     output$dl_totals_csv <- downloadHandler(
       filename = function() paste0(fname_prefix(), "_totals.csv"),
       content = function(file) utils::write.csv(totals_tbl(), file, row.names = FALSE)
@@ -369,7 +530,13 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       filename = function() paste0(fname_prefix(), "_overlaps.csv"),
       content = function(file) utils::write.csv(overlaps_tbl(), file, row.names = FALSE)
     )
+
+    output$dl_overlap_items_csv <- downloadHandler(
+      filename = function() {
+        mode <- input$overlap_mode %||% "exact"
+        paste0(fname_prefix(), "_items_", mode, ".csv")
+      },
+      content = function(file) utils::write.csv(combo_items(), file, row.names = FALSE)
+    )
   })
 }
-
-
