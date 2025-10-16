@@ -24,7 +24,7 @@ tpmHeatmapSidebarUI <- function(id) {
     ),
     radioButtons(
       ns("transform_mode"), "Transform",
-      choices = c("log2(TPM + 1)" = "log2p1", "Z-score (row-wise)" = "zscore"),
+      choices = c("log2(TPM + 1)" = "log2p1", "Z-score" = "zscore"),
       selected = "log2p1", inline = TRUE
     ),
     radioButtons(
@@ -33,7 +33,11 @@ tpmHeatmapSidebarUI <- function(id) {
       selected = "both", inline = TRUE
     ),
     checkboxInput(ns("cluster_rows"), "Cluster rows (genes)", value = TRUE),
-    checkboxInput(ns("cluster_cols"), "Cluster columns (samples)", value = TRUE)
+    checkboxInput(ns("cluster_cols"), "Cluster columns (samples)", value = TRUE),
+    br(),
+    downloadButton(ns("dl_svg"), "Download SVG"),
+    downloadButton(ns("dl_png"), "Download PNG"),
+    uiOutput(ns("plot_notes"))
   )
 }
 
@@ -45,9 +49,8 @@ tpmHeatmapMainUI <- function(id) {
           uiOutput(ns("heatmap_ui")),
           type = 4, color = "#005249"
         ),
-        downloadButton(ns("dl_svg"), "Download SVG"),
-        downloadButton(ns("dl_png"), "Download PNG"),
-        uiOutput(ns("plot_notes"))
+        #add whitespace below the plot 100 px
+        br(), br(), br()
       )
 }
 
@@ -143,23 +146,6 @@ tpmHeatmapServer <- function(
         out$Study[hit] <- mm$Study[j[hit]]
         out$Group[hit] <- mm$Group[j[hit]]
       }
-      out
-    }
-
-
-    annot_from_meta <- function(cols, meta_norm) {
-      out <- data.frame(sample = cols, stringsAsFactors = FALSE)
-      out <- dplyr::left_join(
-        out,
-        dplyr::select(meta_norm, sample_id, Study, Group),
-        by = c("sample" = "sample_id")
-      )
-      # fill missing with fallbacks
-      missing_g <- is.na(out$Group)
-      if (any(missing_g)) out$Group[missing_g] <- "UNKNOWN"
-      missing_s <- is.na(out$Study)
-      if (any(missing_s)) out$Study[missing_s] <- sub("_.*$", "", out$sample[missing_s])
-      out$Group <- factor(out$Group, levels = c("CTRL","FRDA","UNKNOWN"))
       out
     }
 
@@ -317,11 +303,22 @@ tpmHeatmapServer <- function(
       nr <- nrow(mat); nc <- ncol(mat)
 
       # per-cell sizing (tweak to taste)
-      cell_h_pt <- 18  # points per gene row
-      cell_w_px <- 22  # pixels per sample col
+      cell_h_pt <- 16  # points per gene row
+      cell_w_px <- 20  # pixels per sample col
+
+      extra_pad <- if (nr < 30) {
+        700
+      } else if (nr < 60) {
+        800
+      } else if (nr > 100) {
+        1200
+      } else {
+        1000
+      }
+
 
       list(
-        dev_h_px = max(360, min( round(nr * (cell_h_pt * 96/72)) + 220, 6000)), # device height (px); 72pt=96px
+        dev_h_px = max(500, round(nr * (cell_h_pt * 96/72)) + extra_pad), # device height (px); 72pt=96px
         dev_w_px = NULL,                                # let it fill width
         cell_h_pt = cell_h_pt,                          # pass to Heatmap 'height'
         show_row_names = nr <= 120,
@@ -339,7 +336,7 @@ tpmHeatmapServer <- function(
 
     # ---------------- render plot ----------------
     output$heatmap_plot <- renderPlot({
-      mat <- unified_matrix()
+      mat  <- unified_matrix()
       dims <- plot_dims()
 
       ann_df <- if (!is.null(meta_norm)) {
@@ -348,9 +345,9 @@ tpmHeatmapServer <- function(
                    row.names = aa$sample, check.names = FALSE)
       } else {
         data.frame(
-          Dataset = sub("_.*$", "", colnames(mat)),
-          Group   = factor(vapply(colnames(mat), group_from_name, character(1)),
-                           levels = c("CTRL","FRDA","UNKNOWN")),
+          Dataset  = sub("_.*$", "", colnames(mat)),
+          Group    = factor(vapply(colnames(mat), group_from_name, character(1)),
+                            levels = c("CTRL","FRDA","UNKNOWN")),
           row.names = colnames(mat), check.names = FALSE
         )
       }
@@ -385,40 +382,47 @@ tpmHeatmapServer <- function(
       ht <- ComplexHeatmap::Heatmap(
         mat,
         name = legend_title,
-        col = col_fun,
+        col  = col_fun,
         top_annotation = ha_top,
-        show_row_dend = cl_rows,
-        show_column_dend = cl_cols,
-        cluster_rows = cl_rows,
-        cluster_columns = cl_cols,
-        row_names_side = "left",
+        show_row_dend     = cl_rows,
+        show_column_dend  = cl_cols,
+        cluster_rows      = cl_rows,
+        cluster_columns   = cl_cols,
+        row_names_side    = "left",
         column_names_side = "top",
-        show_row_names = dims$show_row_names,
+        show_row_names    = dims$show_row_names,
         show_column_names = dims$show_col_names,
-        row_names_gp = grid::gpar(fontsize = dims$row_cex),
-        column_names_gp = grid::gpar(fontsize = dims$col_cex),
-        na_col = "grey80",
-        border = TRUE,
-        height = grid::unit(max(1, nrow(mat)) * dims$cell_h_pt, "pt"),
-        use_raster = TRUE     # faster & cleaner for big matrices
+        row_names_gp      = grid::gpar(fontsize = dims$row_cex),
+        column_names_gp   = grid::gpar(fontsize = dims$col_cex),
+        na_col            = "grey80",
+        border            = TRUE,
+        # Height matches your per-row intention (points -> ComplexHeatmap expects grid units)
+        #height = grid::unit(max(1, nrow(mat)) * dims$cell_h_pt, "pt"),
+        use_raster = TRUE
       )
 
-      ComplexHeatmap::draw(ht)
+      # Explicitly move legends to the right and add padding at the bottom to avoid clipping
+      ComplexHeatmap::draw(
+        ht,
+        heatmap_legend_side      = "right",
+        annotation_legend_side   = "right",
+        padding = grid::unit(c(6, 20, 20, 6), "mm")  # top, right, bottom, left
+      )
+
       .last_ht(ht)
-    },
-    res = 120
-    )
+    }, res = 120)
 
     output$heatmap_ui <- renderUI({
       dims <- plot_dims()
-      # Ensure height is a character string like "600px"
       h_px <- paste0(round(dims$dev_h_px), "px")
 
-      # Build the plotOutput with dynamic height (in px)
-      plotOutput(
-        outputId = ns("heatmap_plot"),
-        height = h_px,
-        width  = "100%"
+      # Allow the drawing canvas to use overflow beyond the immediate box if needed
+      div(style = "overflow: visible;",
+          plotOutput(
+            outputId = ns("heatmap_plot"),
+            height   = h_px,
+            width    = "100%"
+          )
       )
     })
 
@@ -433,10 +437,14 @@ tpmHeatmapServer <- function(
       content = function(file) {
         dims <- plot_dims()
         w_in <- (session$clientData[[paste0("output_", ns("heatmap_plot"), "_width")]] %||% 1000) / 96
-        h_in <- dims$height / 96
+        h_in <- (dims$dev_h_px %||% 800) / 96  # use dev_h_px, not dims$height
         svglite::svglite(file, width = w_in, height = h_in)
         on.exit(grDevices::dev.off(), add = TRUE)
-        ComplexHeatmap::draw(.last_ht())
+        # Re-draw with the same legend placement & padding
+        ComplexHeatmap::draw(.last_ht(),
+                             heatmap_legend_side="right",
+                             annotation_legend_side="right",
+                             padding = grid::unit(c(6,10,16,6), "mm"))
       }
     )
 
@@ -445,11 +453,16 @@ tpmHeatmapServer <- function(
       content = function(file) {
         dims <- plot_dims()
         w_px <- session$clientData[[paste0("output_", ns("heatmap_plot"), "_width")]] %||% 1000
-        ragg::agg_png(file, width = w_px, height = dims$height, units = "px", res = 150)
+        h_px <- dims$dev_h_px %||% 800
+        ragg::agg_png(file, width = w_px, height = h_px, units = "px", res = 150)
         on.exit(grDevices::dev.off(), add = TRUE)
-        ComplexHeatmap::draw(.last_ht())
+        ComplexHeatmap::draw(.last_ht(),
+                             heatmap_legend_side="right",
+                             annotation_legend_side="right",
+                             padding = grid::unit(c(6,10,16,6), "mm"))
       }
     )
+
 
 
   })
