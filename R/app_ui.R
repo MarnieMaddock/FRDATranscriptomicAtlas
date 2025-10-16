@@ -51,6 +51,10 @@ app_ui <- function() {
       sidebarPanel(
         style = "height: 85vh; overflow-y: auto;", # Set the sidebar height and add a scroll bar
         id = "sidebar",
+        conditionalPanel(
+          condition = "input.tabselected == 1",
+          PCASidebarUI("pca")
+        ),
         conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.1",
                          degTablesSidebarUI("deg_tables")
         ),
@@ -93,7 +97,7 @@ app_ui <- function() {
                    #about_text
           ), #display about text from source("about.R")
           tabPanel("PCA", value = 1,
-                   pcaUI("pca")
+                   PCAMainUI("pca")
           ),
           tabPanel("DEGs",
                    value = 2,
