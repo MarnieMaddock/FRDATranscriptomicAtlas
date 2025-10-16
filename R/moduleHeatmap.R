@@ -45,13 +45,13 @@ tpmHeatmapSidebarUI <- function(id) {
 tpmHeatmapMainUI <- function(id) {
   ns <- NS(id)
   tagList(
-        shinycssloaders::withSpinner(
-          uiOutput(ns("heatmap_ui")),
-          type = 4, color = "#005249"
-        ),
-        #add whitespace below the plot 100 px
-        br(), br(), br()
-      )
+    shinycssloaders::withSpinner(
+      uiOutput(ns("heatmap_ui")),
+      type = 4, color = "#005249"
+    ),
+    #add whitespace below the plot 100 px
+    br(), br(), br()
+  )
 }
 
 # --- TPM Heatmap: Server module ---
@@ -59,13 +59,52 @@ tpmHeatmapMainUI <- function(id) {
 tpmHeatmapServer <- function(
     id,
     pkg = utils::packageName(),
-    pretty_map,
     sample_meta = NULL   # pass a data.frame or leave NULL to auto-load from extdata
 ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
     # ---------------- helpers ----------------
+    # -------- Pretty map (internal default) --------
+    pretty_map  <- c(
+      "Erwin"        = "Erwin (Lymphoblastoid Cells)",
+      "Indelicato"   = "Indelicato (Skeletal Muscle)",
+      "Lai_iPSC"     = "Lai (iPSCs)",
+      "Lai_CNS"      = "Lai (CNS neurons)",
+      "Lai_PNS"      = "Lai (PNS neurons)",
+      "Lees"         = "Lees (Cardiomyocytes)",
+      "Maddock_LMN"  = "Maddock (Lower Motor Neurons)",
+      "Maddock_SN"   = "Maddock (Sensory Neurons)",
+      "Maddock_NCC"  = "Maddock (Neural Crest Cells)",
+      "Mishra"       = "Mishra (Neurons)",
+      "Napierala"    = "Napierala (Fibroblasts)",
+      "Vilema"       = "Vilema-Enriquez (Fibroblasts)"
+    )
+    pretty_map <- pretty_map %||% PRETTY_MAP_LOCAL
+
+    # ---- Define your dataset colour palette ----
+    dataset_colors <- c(
+      # your original order
+      "#00B7C7",  # teal–cyan
+      "#DC267F",  # magenta–pink
+      "#FFB000",  # golden yellow
+      "#FE6100",  # orange
+      "#785EF0",  # purple
+      "#648FFF",  # blue
+      "#00359C",  # navy blue
+      "#009E73",  # emerald green
+      "#E377C2",  # rose pink
+      "#1F77B4",  # sky blue
+      "#D62728",  # red
+      "#2CA02C",  # forest green
+      "#9467BD",  # muted violet
+      "#F564E3",  # fuchsia
+      "#A6761D",  # ochre–brown
+      "#BCBD22",  # olive
+      "#8C564B"   # taupe brown
+    )
+
+
     `%||%` <- function(a, b) if (is.null(a)) b else a
     base_of <- function(dataset_id) sub("(_.*)$", "", dataset_id)
 
@@ -76,18 +115,16 @@ tpmHeatmapServer <- function(
       file.path(getwd(), "inst", "extdata", ...)
     }
 
-    # load TPM table
-    load_one <- function(dataset_base, level = c("genes","transcripts")) {
+    load_one <- function(dataset_id, level = c("genes","transcripts")) {
       level  <- match.arg(level)
       subdir <- if (level == "genes") "tpm" else "transcript_tpm"
       fname  <- if (level == "genes")
-        paste0(dataset_base, "_gene_tpm.rds")
-      else
-        paste0(dataset_base, "_transcript_tpm.rds")
+        paste0(dataset_id, "_gene_tpm.rds") else paste0(dataset_id, "_transcript_tpm.rds")
       path <- extdata_path(subdir, fname, package = pkg)
       if (!file.exists(path)) stop("Missing file: ", path)
       readRDS(path)
     }
+
 
     # feature query parser
     parse_feature_query <- function(txt) {
@@ -102,70 +139,108 @@ tpmHeatmapServer <- function(
       readr::read_csv(path, show_col_types = FALSE)
     }
 
+    # ==== Group token mappers ====
+
+    # 1) Metadata mapper (accepts messy tokens like "FA1CM", "FA2IC", "FRDA2", etc.)
+    # Precedence: CTRL first so FA2IC/FAIC are CTRL, not FRDA.
+    map_to_group_meta <- function(x) {
+      x <- toupper(trimws(x))
+
+      is_ctrl <- grepl("(?:^|[_-])(CTRL|IC)(?:[_-]|$)", x, perl = TRUE) ||
+        grepl("FA\\d*IC", x, perl = TRUE) ||     # FA1IC, FA2IC, FAIC…
+        grepl("FAIC", x, perl = TRUE)
+
+      # FRDA if FRDA[digits] …or FA[digits] NOT followed by IC (supports suffixes like CM/LMN)
+      is_frda <- grepl("FRDA\\d*", x, perl = TRUE) ||
+        grepl("(?:(?:^|[_-])FA\\d*)(?!IC)", x, perl = TRUE) ||
+        grepl("(?:(?:^|[_-])FA)(?!IC)", x, perl = TRUE)
+
+      if (is_ctrl) "CTRL" else if (is_frda) "FRDA" else NA_character_
+    }
+
+    # 2) Sample-name fallback (lenient; finds tokens anywhere in the string)
+    map_to_group_name <- function(x) {
+      x <- toupper(x)
+
+      is_ctrl <- grepl("(?:^|[_-])(CTRL|IC)(?:[_-]|$)", x, perl = TRUE) ||
+        grepl("FA\\d*IC", x, perl = TRUE) ||     # catches FA1ICCM, FA2IC_LMN, etc.
+        grepl("FAIC", x, perl = TRUE)
+
+      is_frda <- grepl("FRDA\\d*", x, perl = TRUE) ||
+        grepl("(?:(?:^|[_-])FA\\d*)(?!IC)", x, perl = TRUE) ||
+        grepl("(?:(?:^|[_-])FA)(?!IC)", x, perl = TRUE)
+
+      if (is_ctrl) "CTRL" else if (is_frda) "FRDA" else NA_character_
+    }
+
+    # ==== Normalise metadata ====
+
     normalise_meta <- function(df) {
       stopifnot(all(c("sample_id","Study") %in% names(df)))
-      df$sample_id <- gsub("\\s+", "", trimws(df$sample_id))   # trim + strip inner spaces
+
+      df$sample_id <- gsub("\\s+", "", trimws(df$sample_id))
       df$Study     <- trimws(as.character(df$Study))
 
-      # choose Group: FRDA_CTRL preferred, else case_diff_controls (IC->CTRL)
       if ("FRDA_CTRL" %in% names(df)) {
-        grp <- toupper(trimws(df$FRDA_CTRL))
+        grp <- vapply(df$FRDA_CTRL, map_to_group_meta, character(1))
       } else if ("case_diff_controls" %in% names(df)) {
-        x <- toupper(trimws(df$case_diff_controls))
-        grp <- ifelse(x %in% c("CTRL","HEALTHY","WT","IC"), "CTRL",
-                      ifelse(x == "FRDA","FRDA","UNKNOWN"))
+        grp <- vapply(df$case_diff_controls, map_to_group_meta, character(1))
       } else {
-        grp <- "UNKNOWN"
+        grp <- NA_character_
       }
-      df$Group <- factor(grp, levels = c("CTRL","FRDA","UNKNOWN"))
+
+      df$Group <- factor(grp, levels = c("CTRL","FRDA"))
       df
     }
 
-    # --- LAST-RESORT GROUP FROM NAME (used when no meta row for a sample) ---
-    .group_from_name <- function(x) {
-      ic_token   <- grepl("(?i)(?:^|[_-])IC(?:[_-]|$)|(?:^|[_-])FA\\d*ic", x, perl = TRUE)
-      ctrl_token <- grepl("(?i)(?:^|[_-])CTRL(?:[_-]|$)|CONTROL|HEALTHY|(?:^|[_-])WT(?:[_-]|$)", x, perl = TRUE)
-      frda_token <- grepl("(?i)(?:^|[_-])FRDA(?:[_-]|$)|(?:^|[_-])FA(?:[_-]|$)", x, perl = TRUE)
-      if (ic_token || ctrl_token) "CTRL" else if (frda_token) "FRDA" else "UNKNOWN"
+    # ==== Fallback from sample names ====
+
+    group_from_name <- function(x) {
+      map_to_group_name(x)
     }
+
+
+
 
     # --- ANNOTATE A VECTOR OF SAMPLE COLS USING META (WITH FALLBACKS) ---
     annot_from_meta <- function(cols, meta_norm) {
-      out <- data.frame(
-        sample = cols,
-        Study  = sub("_.*$", "", cols),   # default from prefix
-        Group  = factor(vapply(cols, .group_from_name, character(1)),
-                        levels = c("CTRL","FRDA","UNKNOWN")),
-        stringsAsFactors = FALSE, check.names = FALSE
-      )
+      out <- data.frame(sample = cols, stringsAsFactors = FALSE)
+
       if (!is.null(meta_norm)) {
-        mm <- meta_norm
-        mm$sample_id <- gsub("\\s+", "", trimws(mm$sample_id))
-        j <- match(out$sample, mm$sample_id)
-        hit <- !is.na(j)
-        out$Study[hit] <- mm$Study[j[hit]]
-        out$Group[hit] <- mm$Group[j[hit]]
+        out <- dplyr::left_join(
+          out,
+          dplyr::select(meta_norm, sample_id, Study, Group),
+          by = c("sample" = "sample_id")
+        )
       }
+
+      # Fill missing Study and Group
+      if (!"Study" %in% names(out) || anyNA(out$Study))
+        out$Study <- if (!"Study" %in% names(out)) sub("_.*$", "", out$sample) else
+          ifelse(is.na(out$Study), sub("_.*$", "", out$sample), out$Study)
+
+      if (!"Group" %in% names(out) || anyNA(out$Group)) {
+        fallback <- vapply(out$sample, group_from_name, character(1))
+        out$Group <- if (!"Group" %in% names(out)) fallback else ifelse(is.na(out$Group), fallback, as.character(out$Group))
+      }
+
+      # Keep only CTRL/FRDA; coerce to factor with those two levels
+      out$Group <- factor(out$Group, levels = c("CTRL","FRDA"))
       out
     }
 
-    # last-resort regex (only used if metadata is absent)
-    group_from_name <- function(x) {
-      ic_token   <- grepl("(?i)(?:^|[_-])IC(?:[_-]|$)|(?:^|[_-])FA\\d*ic", x, perl = TRUE)
-      ctrl_token <- grepl("(?i)(?:^|[_-])CTRL(?:[_-]|$)|CONTROL|HEALTHY|(?:^|[_-])WT(?:[_-]|$)", x, perl = TRUE)
-      frda_token <- grepl("(?i)(?:^|[_-])FRDA(?:[_-]|$)|(?:^|[_-])FA(?:[_-]|$)", x, perl = TRUE)
-      if (ic_token || ctrl_token) "CTRL" else if (frda_token) "FRDA" else "UNKNOWN"
-    }
 
     # choose columns for a dataset with group filter (uses metadata if present)
     columns_for_dataset <- function(df, dataset_id, group_mode, meta_norm) {
-      base <- sub("(_.*)$", "", dataset_id)
-      sample_cols <- grep(paste0("^", base, "_"), names(df), value = TRUE)
+      sample_cols <- grep(paste0("^", dataset_id, "_"), names(df), value = TRUE)
+      if (!length(sample_cols)) {
+        id_cols <- intersect(c("tx","gene_id","gene_name"), names(df))
+        sample_cols <- setdiff(names(df), id_cols)
+        sample_cols <- sample_cols[grepl("_", sample_cols)]
+      }
       if (!length(sample_cols)) return(character(0))
 
       ann <- annot_from_meta(sample_cols, meta_norm)
-
-      # apply the requested filter
       keep <- switch(group_mode,
                      "ctrl" = ann$Group == "CTRL",
                      "frda" = ann$Group == "FRDA",
@@ -173,6 +248,7 @@ tpmHeatmapServer <- function(
                      rep(FALSE, nrow(ann)))
       ann$sample[keep]
     }
+
 
     row_zscore <- function(mat) {
       m <- t(scale(t(mat)))
@@ -184,7 +260,7 @@ tpmHeatmapServer <- function(
     dataset_choices <- setNames(names(pretty_map), pretty_map)
     observe({
       updateCheckboxGroupInput(session, "datasets",
-                               choices = dataset_choices,
+                               choices = setNames(names(pretty_map), pretty_map),
                                selected = character(0)
       )
     })
@@ -217,9 +293,7 @@ tpmHeatmapServer <- function(
       all_keys  <- NULL
 
       for (ds in input$datasets) {
-        base <- base_of(ds)
-        df   <- load_one(base, level = level)
-
+        df <- load_one(ds, level = level)
         sc <- columns_for_dataset(df, ds, input$group_filter %||% "both", meta_norm)
         if (!length(sc)) next
 
@@ -283,7 +357,7 @@ tpmHeatmapServer <- function(
             sample = colnames(mat),
             Study  = sub("_.*$", "", colnames(mat)),
             Group  = factor(vapply(colnames(mat), group_from_name, character(1)),
-                            levels = c("CTRL","FRDA","UNKNOWN"))
+                            levels = c("CTRL","FRDA"))
           )
           ds_order <- setNames(seq_along(input$datasets), input$datasets)
           tmp$ds_rank  <- ds_order[tmp$Study] %||% (max(ds_order, na.rm = TRUE) + 1)
@@ -334,27 +408,37 @@ tpmHeatmapServer <- function(
     # keep last heatmap for downloads
     .last_ht <- reactiveVal(NULL)
 
+    dataset_from_sample <- function(samples, selected_ids) {
+      vapply(samples, function(s) {
+        hit <- selected_ids[startsWith(s, paste0(selected_ids, "_"))]
+        if (length(hit)) hit[1] else sub("_.*$", "", s)
+      }, character(1))
+    }
+
     # ---------------- render plot ----------------
     output$heatmap_plot <- renderPlot({
       mat  <- unified_matrix()
       dims <- plot_dims()
 
-      ann_df <- if (!is.null(meta_norm)) {
-        aa <- annot_from_meta(colnames(mat), meta_norm)
-        data.frame(Dataset = aa$Study, Group = aa$Group,
-                   row.names = aa$sample, check.names = FALSE)
-      } else {
-        data.frame(
-          Dataset  = sub("_.*$", "", colnames(mat)),
-          Group    = factor(vapply(colnames(mat), group_from_name, character(1)),
-                            levels = c("CTRL","FRDA","UNKNOWN")),
-          row.names = colnames(mat), check.names = FALSE
-        )
+      ann_df <- {
+        ds_id <- dataset_from_sample(colnames(mat), input$datasets)
+        grp   <- vapply(colnames(mat), group_from_name, character(1))
+        data.frame(Dataset = ds_id,
+                   Group = factor(grp, levels = c("CTRL","FRDA")),
+                   row.names = colnames(mat), check.names = FALSE)
       }
 
-      group_cols <- c("CTRL"="#4C78A8","FRDA"="#F58518","UNKNOWN"="#A0A0A0")
-      ds_levels  <- unique(ann_df$Dataset)
-      ds_pal     <- setNames(scales::hue_pal()(length(ds_levels)), ds_levels)
+      # keep palettes as-is; they'll now key off proper character labels
+      ds_levels <- unique(ann_df$Dataset)
+      ds_pal <- setNames(dataset_colors[seq_along(ds_levels) %% length(dataset_colors)],
+                         ds_levels)
+
+
+      # Only include colors for groups that exist in the current plot
+      present <- unique(as.character(ann_df$Group))
+      lvls <- intersect(c("CTRL", "FRDA"), present)
+      group_cols <- setNames(c("#a9a9a9ff", "#333333ff")[match(lvls, c("CTRL","FRDA"))], lvls)
+
 
       ha_top <- ComplexHeatmap::HeatmapAnnotation(
         Dataset = ann_df$Dataset,
@@ -365,6 +449,7 @@ tpmHeatmapServer <- function(
           Group   = list(title = "Group")
         )
       )
+
 
       rng <- range(mat, na.rm = TRUE)
       if ((input$transform_mode %||% "log2p1") == "log2p1") {

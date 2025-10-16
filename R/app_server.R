@@ -51,8 +51,7 @@ app_server <- function(input, output, session) {
     pretty_map = pretty_map    # your mapping vector from utils
   )
   tpmHeatmapServer("tpm_hm",
-    pkg = utils::packageName(),
-    pretty_map = pretty_map
+    pkg = utils::packageName()
   )
 
   # ---- In server.R or inside your app_server() ----
