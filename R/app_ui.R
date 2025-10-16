@@ -91,7 +91,7 @@ app_ui <- function() {
           id = "tabselected",
           selected = 0, # Default tab selected is 1
           tabPanel("About", icon = icon("home", lib = "font-awesome"), #display home icon in the tab
-                   #textOutput("about"),
+                   aboutUI("about"),
                    value = 0,
                    #include daatsets info here
                    #about_text

@@ -39,6 +39,7 @@ app_server <- function(input, output, session) {
 
 
   # --- Call modules -----------------------------------------------------
+  aboutServer("about")
   pcaServer(id = "pca")
   degTablesServer("deg_tables")
   genePlotsServer("gene_plots")
