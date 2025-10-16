@@ -1,8 +1,8 @@
 Package: FRDATranscriptomicAtlas
-Title: Explore FRDA RNA Sequencing Data
+Title: FRDA Transcriptomic Atlas
 Version: 0.0.0.9000
 Authors@R: c(person("Marnie", "Maddock", role = c("aut","cre"), email = "mmaddock@uow.edu.au"))
-Description: 
+Description: Explore FRDA RNA Sequencing Data
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
