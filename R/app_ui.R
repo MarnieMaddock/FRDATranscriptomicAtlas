@@ -85,13 +85,16 @@ app_ui <- function() {
         tabsetPanel(
           type = "tabs",
           id = "tabselected",
-          selected = 1, # Default tab selected is 1
+          selected = 0, # Default tab selected is 1
           tabPanel("About", icon = icon("home", lib = "font-awesome"), #display home icon in the tab
                    #textOutput("about"),
-                   value = 1,
+                   value = 0,
                    #include daatsets info here
                    #about_text
           ), #display about text from source("about.R")
+          tabPanel("PCA", value = 1,
+                   pcaUI("pca")
+          ),
           tabPanel("DEGs",
                    value = 2,
                    tabsetPanel(

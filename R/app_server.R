@@ -39,6 +39,7 @@ app_server <- function(input, output, session) {
 
 
   # --- Call modules -----------------------------------------------------
+  pcaServer(id = "pca")
   degTablesServer("deg_tables")
   genePlotsServer("gene_plots")
   degVennServer("deg_venn", pkg = utils::packageName())
