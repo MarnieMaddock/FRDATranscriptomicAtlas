@@ -62,6 +62,10 @@ app_ui <- function() {
           volcanoSidebarUI("volc", pretty_map = pretty_map)
         ),
         conditionalPanel(
+          condition = "input.tabselected == 5",
+          tpmHeatmapSidebarUI("tpm_hm")
+        ),
+        conditionalPanel(
           condition = "input.tabselected == 6 && input.gene_plots == 6.1",
           genePlotsSidebarUI("gene_plots")
         ),
@@ -105,6 +109,9 @@ app_ui <- function() {
           ),
           tabPanel("Volcano Plots", value = 3,
                    volcanoMainUI("volc")
+          ),
+          tabPanel("Heatmaps", value = 5,
+                   tpmHeatmapMainUI("tpm_hm")
           ),
           #statistics tab
           tabPanel("Functional Enrichment", value = 4,

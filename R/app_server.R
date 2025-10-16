@@ -50,6 +50,10 @@ app_server <- function(input, output, session) {
     labels    = NULL,          # auto-discover from filenames
     pretty_map = pretty_map    # your mapping vector from utils
   )
+  tpmHeatmapServer("tpm_hm",
+    pkg = utils::packageName(),
+    pretty_map = pretty_map
+  )
 
   # ---- In server.R or inside your app_server() ----
   observe({
