@@ -1,0 +1,10 @@
+name: FRDATranscriptomicAtlas
+title: FRDATranscriptomicAtlas
+username: marniem
+account: marniem
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15784410
+bundleId: 11046372
+url: https://marniem.shinyapps.io/FRDATranscriptomicAtlas/
+version: 1

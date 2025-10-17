@@ -88,12 +88,16 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     requireNamespace("svglite", quietly = TRUE)
 
     # --- paths + cached reader ---
-    deg_dir_genes       <- system.file("extdata/deg/genes",       package = pkg, mustWork = FALSE)
+    deg_dir_genes <- system.file("extdata/deg/genes", package = pkg, mustWork = FALSE)
+    if (!nzchar(deg_dir_genes)) deg_dir_genes <- file.path("inst", "extdata", "deg", "genes")
+
     deg_dir_transcripts <- system.file("extdata/deg/transcripts", package = pkg, mustWork = FALSE)
+    if (!nzchar(deg_dir_transcripts)) deg_dir_transcripts <- file.path("inst", "extdata", "deg", "transcripts")
     read_cached <- memoise::memoise(readRDS)
 
     # --- maps (tx2gene) ---
     tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
+    if (!nzchar(tx2_path)) tx2_path <- file.path("inst", "extdata", "maps", "tx2gene.tsv")
     tx2gene <- if (nzchar(tx2_path) && file.exists(tx2_path)) {
       readr::read_tsv(tx2_path, col_types = "ccc") |>
         # expected cols: transcript_id, gene_id, gene_name

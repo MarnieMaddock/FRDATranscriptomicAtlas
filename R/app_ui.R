@@ -7,26 +7,38 @@
 #' @importFrom shinyjs useShinyjs
 #' @importFrom fontawesome fa
 
-get_css_path <- function() {
-  local_path <- "inst/www/style.css"
-  pkg_path   <- system.file("www", "style.css", package = "FRDATranscriptomicAtlas")
-
-  if (file.exists(local_path)) local_path else pkg_path
-}
+# logos/css
+# Define helper functions for resource paths ----------------------
 
 get_logo_path <- function() {
   if (file.exists("inst/www/dottori_lab_pentagon.svg")) {
-    return("inst/www/dottori_lab_pentagon.svg") #shinyapps.io
+    return("inst/www/dottori_lab_pentagon.svg")  # shinyapps.io
   } else {
-    return(system.file("www", "dottori_lab_pentagon.svg", package = "FRDATranscriptomicAtlas")) #github
+    return(system.file("www", "dottori_lab_pentagon.svg", package = "FRDATranscriptomicAtlas"))  # GitHub / package
   }
 }
 
 get_UOW_path <- function() {
   if (file.exists("inst/www/UOW.png")) {
-    return("inst/www/UOW.png") #shinyapps.io
+    return("inst/www/UOW.png")  # shinyapps.io
   } else {
-    return(system.file("www", "UOW.png", package = "FRDATranscriptomicAtlas")) #github
+    return(system.file("www", "UOW.png", package = "FRDATranscriptomicAtlas"))
+  }
+}
+
+get_css_path <- function() {
+  if (file.exists("inst/www/style.css")) {
+    return("inst/www/style.css")  # shinyapps.io
+  } else {
+    return(system.file("www", "style.css", package = "FRDATranscriptomicAtlas"))
+  }
+}
+
+get_DTU_dir <- function() {
+  if (dir.exists("inst/extdata/DTU")) {
+    return("inst/extdata/DTU")  # shinyapps.io / local project
+  } else {
+    return(system.file("extdata", "DTU", package = "FRDATranscriptomicAtlas"))
   }
 }
 

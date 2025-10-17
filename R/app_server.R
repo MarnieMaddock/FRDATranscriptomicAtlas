@@ -48,9 +48,9 @@ app_server <- function(input, output, session) {
   forestPlotsServer("forest")
   dtuResultsServer(
     id = "dtu",
-    data_dir  = system.file("extdata/DTU", package = utils::packageName()),
-    labels    = NULL,          # auto-discover from filenames
-    pretty_map = pretty_map    # your mapping vector from utils
+    data_dir   = get_DTU_dir(),
+    labels     = NULL,
+    pretty_map = pretty_map
   )
   tpmHeatmapServer("tpm_hm",
     pkg = utils::packageName()
