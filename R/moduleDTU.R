@@ -1,6 +1,4 @@
-# ---- DTU results module -----------------------------------------------
-# ---- DTU helpers ------------------------------------------------------
-
+#' @importFrom rlang .data
 # a %||% b  ->  if a is NULL use b
 `%||%` <- function(a, b) if (is.null(a)) b else a
 

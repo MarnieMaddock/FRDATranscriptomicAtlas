@@ -1,6 +1,4 @@
-# R/moduleGenePlots.R
-
-#' Gene Plots – sidebar
+#' @importFrom shiny HTML
 #' @noRd
 genePlotsSidebarUI <- function(id) {
   ns <- NS(id)

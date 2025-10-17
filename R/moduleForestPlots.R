@@ -1,6 +1,4 @@
-# R/moduleForestPlots.R
-# ---------------------
-
+#' @importFrom graphics par
 # UI ----
 forestPlotsUI <- function(id) {
   ns <- NS(id)
@@ -59,12 +57,6 @@ forestPlotMainUI <- function(id) {
 forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
-    suppressPackageStartupMessages({
-      library(dplyr)
-      library(stringr)
-      library(metafor)
-    })
 
     # ---------- Helpers ----------
     # --- symbol map (tx2gene) ---

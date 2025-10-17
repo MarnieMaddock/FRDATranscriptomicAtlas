@@ -1,5 +1,4 @@
-# --- UI -----------------------------------------------------------------------
-
+#' @importFrom graphics plot.new text
 degVennUI <- function(id) {
   ns <- NS(id)
   tagList(

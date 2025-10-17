@@ -1,5 +1,6 @@
 #moduleVolcano.R
 #' Volcano Plot — Sidebar UI
+#' @importFrom rlang %||%
 #' @param id module id
 #' @param pretty_map named character vector dataset_key = "Pretty Label"
 #' @noRd

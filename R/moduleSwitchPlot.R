@@ -1,3 +1,5 @@
+#' @importFrom shiny HTML
+#' @importFrom shiny tags
 # =========================
 # Switchplot help + rationale + OneDrive link + example image
 # =========================

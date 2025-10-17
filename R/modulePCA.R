@@ -1,6 +1,4 @@
-# ---- PCA module (multi-select) ---------------------------------------------
-# Files expected: <label>_pca_input.rds with list(vsd_mat, meta, percent_var)
-
+#' @importFrom stats prcomp
 PCASidebarUI <- function(id, title = "PCA (VST)") {
   ns <- NS(id)
   tagList(

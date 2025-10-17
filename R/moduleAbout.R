@@ -1,6 +1,11 @@
-# ---- About module ------------------------------------------------------
-# Place this in R/moduleAbout.R (or similar)
-
+#' About module UI
+#' @param id Shiny module id
+#' @param title Title text
+#' @param github_url Project URL
+#' @param issues_url Issues URL
+#' @param contact_email Contact email
+#' @export
+#' @importFrom shiny NS tagList div h2 p h3 uiOutput span moduleServer renderUI tags HTML
 aboutUI <- function(id,
                     title = "About the FRDA Transcriptomic Atlas",
                     github_url = "https://github.com/MarnieMaddock/FRDATranscriptomicAtlas",

@@ -1,5 +1,4 @@
-# --- TPM Heatmap: Sidebar UI ---
-# --- TPM Heatmap: Sidebar UI ---
+#' @importFrom grid gpar unit
 tpmHeatmapSidebarUI <- function(id) {
   ns <- NS(id)
   tagList(

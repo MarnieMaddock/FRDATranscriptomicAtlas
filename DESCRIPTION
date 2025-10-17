@@ -20,23 +20,28 @@ Imports:
     ggtext,
     plotly,
     stringr,
+    rlang,
+    metafor,
     shinyjs,
     shinycssloaders,
     shinyWidgets,
-    upsetjs,
+    svglite,
     FNN,
     tibble,
     readr,
     htmlwidgets,
+    ggVennDiagram,
     heatmaply,
-    plotly,
     ComplexHeatmap,
     circlize,
     tidyr,
-    scales
-Suggests:
-    svglite,
+    scales,
+    ggrepel,
+    DT,
+    memoise, 
     ragg
+Remotes:
+    bioc::ComplexHeatmap
 RoxygenNote: 7.3.3
 URL: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas
 BugReports: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/issues
