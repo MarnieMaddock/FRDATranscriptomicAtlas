@@ -19,14 +19,15 @@ PCASidebarUI <- function(id, title = "PCA (VST)") {
 
 PCAMainUI <- function(id) {
   ns <- NS(id)
+  spin <- function(x) shinycssloaders::withSpinner(x, type = 4, color = "#005249")
   tagList(
     conditionalPanel(
       sprintf("input['%s'] === 'plotly'", ns("engine")),
-      plotly::plotlyOutput(ns("pca_plotly"), height = "600px")
+      spin(plotly::plotlyOutput(ns("pca_plotly"), height = "600px"))
     ),
     conditionalPanel(
       sprintf("input['%s'] === 'ggplot'", ns("engine")),
-      plotOutput(ns("pca_plot"), height = "600px")
+      spin(plotOutput(ns("pca_plot"), height = "600px"))
     ),
     tags$br(),
     fluidRow(
