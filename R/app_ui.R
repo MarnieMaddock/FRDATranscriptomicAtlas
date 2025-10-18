@@ -105,6 +105,10 @@ app_ui <- function() {
           condition = "input.tabselected == 7 && input.DTU_tables == 7.2",
           dtuVennUI("dtuVenn")
         ),
+        conditionalPanel(
+          condition = "input.tabselected == 7 && input.DTU_tables == 7.3",
+          consequencesSidebarUI("dtu_func_cons")
+        )
 
 
       ), #sidebarPanel closing bracket
@@ -176,7 +180,11 @@ app_ui <- function() {
                      tabPanel("Compare Datasets",
                               value = 7.2,
                               dtuVennMainUI("dtuVenn")
-                     )
+                     ),
+                     tabPanel("Functional Consequences",
+                              value = 7.3,
+                              consequencesMainUI("dtu_func_cons")
+                              )
                    )
           ),
           tabPanel(

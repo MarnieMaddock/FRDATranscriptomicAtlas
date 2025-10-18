@@ -1,0 +1,281 @@
+dataset,gene_id,gene_name,n_consequences,consequences,max_abs_dIF,min_q
+Mishra_FF2,FLNB,FLNB,2,codingPotential; domain_identified,0.21032499999999998,5.136371333944926e-47
+Mishra_FF2,PTPRM,PTPRM,3,codingPotential; domain_identified; signal_peptide_identified,0.135025,5.20569457925555e-46
+Mishra_FF2,DST,DST,2,codingPotential; domain_identified,0.16335,8.024478043999968e-38
+Mishra_FF2,ACTA2,ACTA2,2,codingPotential; domain_identified,0.678625,5.0103573684593744e-30
+Mishra_FF2,WASHC1,WASHC1,2,codingPotential; domain_identified,0.6313000000000001,2.2721275613371033e-29
+Mishra_FF2,P3H3,P3H3,2,codingPotential; IR,0.225525,8.002959056880223e-28
+Mishra_FF2,MCM9,MCM9,2,codingPotential; domain_identified,0.42122500000000007,1.717905638593104e-25
+Mishra_FF2,OSGIN2,OSGIN2,1,codingPotential,0.43815000000000004,2.3418938770872907e-20
+Mishra_FF2,RCAN1,RCAN1,2,codingPotential; domain_identified,0.40904999999999997,3.99471511453931e-18
+Mishra_FF2,ANK1,ANK1,3,codingPotential; domain_identified; IR,0.16414999999999996,3.99471511453931e-18
+Mishra_FF2,AP1S2,AP1S2,2,codingPotential; domain_identified,0.19785,5.168341109825759e-18
+Mishra_FF2,NRXN3,NRXN3,4,codingPotential; domain_identified; PTC; signal_peptide_identified,0.2308,9.099293172584762e-17
+Mishra_FF2,TJP2,TJP2,2,codingPotential; domain_identified,0.15925,9.95354988259841e-17
+Mishra_FF2,ACTN4,ACTN4,2,codingPotential; domain_identified,0.175975,3.2474614054009743e-15
+Mishra_FF2,DSC2,DSC2,2,codingPotential; domain_identified,0.188625,4.1270779019025365e-15
+Mishra_FF2,FHL1,FHL1,2,codingPotential; domain_identified,0.14525,3.4123635492218584e-14
+Mishra_FF2,SACM1L,SACM1L,2,codingPotential; domain_identified,0.174675,4.774667848493216e-14
+Mishra_FF2,LEPROTL1,LEPROTL1,2,codingPotential; domain_identified,0.13607500000000006,1.0462117573877442e-13
+Mishra_FF2,SPATA13,SPATA13,2,codingPotential; domain_identified,0.1583000000000001,1.0116899893114443e-12
+Mishra_FF2,PCDHGA10,PCDHGA10,3,codingPotential; domain_identified; signal_peptide_identified,0.26695,2.376650578828722e-11
+Mishra_FF2,CALD1,CALD1,3,codingPotential; domain_identified; PTC,0.257575,5.931743349947141e-11
+Mishra_FF2,SPOCK2,SPOCK2,3,codingPotential; domain_identified; signal_peptide_identified,0.1291,7.539186856315206e-11
+Mishra_FF2,ATG7,ATG7,2,codingPotential; domain_identified,0.2295,1.9656968657700965e-10
+Mishra_FF2,STX16,STX16,3,codingPotential; domain_identified; IR,0.137875,9.055773430361774e-10
+Mishra_FF2,ENSG00000239922.3,NA,1,IR,0.4754,1.0771400463314768e-9
+Mishra_FF2,CLIP1,CLIP1,2,codingPotential; domain_identified,0.10230000000000003,1.2901439625970867e-9
+Mishra_FF2,ALDH16A1,ALDH16A1,2,codingPotential; domain_identified,0.198975,1.5134060717013897e-9
+Mishra_FF2,LIMA1,LIMA1,2,codingPotential; domain_identified,0.27147499999999997,1.7624327232176557e-9
+Mishra_FF2,TNIP1,TNIP1,2,codingPotential; domain_identified,0.15315,1.7624327232176557e-9
+Mishra_FF2,ATP13A1,ATP13A1,2,codingPotential; domain_identified,0.144175,1.874986047806212e-9
+Mishra_FF2,UBE2N,UBE2N,2,codingPotential; domain_identified,0.1026,1.874986047806212e-9
+Mishra_FF2,SORBS1,SORBS1,2,codingPotential; domain_identified,0.130525,2.0419104683426997e-9
+Mishra_FF2,XRCC2,XRCC2,2,codingPotential; domain_identified,0.16815,2.561823265081154e-9
+Mishra_FF2,FLNA,FLNA,3,codingPotential; domain_identified; IR,0.194125,8.185130871319998e-9
+Mishra_FF2,RASGEF1B,RASGEF1B,2,codingPotential; domain_identified,0.44232499999999997,1.595317498490487e-8
+Mishra_FF2,OBSCN-AS1,OBSCN-AS1,1,codingPotential,0.34325,1.851195499833755e-8
+Mishra_FF2,AAK1,AAK1,3,codingPotential; domain_identified; IR,0.2339,1.9745621898160447e-8
+Mishra_FF2,PDLIM7,PDLIM7,2,codingPotential; domain_identified,0.15337499999999998,6.376545712404684e-8
+Mishra_FF2,NECTIN3-AS1,NECTIN3-AS1,2,codingPotential; IR,0.4246500000000001,1.1928767505141756e-7
+Mishra_FF2,SCUBE2,SCUBE2,3,codingPotential; domain_identified; signal_peptide_identified,0.245775,1.3140770599364193e-7
+Mishra_FF2,CCP110,CCP110,2,codingPotential; domain_identified,0.21295000000000003,1.731485787780397e-7
+Mishra_FF2,RAP2C,RAP2C,3,codingPotential; domain_identified; IR,0.22505,1.8152804404750593e-7
+Mishra_FF2,FGF14,FGF14,2,codingPotential; domain_identified,0.23970000000000002,2.1583969396733318e-7
+Mishra_FF2,AOPEP,AOPEP,2,codingPotential; domain_identified,0.23542500000000002,2.340681976801609e-7
+Mishra_FF2,ANXA6,ANXA6,2,codingPotential; domain_identified,0.19889999999999997,2.7526947141013027e-7
+Mishra_FF2,UBE2D3-AS1,UBE2D3-AS1,1,IR,0.21805000000000005,3.4370312888779144e-7
+Mishra_FF2,SMIM14-DT,SMIM14-DT,1,IR,0.37385,4.1724425433030163e-7
+Mishra_FF2,PAK6,PAK6,3,codingPotential; domain_identified; IR,0.133825,8.719814695602258e-7
+Mishra_FF2,KANSL3,KANSL3,3,codingPotential; domain_identified; PTC,0.2788,9.80174279712988e-7
+Mishra_FF2,SLX1A-SULT1A3,SLX1A-SULT1A3,2,codingPotential; IR,0.331825,1.1706766174917743e-6
+Mishra_FF2,HTRA1,HTRA1,2,codingPotential; domain_identified,0.171925,1.5647408019997216e-6
+Mishra_FF2,CD8A,CD8A,3,codingPotential; domain_identified; signal_peptide_identified,0.399925,1.9020696939083639e-6
+Mishra_FF2,PRKY,PRKY,1,codingPotential,0.163275,2.0703057502120083e-6
+Mishra_FF2,NCLN,NCLN,5,codingPotential; domain_identified; IR; PTC; signal_peptide_identified,0.2241999999999999,2.95539484151265e-6
+Mishra_FF2,RFNG,RFNG,2,codingPotential; domain_identified,0.1295,5.2075305538385794e-6
+Mishra_FF2,CDK2AP1,CDK2AP1,2,codingPotential; domain_identified,0.12280000000000002,5.817833500278173e-6
+Mishra_FF2,TCF12,TCF12,2,codingPotential; domain_identified,0.17984999999999998,6.0668577434423155e-6
+Mishra_FF2,ELAVL1,ELAVL1,2,codingPotential; domain_identified,0.13495000000000001,6.27567485344594e-6
+Mishra_FF2,ADD3,ADD3,2,codingPotential; domain_identified,0.18732500000000002,6.8860787840226185e-6
+Mishra_FF2,WDSUB1,WDSUB1,2,codingPotential; domain_identified,0.45000000000000007,9.317577617281677e-6
+Mishra_FF2,SPEN,SPEN,3,codingPotential; domain_identified; IR,0.141125,1.1212606669400194e-5
+Mishra_FF2,ELP6,ELP6,3,codingPotential; domain_identified; PTC,0.221225,2.0518203587370485e-5
+Mishra_FF2,ENSG00000289877.2,NA,1,codingPotential,0.6726,2.7126897559979063e-5
+Mishra_FF2,CALU,CALU,4,codingPotential; domain_identified; IR; signal_peptide_identified,0.11560000000000001,3.024568662061784e-5
+Mishra_FF2,BTN2A3P,BTN2A3P,2,codingPotential; IR,0.148775,3.4574350412176046e-5
+Mishra_FF2,NRBP1,NRBP1,2,codingPotential; domain_identified,0.15622499999999995,3.466397445875501e-5
+Mishra_FF2,DIDO1,DIDO1,2,codingPotential; domain_identified,0.11422500000000002,3.544595659684694e-5
+Mishra_FF2,RAPGEF2,RAPGEF2,2,codingPotential; domain_identified,0.15025,3.91792566936068e-5
+Mishra_FF2,CLTA,CLTA,2,codingPotential; domain_identified,0.11875,6.0223354092597626e-5
+Mishra_FF2,VMP1,VMP1,1,IR,0.21437499999999998,6.423361743816432e-5
+Mishra_FF2,RNASEH1-DT,RNASEH1-DT,1,IR,0.20525,6.571061248196575e-5
+Mishra_FF2,GFAP,GFAP,2,codingPotential; IR,0.11625000000000002,8.453409184531637e-5
+Mishra_FF2,DBNL,DBNL,2,codingPotential; domain_identified,0.1179,9.693714796190264e-5
+Mishra_FF2,MAST4,MAST4,2,codingPotential; domain_identified,0.18455,1.2283633590025477e-4
+Mishra_FF2,C1QTNF6,C1QTNF6,2,codingPotential; IR,0.10367500000000002,1.4283653727678515e-4
+Mishra_FF2,NRG1,NRG1,2,codingPotential; domain_identified,0.14817500000000003,1.7790194682985644e-4
+Mishra_FF2,SULF2,SULF2,4,codingPotential; domain_identified; IR; signal_peptide_identified,0.158825,2.2033237717338986e-4
+Mishra_FF2,STEEP1,STEEP1,2,codingPotential; domain_identified,0.20452500000000007,2.2096442916062954e-4
+Mishra_FF2,EFHB,EFHB,2,codingPotential; domain_identified,0.14755000000000001,2.5131750673450666e-4
+Mishra_FF2,OCIAD1,OCIAD1,2,codingPotential; domain_identified,0.143775,2.7800916145062366e-4
+Mishra_FF2,SNHG15,SNHG15,1,IR,0.12157499999999999,2.924037018411616e-4
+Mishra_FF2,IL1RAP,IL1RAP,3,codingPotential; domain_identified; signal_peptide_identified,0.210225,3.4617708855652206e-4
+Mishra_FF2,NCOA4,NCOA4,2,codingPotential; domain_identified,0.12425,3.9722273184196103e-4
+Mishra_FF2,NNAT,NNAT,1,codingPotential,0.144075,4.001317696674233e-4
+Mishra_FF2,THOC5,THOC5,3,codingPotential; domain_identified; IR,0.10044999999999998,5.113310261135346e-4
+Mishra_FF2,PCDHGC3,PCDHGC3,4,codingPotential; domain_identified; IR; signal_peptide_identified,0.33532499999999993,5.938871926228645e-4
+Mishra_FF2,NEDD4,NEDD4,2,codingPotential; domain_identified,0.2606,5.9712212633248e-4
+Mishra_FF2,SDC1,SDC1,3,codingPotential; domain_identified; signal_peptide_identified,0.26997499999999997,6.119506300110112e-4
+Mishra_FF2,MAP4,MAP4,2,codingPotential; domain_identified,0.20779999999999998,6.371619675563933e-4
+Mishra_FF2,GSPT1,GSPT1,2,codingPotential; domain_identified,0.11102500000000004,6.371619675563933e-4
+Mishra_FF2,SMAP1,SMAP1,2,codingPotential; domain_identified,0.16785000000000005,6.827642177060123e-4
+Mishra_FF2,PLEKHG4B,PLEKHG4B,1,codingPotential,0.13730000000000003,7.171818910616191e-4
+Mishra_FF2,RGS9,RGS9,2,codingPotential; domain_identified,0.11307499999999998,7.532205826454604e-4
+Mishra_FF2,VPS54,VPS54,2,codingPotential; domain_identified,0.13005,8.538065926626734e-4
+Mishra_FF2,GBX2-AS1,GBX2-AS1,1,IR,0.24054999999999999,8.568759535466329e-4
+Mishra_FF2,PLD2,PLD2,2,codingPotential; domain_identified,0.16375000000000003,8.91654273201706e-4
+Mishra_FF2,LINC00663,LINC00663,1,codingPotential,0.14715,9.15843801336537e-4
+Mishra_FF2,BUB1B,BUB1B,2,codingPotential; domain_identified,0.11807500000000004,9.541413459875176e-4
+Mishra_FF2,EPB41L4B,EPB41L4B,2,codingPotential; domain_identified,0.17557500000000004,0.0010857784429967722
+Mishra_FF2,ZNF433,ZNF433,2,codingPotential; domain_identified,0.359625,0.0011093998104184902
+Mishra_FF2,NTAN1,NTAN1,2,codingPotential; domain_identified,0.226225,0.001122560620072825
+Mishra_FF2,SLC44A2,SLC44A2,3,codingPotential; domain_identified; IR,0.12225000000000003,0.001149195537399452
+Mishra_FF2,SMARCA1,SMARCA1,2,codingPotential; domain_identified,0.14229999999999987,0.0011551395023500755
+Mishra_FF2,PKP4,PKP4,3,codingPotential; domain_identified; IR,0.1466,0.0012393827478405126
+Mishra_FF2,TMEM129,TMEM129,3,codingPotential; domain_identified; IR,0.2081,0.0012603483554076398
+Mishra_FF2,TANGO6,TANGO6,2,codingPotential; domain_identified,0.27027500000000004,0.0014104540636200875
+Mishra_FF2,GPM6B,GPM6B,3,codingPotential; domain_identified; IR,0.15070000000000006,0.0017745435302648858
+Mishra_FF2,PRICKLE2,PRICKLE2,2,codingPotential; domain_identified,0.22660000000000002,0.0018506663884562042
+Mishra_FF2,REEP6,REEP6,2,codingPotential; domain_identified,0.124625,0.001886233284590124
+Mishra_FF2,TSC22D1,TSC22D1,2,codingPotential; domain_identified,0.10432499999999995,0.0019324936385890492
+Mishra_FF2,CENPK,CENPK,2,codingPotential; domain_identified,0.253025,0.001940558445905449
+Mishra_FF2,FERMT2,FERMT2,2,codingPotential; domain_identified,0.233825,0.001940558445905449
+Mishra_FF2,PFN2,PFN2,3,codingPotential; domain_identified; IR,0.14182499999999998,0.001985244196983757
+Mishra_FF2,UNC13B,UNC13B,2,codingPotential; domain_identified,0.25045,0.002177073302887305
+Mishra_FF2,EHBP1,EHBP1,3,codingPotential; domain_identified; IR,0.16162500000000002,0.0024348134189778638
+Mishra_FF2,PPM1M,PPM1M,3,codingPotential; domain_identified; IR,0.266125,0.0024366338893026173
+Mishra_FF2,WWTR1,WWTR1,2,codingPotential; domain_identified,0.16137499999999994,0.0025990724493253382
+Mishra_FF2,SAMD3,SAMD3,2,codingPotential; IR,0.17527500000000001,0.0027269339106848036
+Mishra_FF2,TRIM16,TRIM16,3,codingPotential; domain_identified; IR,0.12122499999999997,0.0028338359807403572
+Mishra_FF2,CNTN4,CNTN4,3,codingPotential; domain_identified; signal_peptide_identified,0.3624,0.0029114833573543083
+Mishra_FF2,ENSG00000304011.1,NA,1,IR,0.197175,0.0030635423096357843
+Mishra_FF2,TGFB2,TGFB2,3,codingPotential; domain_identified; signal_peptide_identified,0.20882500000000004,0.003195907622531363
+Mishra_FF2,NECAB3,NECAB3,3,codingPotential; domain_identified; IR,0.11152499999999999,0.003429563535687426
+Mishra_FF2,ANKRD52,ANKRD52,2,codingPotential; domain_identified,0.10772500000000007,0.003654975420917777
+Mishra_FF2,FXYD1,FXYD1,3,codingPotential; domain_identified; signal_peptide_identified,0.28595000000000004,0.0037787644471170413
+Mishra_FF2,CD47,CD47,3,codingPotential; domain_identified; signal_peptide_identified,0.25260000000000005,0.0037787644471170413
+Mishra_FF2,FER,FER,2,codingPotential; domain_identified,0.12092500000000006,0.003909253610713413
+Mishra_FF2,ESPN,ESPN,3,codingPotential; domain_identified; IR,0.19439999999999996,0.004313315724587862
+Mishra_FF2,AP2A1,AP2A1,2,codingPotential; domain_identified,0.19774999999999998,0.004350037194365271
+Mishra_FF2,TRIM36,TRIM36,2,codingPotential; domain_identified,0.14117500000000002,0.004350037194365271
+Mishra_FF2,IFRD1,IFRD1,3,codingPotential; domain_identified; PTC,0.11407500000000001,0.004437887296579271
+Mishra_FF2,NBEAL2,NBEAL2,3,codingPotential; domain_identified; IR,0.11022499999999999,0.004622042528658783
+Mishra_FF2,ENSG00000225889.11,NA,1,IR,0.412975,0.004942610769741307
+Mishra_FF2,ENSG00000288823.2,NA,1,IR,0.11329999999999998,0.004942610769741307
+Mishra_FF2,DCDC1,DCDC1,2,codingPotential; domain_identified,0.319575,0.0049995578107815235
+Mishra_FF2,HYAL2,HYAL2,3,codingPotential; domain_identified; signal_peptide_identified,0.2657500000000001,0.0050189027068787756
+Mishra_FF2,ZNF587B,ZNF587B,3,codingPotential; domain_identified; IR,0.1099,0.005027734204179231
+Mishra_FF2,NAPRT,NAPRT,2,codingPotential; IR,0.24855,0.005054603627949071
+Mishra_FF2,PTGFRN,PTGFRN,4,codingPotential; domain_identified; IR; signal_peptide_identified,0.12695,0.005054603627949071
+Mishra_FF2,DDX18,DDX18,1,codingPotential,0.11355000000000001,0.0052093340314619445
+Mishra_FF2,ANK2,ANK2,2,codingPotential; domain_identified,0.133475,0.005420084172967113
+Mishra_FF2,WWP1,WWP1,2,codingPotential; domain_identified,0.12529999999999997,0.005532470609233337
+Mishra_FF2,UAP1,UAP1,2,codingPotential; domain_identified,0.137575,0.005845036576928845
+Mishra_FF2,NAV2,NAV2,2,codingPotential; domain_identified,0.11304999999999998,0.006777725653318996
+Mishra_FF2,TMEM104,TMEM104,3,codingPotential; domain_identified; IR,0.18969999999999998,0.006873425286884709
+Mishra_FF2,WNT5B,WNT5B,3,codingPotential; domain_identified; signal_peptide_identified,0.179925,0.006928342708596903
+Mishra_FF2,PDCD2L,PDCD2L,2,codingPotential; domain_identified,0.1815,0.007018482721163442
+Mishra_FF2,ZNF106,ZNF106,2,codingPotential; IR,0.23895,0.007479899406805098
+Mishra_FF2,AGRN,AGRN,2,codingPotential; domain_identified,0.11252499999999999,0.00770393673345093
+Mishra_FF2,SPAG1,SPAG1,1,codingPotential,0.13722499999999999,0.008046862478206249
+Mishra_FF2,CREB1,CREB1,3,codingPotential; domain_identified; IR,0.11732500000000001,0.00806318447461092
+Mishra_FF2,CPD,CPD,2,codingPotential; domain_identified,0.105125,0.008103892141889571
+Mishra_FF2,GAL3ST4,GAL3ST4,2,codingPotential; domain_identified,0.24785000000000001,0.008235006542831665
+Mishra_FF2,CHD2,CHD2,1,IR,0.106375,0.008235006542831665
+Mishra_FF2,ARL1,ARL1,2,codingPotential; domain_identified,0.12192499999999995,0.008337302263053958
+Mishra_FF2,RMND5A,RMND5A,2,codingPotential; domain_identified,0.14625,0.008438748730908082
+Mishra_FF2,VPS72,VPS72,2,codingPotential; domain_identified,0.10629999999999995,0.008521028338100412
+Mishra_FF2,PPIEL,PPIEL,1,IR,0.15062499999999998,0.00858997500122787
+Mishra_FF2,CBR1,CBR1,2,codingPotential; domain_identified,0.150725,0.008757923050055395
+Mishra_FF2,GRAMD1C,GRAMD1C,2,codingPotential; domain_identified,0.30892499999999995,0.00891600437269887
+Mishra_FF2,SLC35A2,SLC35A2,4,codingPotential; domain_identified; IR; PTC,0.183025,0.00891600437269887
+Mishra_FF2,ENSG00000273355.3,NA,1,IR,0.23660000000000003,0.008962979314351088
+Mishra_FF2,PLOD2,PLOD2,3,codingPotential; domain_identified; signal_peptide_identified,0.3716,0.008966315106759907
+Mishra_FF2,EXO5,EXO5,2,codingPotential; domain_identified,0.29817499999999997,0.009039048487457143
+Mishra_FF2,BLTP3B,BLTP3B,2,codingPotential; domain_identified,0.24397500000000003,0.009516346507951004
+Mishra_FF2,UVRAG,UVRAG,2,codingPotential; domain_identified,0.27335000000000004,0.010022566288004284
+Mishra_FF2,RBFOX1,RBFOX1,3,codingPotential; domain_identified; IR,0.153625,0.010893147637384443
+Mishra_FF2,SERPINF1,SERPINF1,3,codingPotential; domain_identified; signal_peptide_identified,0.33137500000000003,0.011132426918513193
+Mishra_FF2,NUDT5,NUDT5,2,codingPotential; domain_identified,0.21197500000000002,0.01212968676057933
+Mishra_FF2,ZNF385A,ZNF385A,3,codingPotential; domain_identified; PTC,0.196025,0.01233792606468973
+Mishra_FF2,RIMS2,RIMS2,2,codingPotential; domain_identified,0.16662500000000002,0.013111299809060133
+Mishra_FF2,KATNAL2,KATNAL2,1,domain_identified,0.280325,0.013550390149242017
+Mishra_FF2,GRK4,GRK4,2,codingPotential; domain_identified,0.10935,0.01374841522533453
+Mishra_FF2,POLD4,POLD4,1,IR,0.25375000000000003,0.01407348449614663
+Mishra_FF2,FMNL1,FMNL1,2,codingPotential; domain_identified,0.21194999999999997,0.014756117250491857
+Mishra_FF2,HYAL3,HYAL3,3,codingPotential; domain_identified; signal_peptide_identified,0.32235,0.014766983692331885
+Mishra_FF2,FBXL7,FBXL7,2,codingPotential; domain_identified,0.3309749999999999,0.01543628779059981
+Mishra_FF2,NPIPB6,NPIPB6,4,codingPotential; domain_identified; IR; signal_peptide_identified,0.3821,0.015690174976361455
+Mishra_FF2,TCF4,TCF4,2,codingPotential; IR,0.10117499999999999,0.015703534132994357
+Mishra_FF2,DBP,DBP,2,codingPotential; domain_identified,0.205475,0.016049131777231284
+Mishra_FF2,NDUFC1,NDUFC1,1,domain_identified,0.109925,0.016059071449132406
+Mishra_FF2,ATG4D,ATG4D,3,codingPotential; domain_identified; PTC,0.2542,0.016156951914035367
+Mishra_FF2,EXD3,EXD3,2,codingPotential; domain_identified,0.159975,0.016532000230880587
+Mishra_FF2,SPAG4,SPAG4,3,codingPotential; domain_identified; IR,0.286275,0.017217364717878953
+Mishra_FF2,CFL2,CFL2,2,codingPotential; domain_identified,0.24345,0.017276360175006295
+Mishra_FF2,ELMO1,ELMO1,2,codingPotential; domain_identified,0.11409999999999998,0.017606965999318533
+Mishra_FF2,PLEKHA1,PLEKHA1,3,codingPotential; domain_identified; IR,0.1119,0.017617779964140105
+Mishra_FF2,DNASE1L1,DNASE1L1,3,codingPotential; domain_identified; signal_peptide_identified,0.15885000000000002,0.017832713707978173
+Mishra_FF2,SLF1,SLF1,2,codingPotential; domain_identified,0.20400000000000001,0.018232275990824838
+Mishra_FF2,ACHE,ACHE,4,codingPotential; domain_identified; IR; signal_peptide_identified,0.164975,0.01938735429925246
+Mishra_FF2,TMEM178A,TMEM178A,2,codingPotential; domain_identified,0.10382499999999995,0.01938735429925246
+Mishra_FF2,BTG1-DT,BTG1-DT,1,IR,0.175325,0.01947740079203766
+Mishra_FF2,DACH1,DACH1,2,codingPotential; domain_identified,0.18310000000000004,0.019596478045278778
+Mishra_FF2,ARB2A,ARB2A,2,codingPotential; domain_identified,0.1317250000000001,0.01969271539718509
+Mishra_FF2,GABRD,GABRD,3,codingPotential; domain_identified; signal_peptide_identified,0.58585,0.020237352309798277
+Mishra_FF2,CRMA,CRMA,2,codingPotential; IR,0.271375,0.02027321437838968
+Mishra_FF2,KEAP1,KEAP1,3,codingPotential; domain_identified; IR,0.27235,0.021428034613092093
+Mishra_FF2,SYTL2,SYTL2,3,codingPotential; domain_identified; IR,0.2306,0.022111452315858947
+Mishra_FF2,CSNK1A1,CSNK1A1,3,codingPotential; domain_identified; IR,0.1255,0.022574625955093137
+Mishra_FF2,FSTL3,FSTL3,3,codingPotential; domain_identified; signal_peptide_identified,0.18227500000000002,0.022627119705111595
+Mishra_FF2,HILPDA,HILPDA,1,domain_identified,0.21222499999999997,0.023566632320080775
+Mishra_FF2,MMP25-AS1,MMP25-AS1,2,codingPotential; IR,0.12135000000000004,0.023761668015872765
+Mishra_FF2,LINC02610,LINC02610,2,codingPotential; IR,0.25542499999999996,0.024923723142033227
+Mishra_FF2,SLC2A3,SLC2A3,3,codingPotential; domain_identified; IR,0.16899999999999993,0.025320961722029977
+Mishra_FF2,FBXW2,FBXW2,3,codingPotential; domain_identified; PTC,0.13085000000000002,0.026654253260797418
+Mishra_FF2,GCNT1,GCNT1,2,codingPotential; domain_identified,0.4961499999999999,0.027141220099650334
+Mishra_FF2,PFKFB3,PFKFB3,2,codingPotential; domain_identified,0.1678,0.027210370718543948
+Mishra_FF2,ANXA4,ANXA4,2,codingPotential; domain_identified,0.21647499999999997,0.027490843465965024
+Mishra_FF2,IER3IP1,IER3IP1,1,domain_identified,0.12435,0.027490843465965024
+Mishra_FF2,ENSG00000288759.3,NA,1,IR,0.27135,0.027640010307252202
+Mishra_FF2,SGK1,SGK1,2,codingPotential; domain_identified,0.49970000000000003,0.02820940321959228
+Mishra_FF2,LINC01569,LINC01569,1,IR,0.2135,0.02878760455022146
+Mishra_FF2,SLC4A4,SLC4A4,2,codingPotential; domain_identified,0.329675,0.02932025553815744
+Mishra_FF2,KCNJ11,KCNJ11,3,codingPotential; domain_identified; signal_peptide_identified,0.17869999999999997,0.02932025553815744
+Mishra_FF2,UBAP1,UBAP1,2,codingPotential; domain_identified,0.265375,0.029349283716520163
+Mishra_FF2,PLPP1,PLPP1,2,codingPotential; domain_identified,0.20314999999999994,0.029349283716520163
+Mishra_FF2,CLEC16A,CLEC16A,2,codingPotential; domain_identified,0.18905,0.029349283716520163
+Mishra_FF2,KIT,KIT,3,codingPotential; domain_identified; signal_peptide_identified,0.216125,0.029473685840532816
+Mishra_FF2,RAP1A,RAP1A,2,codingPotential; domain_identified,0.13954999999999995,0.029584117177932783
+Mishra_FF2,JAKMIP3,JAKMIP3,3,codingPotential; domain_identified; PTC,0.26315,0.029774287348549824
+Mishra_FF2,MGST1,MGST1,2,codingPotential; domain_identified,0.139175,0.029977500045313216
+Mishra_FF2,NOMO3,NOMO3,5,codingPotential; domain_identified; IR; PTC; signal_peptide_identified,0.20285000000000003,0.031085944373651444
+Mishra_FF2,UBL7-DT,UBL7-DT,1,IR,0.103075,0.031105000733401438
+Mishra_FF2,DPP3-DT,DPP3-DT,1,IR,0.215175,0.03317657610966398
+Mishra_FF2,LINC01798,LINC01798,1,IR,0.4226,0.0336622368359428
+Mishra_FF2,FBXL5,FBXL5,2,codingPotential; domain_identified,0.1293,0.0336622368359428
+Mishra_FF2,PCMTD2,PCMTD2,2,codingPotential; domain_identified,0.135325,0.03380462722289967
+Mishra_FF2,ACSL4,ACSL4,2,codingPotential; domain_identified,0.23900000000000002,0.03404220378710437
+Mishra_FF2,CCDC74B,CCDC74B,4,codingPotential; domain_identified; IR; PTC,0.151,0.03404220378710437
+Mishra_FF2,RAB11FIP4,RAB11FIP4,2,codingPotential; domain_identified,0.12714999999999999,0.03404220378710437
+Mishra_FF2,CLK1,CLK1,2,codingPotential; IR,0.11319999999999997,0.034708538750427995
+Mishra_FF2,TLE6,TLE6,3,codingPotential; domain_identified; IR,0.42475,0.034916375674049274
+Mishra_FF2,RXYLT1,RXYLT1,3,codingPotential; domain_identified; PTC,0.23764999999999997,0.034916375674049274
+Mishra_FF2,DLG2,DLG2,2,codingPotential; domain_identified,0.15547499999999997,0.034916375674049274
+Mishra_FF2,TSPAN2,TSPAN2,2,codingPotential; domain_identified,0.10175000000000001,0.034916375674049274
+Mishra_FF2,LRRC23,LRRC23,1,codingPotential,0.1373,0.03505289049991414
+Mishra_FF2,SPIDR,SPIDR,2,codingPotential; IR,0.117175,0.03540124836585901
+Mishra_FF2,SLC66A1,SLC66A1,2,codingPotential; domain_identified,0.13327499999999998,0.03542842293223302
+Mishra_FF2,LZTS2,LZTS2,2,codingPotential; domain_identified,0.22024999999999995,0.036636684996926065
+Mishra_FF2,COL7A1,COL7A1,3,codingPotential; domain_identified; signal_peptide_identified,0.20737500000000003,0.03691524214659418
+Mishra_FF2,NHS,NHS,2,codingPotential; domain_identified,0.2294,0.037630321823759694
+Mishra_FF2,WDHD1,WDHD1,2,codingPotential; domain_identified,0.108325,0.037630321823759694
+Mishra_FF2,NCK1-DT,NCK1-DT,1,IR,0.144775,0.03776328689887587
+Mishra_FF2,CIT,CIT,1,codingPotential,0.1809,0.037801200841223744
+Mishra_FF2,SAFB2,SAFB2,3,codingPotential; domain_identified; IR,0.34802500000000003,0.03890542139719207
+Mishra_FF2,VGLL4,VGLL4,2,codingPotential; domain_identified,0.190675,0.038970062137482185
+Mishra_FF2,RAD50,RAD50,3,codingPotential; domain_identified; PTC,0.11380000000000007,0.038970062137482185
+Mishra_FF2,SYNPO,SYNPO,1,codingPotential,0.329125,0.03940139607281836
+Mishra_FF2,MCTP1,MCTP1,2,codingPotential; domain_identified,0.126375,0.039873766353062313
+Mishra_FF2,CNKSR2,CNKSR2,2,codingPotential; domain_identified,0.24165,0.040021969248723505
+Mishra_FF2,HIPK3,HIPK3,2,codingPotential; domain_identified,0.11785000000000001,0.040466403219298785
+Mishra_FF2,TBC1D2,TBC1D2,2,codingPotential; domain_identified,0.15064999999999998,0.04055360881807957
+Mishra_FF2,TPD52L1,TPD52L1,2,codingPotential; domain_identified,0.5413250000000001,0.040576494122330484
+Mishra_FF2,DDX51,DDX51,3,codingPotential; domain_identified; IR,0.17417500000000002,0.04074865304515343
+Mishra_FF2,ELAC2,ELAC2,2,codingPotential; domain_identified,0.15234999999999999,0.040918882885630115
+Mishra_FF2,KANK1,KANK1,1,IR,0.10095000000000001,0.04202110425867306
+Mishra_FF2,MORN5,MORN5,2,codingPotential; domain_identified,0.311875,0.04299189202933807
+Mishra_FF2,GOLGA4,GOLGA4,3,codingPotential; IR; PTC,0.27765000000000006,0.04299189202933807
+Mishra_FF2,TCIRG1,TCIRG1,2,codingPotential; IR,0.251525,0.04299189202933807
+Mishra_FF2,SIPA1L2,SIPA1L2,2,codingPotential; domain_identified,0.12135,0.04299189202933807
+Mishra_FF2,NHLRC3,NHLRC3,2,codingPotential; domain_identified,0.11575000000000002,0.044525830823348655
+Mishra_FF2,MROH6,MROH6,2,codingPotential; IR,0.15227500000000002,0.045138059638218694
+Mishra_FF2,CADM2,CADM2,3,codingPotential; domain_identified; signal_peptide_identified,0.159075,0.045387670306344045
+Mishra_FF2,CNTNAP2,CNTNAP2,1,codingPotential,0.11857499999999999,0.04539416988434679
+Mishra_FF2,FMR1,FMR1,2,codingPotential; domain_identified,0.12360000000000002,0.045466091204124454
+Mishra_FF2,ZFYVE16,ZFYVE16,3,codingPotential; domain_identified; IR,0.17395,0.04551657980176401
+Mishra_FF2,STX4,STX4,2,codingPotential; IR,0.10544999999999999,0.04583018171228364
+Mishra_FF2,POGLUT3,POGLUT3,3,codingPotential; domain_identified; signal_peptide_identified,0.13242500000000001,0.046416833215628776
+Mishra_FF2,ENSG00000254531.4,NA,2,codingPotential; IR,0.35687499999999994,0.04652579377492024
+Mishra_FF2,POLR1B,POLR1B,3,codingPotential; domain_identified; IR,0.2669,0.04663473827142862
+Mishra_FF2,ADNP,ADNP,2,codingPotential; domain_identified,0.19047499999999998,0.04669121739519816
+Mishra_FF2,ADAMTS12,ADAMTS12,3,codingPotential; domain_identified; signal_peptide_identified,0.16454999999999997,0.048991770880422295
+Mishra_FF2,ANKRD6,ANKRD6,1,codingPotential,0.107075,0.04915272381259502
+Mishra_FF2,BIRC5,BIRC5,2,codingPotential; domain_identified,0.10330000000000006,0.04915272381259502
+Mishra_FF2,PLEKHA8P1,PLEKHA8P1,1,codingPotential,0.14320000000000002,0.04936196008462721
+Mishra_FF2,ENSG00000290938.2,NA,1,codingPotential,0.31245,0.04953028828063463
+Mishra_FF2,CEP57,CEP57,2,codingPotential; domain_identified,0.304925,0.04996859463162516
+Mishra_FF2,KLHL2,KLHL2,2,codingPotential; domain_identified,0.26615,0.04996859463162516
+Mishra_FF2,ODF2,ODF2,2,codingPotential; PTC,0.13834999999999997,0.04996859463162516
+Mishra_FF2,EDEM3,EDEM3,3,codingPotential; domain_identified; signal_peptide_identified,0.20192499999999997,0.049982411357564684

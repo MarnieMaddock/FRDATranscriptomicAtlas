@@ -5,6 +5,6 @@ account: marniem
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 15784410
-bundleId: 11050602
+bundleId: 11050935
 url: https://marniem.shinyapps.io/FRDATranscriptomicAtlas/
 version: 1
