@@ -49,6 +49,11 @@ genePlotsMainUI <- function(id) {
 genePlotsServer <- function(id, pkg = utils::packageName()) {
   moduleServer(id, function(input, output, session) {
 
+    # --- make pkg safe for both project + installed package modes ---
+    pkg <- tryCatch(pkg, error = function(e) "")
+    if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
+    pkg <- pkg[[1L]]
+
     # ----- Pretty labels matching file base names -----
     pretty_map  <- c(
       "Erwin"        = "Erwin (Lymphoblastoid Cells)",
@@ -65,19 +70,16 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       "Vilema"       = "Vilema-Enriquez (Fibroblasts)"
     )
     `%||%` <- function(a, b) if (is.null(a)) b else a
-
     pretty_label <- function(id) pretty_map[[id]] %||% id
 
-
-
-    # Locate and source the theme file
+    # Locate and source the theme file (works in both modes)
     if (!exists("theme_Marnie", inherits = TRUE)) {
       tp <- system.file("R", "utils_graphTheme.R", package = pkg, mustWork = FALSE)
       if (!nzchar(tp)) tp <- file.path("R", "utils_graphTheme.R")
       if (file.exists(tp)) source(tp)
     }
 
-    # ----- Locate TPM RDS files -----
+    # ----- Locate TPM RDS files (package OR project) -----
     tpm_dir <- system.file("extdata/tpm", package = pkg, mustWork = FALSE)
     if (!nzchar(tpm_dir)) tpm_dir <- file.path("inst", "extdata", "tpm")
 
@@ -107,10 +109,8 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
 
       updateCheckboxGroupInput(session, "gp_datasets",
                                choices  = choices_named,
-                               selected = pre_sel
-      )
+                               selected = pre_sel)
     })
-
 
     output$gp_datasets_note <- renderUI({
       req(input$gp_datasets)
@@ -118,7 +118,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       htmltools::HTML(sprintf("<small>Selected: <b>%s</b></small>", paste(labs, collapse = ", ")))
     })
 
-    # ----- Helper: list of file paths for selected datasets -----
+    # ----- Files → load → tidy → plot/table (unchanged below this line) -----
     file_paths <- reactive({
       req(input$gp_datasets)
       m <- manifest()
@@ -127,7 +127,6 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       stats::setNames(hits$path, hits$dataset)
     })
 
-    # ----- Load each dataset (wide), return named list -----
     tpms_wide_list <- reactive({
       fps <- file_paths()
       out <- lapply(names(fps), function(ds) {
@@ -141,29 +140,23 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       out
     })
 
-    # ----- Gene dropdown: union across selected datasets -----
     observeEvent(tpms_wide_list(), {
       wl <- tpms_wide_list()
       genes <- sort(unique(unlist(lapply(wl, function(x) x$gene_name))))
-      updateSelectizeInput(
-        session, "gp_gene",
-        choices  = genes,        # autocomplete list
-        selected = if ("FXN" %in% genes) "FXN" else genes[1],
-        server   = TRUE
-      )
+      updateSelectizeInput(session, "gp_gene",
+                           choices = genes,
+                           selected = if ("FXN" %in% genes) "FXN" else genes[1],
+                           server = TRUE)
     })
 
-    # ----- Long format for all selected datasets -----
     tpms_long_all <- reactive({
       wl <- tpms_wide_list()
       if (!length(wl)) return(dplyr::tibble())
       parts <- lapply(names(wl), function(ds) {
         x <- wl[[ds]]
         lng <- tidyr::pivot_longer(
-          x,
-          cols = -c(gene_id, gene_name),
-          names_to = "sample",
-          values_to = "TPM"
+          x, cols = -c(gene_id, gene_name),
+          names_to = "sample", values_to = "TPM"
         )
         lng$dataset <- ds
         lng
@@ -171,38 +164,25 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       dplyr::bind_rows(parts)
     })
 
-    # --- helper to strip dataset prefixes like "Maddock_LMN_" or "Lai_CNS_" ---
     base_of <- function(x) sub("_.*$", "", x)
-
     strip_dataset_prefix <- function(x, ds_id) {
-      # try full id first (e.g. "Maddock_LMN_"), then base token (e.g. "Maddock_")
       x2 <- sub(paste0("^", ds_id, "_"), "", x)
       if (identical(x2, x)) sub(paste0("^", base_of(ds_id), "_"), "", x) else x2
     }
 
-
-    # ----- Dataset-specific parsing for condition / replicate -----
     parse_conditions <- function(df_ds) {
       ds <- unique(df_ds$dataset)
-      # Extract replicate number (trailing _REP#)
       repnum <- suppressWarnings(as.integer(sub(".*_REP([0-9]+)$", "\\1", df_ds$sample)))
       repnum[is.na(repnum)] <- NA_integer_
-
       cond <- sub("_REP[0-9]+$", "", df_ds$sample)
       cond <- strip_dataset_prefix(cond, ds)
 
-
-      # dataset-specific ordering rules
       if (identical(ds, "Maddock")) {
-        celltype_order <- c("SN", "LMN", "NCC")
-        tmp <- tidyr::extract(
-          data = data.frame(condition = cond),
-          col = "condition",
-          into = c("fa_num", "ic", "ctype"),
-          regex = "^FA(\\d+)(ic)?(SN|LMN|NCC)$",
-          remove = FALSE
-        )
-        tmp$fa_num   <- as.integer(tmp$fa_num)
+        celltype_order <- c("SN","LMN","NCC")
+        tmp <- tidyr::extract(data.frame(condition = cond), "condition",
+                              into = c("fa_num","ic","ctype"),
+                              regex = "^FA(\\d+)(ic)?(SN|LMN|NCC)$", remove = FALSE)
+        tmp$fa_num <- as.integer(tmp$fa_num)
         tmp$ic_first <- ifelse(is.na(tmp$ic), 1L, 0L)
         tmp$ctype_ord <- match(tmp$ctype, celltype_order)
         levs <- tmp |>
@@ -211,91 +191,61 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
           unique()
         cond <- factor(cond, levels = levs)
       } else if (identical(ds, "Lai")) {
-        tissue_order <- c("iPSC", "CNS", "PNS")
-        tmp <- tidyr::extract(
-          data = data.frame(condition = cond),
-          col = "condition",
-          into = c("status","tissue"),
-          regex = "^(FRDA2|FRDA|IC)_(CNS|iPSC|PNS)$",
-          remove = FALSE
-        )
+        tissue_order <- c("iPSC","CNS","PNS")
+        tmp <- tidyr::extract(data.frame(condition = cond), "condition",
+                              into = c("status","tissue"),
+                              regex = "^(FRDA2|FRDA|IC)_(CNS|iPSC|PNS)$", remove = FALSE)
         tmp$tissue_ord <- match(tmp$tissue, tissue_order)
         tmp$status_rank <- dplyr::case_when(
-          tmp$status == "IC"    ~ 1L,
-          tmp$status == "FRDA"  ~ 2L,
-          tmp$status == "FRDA2" ~ 3L,
-          TRUE                  ~ 9L
-        )
+          tmp$status == "IC" ~ 1L, tmp$status == "FRDA" ~ 2L, tmp$status == "FRDA2" ~ 3L, TRUE ~ 9L)
         levs <- tmp |>
           dplyr::arrange(tissue_ord, status_rank) |>
           dplyr::pull(condition) |>
           unique()
         cond <- factor(cond, levels = levs)
       } else if (identical(ds, "Mishra")) {
-        tmp <- tidyr::extract(
-          data = data.frame(condition = cond),
-          col = "condition",
-          into = c("status","code"),
-          regex = "^(FRDA|IC)_([A-Za-z0-9]+)$",
-          remove = FALSE
-        )
+        tmp <- tidyr::extract(data.frame(condition = cond), "condition",
+                              into = c("status","code"),
+                              regex = "^(FRDA|IC)_([A-Za-z0-9]+)$", remove = FALSE)
         unify_group <- function(code) if (code == "E35") "FF1" else code
         tmp$group <- vapply(tmp$code, unify_group, "", USE.NAMES = FALSE)
-
         groups <- unique(tmp$group)
-        num_g  <- groups[grepl("^\\d+$", groups)]
-        non_g  <- setdiff(groups, num_g)
-        num_g  <- num_g[order(as.integer(num_g))]
-        preferred_non <- c("FF1", "FF2")
-        non_pref      <- setdiff(non_g, preferred_non)
-        non_g         <- c(intersect(preferred_non, non_g), sort(non_pref))
+        num_g <- groups[grepl("^\\d+$", groups)]
+        non_g <- setdiff(groups, num_g)
+        num_g <- num_g[order(as.integer(num_g))]
+        preferred_non <- c("FF1","FF2")
+        non_pref <- setdiff(non_g, preferred_non)
+        non_g <- c(intersect(preferred_non, non_g), sort(non_pref))
         ordered_groups <- c(num_g, non_g)
-
-        ic_code_for   <- function(g) if (g == "FF1") "E35" else g
+        ic_code_for <- function(g) if (g == "FF1") "E35" else g
         frda_code_for <- function(g) g
         levs <- unlist(lapply(ordered_groups, function(g) {
-          cand <- c(paste0("IC_",   ic_code_for(g)),
-                    paste0("FRDA_", frda_code_for(g)))
-          cand
+          c(paste0("IC_", ic_code_for(g)), paste0("FRDA_", frda_code_for(g)))
         }))
-        # keep only those that actually exist
         levs <- levs[levs %in% cond]
         cond <- factor(cond, levels = levs)
       } else {
-        # default alphabetical
         cond <- factor(cond, levels = sort(unique(cond)))
       }
 
-      dplyr::mutate(
-        df_ds,
-        condition = cond,
-        rep = repnum
-      )
+      dplyr::mutate(df_ds, condition = cond, rep = repnum)
     }
 
     tpms_long_parsed <- reactive({
       all <- tpms_long_all()
       if (!nrow(all)) return(all)
-      # split by dataset and parse each chunk, then bind
-      chunks <- split(all, all$dataset)
-      parsed <- lapply(chunks, parse_conditions)
+      parsed <- lapply(split(all, all$dataset), parse_conditions)
       dplyr::bind_rows(parsed)
     })
 
-    # ----- Filter by gene and (optionally) dataset selection -----
     dat_points <- reactive({
       req(input$gp_datasets, input$gp_gene)
       gene_input <- trimws(input$gp_gene)
-
       df <- tpms_long_parsed() |>
-        dplyr::filter(dataset %in% input$gp_datasets,
-                      gene_name == gene_input)
-
+        dplyr::filter(dataset %in% input$gp_datasets, gene_name == gene_input)
       if (nrow(df) == 0) {
-        shiny::showNotification(
-          sprintf("⚠️ Gene '%s' was not found in the selected datasets.", gene_input),
-          type = "error", duration = 5
-        )
+        shiny::showNotification(sprintf("⚠️ Gene '%s' was not found in the selected datasets.", gene_input),
+                                type = "error", duration = 5)
       }
       df
     })
@@ -303,51 +253,29 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
     dat_summary <- reactive({
       dat_points() |>
         dplyr::group_by(dataset, condition) |>
-        dplyr::summarise(
-          n    = dplyr::n(),
-          mean = mean(TPM, na.rm = TRUE),
-          sd   = sd(TPM,   na.rm = TRUE),
-          .groups = "drop"
-        )
+        dplyr::summarise(n = dplyr::n(), mean = mean(TPM, na.rm = TRUE),
+                         sd = sd(TPM, na.rm = TRUE), .groups = "drop")
     })
 
-    # ----- Plot -----
     build_plot <- function(points, summary, logy = FALSE, title_txt = "") {
-      # order facets to match checkbox order (nice UX)
       points$dataset  <- factor(points$dataset,  levels = input$gp_datasets)
       summary$dataset <- factor(summary$dataset, levels = input$gp_datasets)
-
-      lab_ds <- labeller(
-        dataset = as_labeller(
-          function(v) vapply(v, pretty_label, "", USE.NAMES = FALSE)
-        )
-      )
-
+      lab_ds <- ggplot2::labeller(dataset = ggplot2::as_labeller(
+        function(v) vapply(v, pretty_label, "", USE.NAMES = FALSE)))
       p <- ggplot2::ggplot() +
-        ggplot2::geom_crossbar(
-          data = summary,
-          ggplot2::aes(x = condition, y = mean, ymin = mean, ymax = mean),
-          width = 0.6, linewidth = 1
-        ) +
-        ggplot2::geom_errorbar(
-          data = summary,
-          ggplot2::aes(x = condition, ymin = mean - sd, ymax = mean + sd),
-          width = 0.3, linewidth = 0.8
-        ) +
-        ggplot2::geom_point(
-          data = points,
-          ggplot2::aes(x = condition, y = TPM),
-          position = ggplot2::position_jitter(width = 0.15, height = 0, seed = 1),
-          size = 3.5, color = "#005249", na.rm = TRUE, show.legend = FALSE
-        ) +
+        ggplot2::geom_crossbar(data = summary,
+                               ggplot2::aes(x = condition, y = mean, ymin = mean, ymax = mean),
+                               width = 0.6, linewidth = 1) +
+        ggplot2::geom_errorbar(data = summary,
+                               ggplot2::aes(x = condition, ymin = mean - sd, ymax = mean + sd),
+                               width = 0.3, linewidth = 0.8) +
+        ggplot2::geom_point(data = points,
+                            ggplot2::aes(x = condition, y = TPM),
+                            position = ggplot2::position_jitter(width = 0.15, height = 0, seed = 1),
+                            size = 3.5, color = "#005249", na.rm = TRUE, show.legend = FALSE) +
         ggplot2::labs(title = title_txt, x = " ", y = "Transcripts Per Million") +
         theme_Marnie +
-        ggplot2::facet_wrap(
-          vars(dataset),
-          scales   = "free_x",
-          nrow     = 1,            # <- single strip row
-          labeller = lab_ds        # <- stable, named labeller
-        )
+        ggplot2::facet_wrap(vars(dataset), scales = "free_x", nrow = 1, labeller = lab_ds)
       if (isTRUE(logy)) p <- p + ggplot2::scale_y_continuous(trans = "log10")
       p
     }
@@ -355,27 +283,20 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
     output$gp_plot <- renderPlot({
       pts <- dat_points(); sms <- dat_summary()
       validate(need(nrow(pts) > 0, "No TPM values for this selection."))
-      # Build a compact title for multiple datasets
-      ds_lab <- if (length(input$gp_datasets) == 1) {
-        pretty_label(input$gp_datasets)
-      } else {
-        paste0(length(input$gp_datasets), " datasets")
-      }
+      ds_lab <- if (length(input$gp_datasets) == 1) pretty_label(input$gp_datasets)
+      else paste0(length(input$gp_datasets), " datasets")
       build_plot(pts, sms, input$gp_logy, paste(input$gp_gene, "—", ds_lab))
     })
 
-    # ----- Table -----
     output$gp_table <- DT::renderDataTable({
       DT::datatable(
         dat_points() |>
           dplyr::arrange(dataset, condition, rep) |>
           dplyr::select(dataset, condition, rep, gene_id, gene_name, TPM),
-        rownames = FALSE,
-        options = list(pageLength = 5, scrollX = TRUE)
+        rownames = FALSE, options = list(pageLength = 5, scrollX = TRUE)
       )
     }, server = TRUE)
 
-    # ----- Downloads -----
     safe_stem <- function(ds_vec) {
       if (!length(ds_vec)) return("none")
       if (length(ds_vec) <= 3) paste(ds_vec, collapse = "+") else
@@ -387,31 +308,25 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
                                     safe_stem(input$gp_datasets), input$gp_gene),
       content  = function(file) readr::write_csv(dat_points(), file)
     )
-
     output$dl_summary <- downloadHandler(
       filename = function() sprintf("TPM_%s_%s_summary.csv",
                                     safe_stem(input$gp_datasets), input$gp_gene),
       content  = function(file) readr::write_csv(dat_summary(), file)
     )
-
     output$dl_plot <- downloadHandler(
       filename = function() sprintf("TPM_%s_%s.svg",
                                     safe_stem(input$gp_datasets), input$gp_gene),
       content = function(file) {
-        pts <- isolate(dat_points())
-        sms <- isolate(dat_summary())
+        pts <- isolate(dat_points()); sms <- isolate(dat_summary())
         validate(need(nrow(pts) > 0, "No data available for this gene."))
-
-        ds_lab <- isolate(if (length(input$gp_datasets) == 1) {
+        ds_lab <- isolate(if (length(input$gp_datasets) == 1)
           pretty_label(input$gp_datasets)
-        } else paste0(length(input$gp_datasets), " datasets"))
-
+          else paste0(length(input$gp_datasets), " datasets"))
         grDevices::svg(file, width = 11, height = 7, onefile = TRUE)
         print(build_plot(pts, sms, isolate(input$gp_logy),
                          paste(isolate(input$gp_gene), "—", ds_lab)))
         grDevices::dev.off()
       }
     )
-
   })
 }

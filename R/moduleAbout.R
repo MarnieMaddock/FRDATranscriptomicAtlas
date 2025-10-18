@@ -66,8 +66,7 @@ aboutUI <- function(id,
       h3("Authorship and Acknowledgements"),
       p(HTML(
         paste0(
-          "<b>Developed by:</b> Marnie Maddock, XXX, XXXX, XXXXX University of Wollongong, Australia<br/>",
-          "<b>Supervision:</b> Prof. Mirella Dottori<br/>",
+          "<b>Developed by:</b> Marnie Maddock, Prof. Mirella Dottori, XXXX, XXXXX University of Wollongong, Australia<br/>",
           "<b>Funding:</b> Friedreich’s Ataxia Research Alliance (FARA)",
           "<b>We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis.</b> "
         )

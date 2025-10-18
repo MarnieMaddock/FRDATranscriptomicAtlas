@@ -3,6 +3,16 @@
 # =========================
 # Switchplot help + rationale + OneDrive link + example image
 # =========================
+
+get_switchplot_example_path <- function() {
+  if (file.exists("inst/www/switchplot_example.svg")) {
+    "inst/www/switchplot_example.svg"             # shinyapps.io / project
+  } else {
+    system.file("www", "switchplot_example.svg",
+                package = "FRDATranscriptomicAtlas")  # package install
+  }
+}
+
 switchplotsHelpUI <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -135,10 +145,12 @@ switchplotsHelpUI <- function(id) {
                          div(
                            tags$figure(
                              tags$img(
-                               src = "pkgwww/switchplot_example.svg",  # note the 'pkgwww/' prefix
+                               src = get_switch_dir(),
                                class = "sp-img",
                                alt   = "Example switchplot"
-                             ),
+                             )
+                           )
+                         ),
 
 
                              tags$figcaption(
@@ -155,6 +167,5 @@ switchplotsHelpUI <- function(id) {
                            )
                          )
                      )
-    )
-  )
+
 }

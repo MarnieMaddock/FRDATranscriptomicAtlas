@@ -65,17 +65,33 @@ degTablesMainUI <- function(id) {
   )
 }
 
-#' Server logic for DEG-by-dataset (simplified & fast)
+#' Server logic for DEG-by-dataset (robust for package + project)
 #' @noRd
 degTablesServer <- function(id, pkg = utils::packageName()) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # ---------- one-time loads ----------
-    deg_dir_genes       <- system.file("extdata/deg/genes",       package = pkg, mustWork = FALSE)
-    deg_dir_transcripts <- system.file("extdata/deg/transcripts", package = pkg, mustWork = FALSE)
+    # --- make pkg safe (length-1 string) ---------------------------------
+    pkg <- tryCatch(pkg, error = function(e) "")
+    if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
+    pkg <- pkg[[1L]]
 
-    tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
+    # --- resolve paths with package-or-project fallback -------------------
+    resolve_dir <- function(subpath) {
+      d <- system.file(subpath, package = pkg, mustWork = FALSE)
+      if (!nzchar(d)) d <- file.path("inst", subpath)
+      d
+    }
+    resolve_file <- function(subpath, fname) {
+      d <- resolve_dir(subpath)
+      file.path(d, fname)
+    }
+
+    # one-time loads
+    deg_dir_genes       <- resolve_dir(file.path("extdata", "deg", "genes"))
+    deg_dir_transcripts <- resolve_dir(file.path("extdata", "deg", "transcripts"))
+
+    tx2_path <- resolve_file(file.path("extdata", "maps"), "tx2gene.tsv")
     tx2 <- if (nzchar(tx2_path) && file.exists(tx2_path)) {
       readr::read_tsv(tx2_path, col_types = "ccc") |> dplyr::distinct()
     } else NULL
@@ -91,19 +107,21 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
     # ---------- manifest of DEG files ----------
     manifest <- reactive({
       files <- c(
-        if (nzchar(deg_dir_genes))       list.files(deg_dir_genes,       full.names = TRUE) else character(0),
-        if (nzchar(deg_dir_transcripts)) list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
+        if (nzchar(deg_dir_genes)       && dir.exists(deg_dir_genes))
+          list.files(deg_dir_genes,       full.names = TRUE) else character(0),
+        if (nzchar(deg_dir_transcripts) && dir.exists(deg_dir_transcripts))
+          list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
       )
-      if (!length(files)) return(dplyr::tibble())
+      if (!length(files)) return(tibble::tibble())
 
       rx <- "^.*/DESEQ2_res_(.+)_(0\\.[0-9]+)_all_(genes|transcripts)\\.rds$"
       tibble::tibble(path = files) |>
         tidyr::extract(path, into = c("dataset","p_str","level"), regex = rx, remove = FALSE) |>
-        dplyr::mutate(p = as.numeric(p_str))
+        dplyr::mutate(p = suppressWarnings(as.numeric(p_str)))
     })
 
     # ---------- dataset dropdown ----------
-
+    `%||%` <- function(a,b) if (is.null(a)) b else a
     pretty_map <- c(
       "Erwin"             = "Erwin (Lymphoblastoid Cells)",
       "Indelicato"        = "Indelicato (Skeletal Muscle)",
@@ -126,26 +144,19 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
       "Vilema"            = "Vilema-Enriquez (Fibroblasts)"
     )
 
-
     observe({
       m <- manifest()
       lvl <- input$feature_level %||% "genes"
       avail_ids <- sort(unique(m$dataset[m$level == lvl]))
-      # keep only ids we actually have files for
-      pm_sub <- pretty_map[avail_ids]                         # names = ids, values = labels
-      # Build a named vector: names = labels (shown), values = ids (returned)
+
+      pm_sub <- unname(pretty_map[avail_ids])
+      pm_sub[is.na(pm_sub)] <- avail_ids[is.na(pm_sub)]
       labelled_choices <- stats::setNames(avail_ids, pm_sub)
 
-      # Fallback for any ids that have no pretty name
-      missing_ids <- setdiff(avail_ids, names(pretty_map))
-      if (length(missing_ids)) {
-        add <- stats::setNames(missing_ids, missing_ids)
-        labelled_choices <- c(labelled_choices, add)
-      }
       updateSelectizeInput(session, "dataset",
-                           choices = labelled_choices,
+                           choices  = labelled_choices,
                            selected = if (length(avail_ids)) avail_ids[1] else NULL,
-                           server = TRUE
+                           server   = TRUE
       )
     })
 
@@ -207,7 +218,7 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
         if (identical(dir, "both")) x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
       }
 
-      # symbols
+      # symbols mapping
       if (identical(lvl, "genes")) {
         if (!is.null(gene_map) && "ensembl_gene_id" %in% names(x)) {
           x <- dplyr::left_join(x, gene_map, by = c("ensembl_gene_id" = "gene_id")) |>
@@ -224,7 +235,7 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
       x
     })
 
-    # Summary bar
+    # ---------- UI bits ----------
     pretty_label <- function(id) pretty_map[[id]] %||% id
 
     output$summary_bar <- renderUI({
@@ -237,7 +248,6 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
                 input$p_filter_mode, input$lfc_min, format(nrow(x), big.mark=",")))
     })
 
-    # Render big table (DT with server-side processing)
     output$deg_table <- DT::renderDataTable({
       req(dat())
       DT::datatable(
@@ -255,16 +265,10 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
       )
     }, server = TRUE)
 
-    # Downloads
     output$download_filtered <- downloadHandler(
       filename = function() sprintf("DEG_%s_%s_p%s_filtered.csv",
                                     input$feature_level, input$dataset, input$p_filter_mode),
-      content  = function(file) {
-        x <- dat()
-        readr::write_csv(x, file)
-      }
+      content  = function(file) readr::write_csv(dat(), file)
     )
-
   })
 }
-

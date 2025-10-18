@@ -62,6 +62,10 @@ tpmHeatmapServer <- function(
 ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    # ---- make pkg robust ----
+    pkg <- tryCatch(pkg, error = function(e) "")
+    if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
+    pkg <- pkg[[1L]]
 
     # ---------------- helpers ----------------
     # -------- Pretty map (internal default) --------
@@ -106,6 +110,24 @@ tpmHeatmapServer <- function(
 
     `%||%` <- function(a, b) if (is.null(a)) b else a
     base_of <- function(dataset_id) sub("(_.*)$", "", dataset_id)
+
+    .auto_downshift <- function(mat) {
+      nr <- nrow(mat); nc <- ncol(mat)
+      # thresholds you can tune
+      too_many_cells <- (nr * nc) > 1e6
+      too_many_rows  <- nr > 1500
+      too_many_cols  <- nc > 800
+
+      if (too_many_cells || too_many_rows) {
+        # turn off row clustering
+        if (isTRUE(input$cluster_rows)) updateCheckboxInput(session, "cluster_rows", value = FALSE)
+      }
+      if (too_many_cells || too_many_cols) {
+        # turn off column clustering
+        if (isTRUE(input$cluster_cols)) updateCheckboxInput(session, "cluster_cols", value = FALSE)
+      }
+    }
+
 
     # extdata path resolver (works for installed pkg or dev tree)
     extdata_path <- function(..., package = utils::packageName()) {
@@ -417,6 +439,7 @@ tpmHeatmapServer <- function(
     # ---------------- render plot ----------------
     output$heatmap_plot <- renderPlot({
       mat  <- unified_matrix()
+      .auto_downshift(mat)  # may toggle the cluster checkboxes
       dims <- plot_dims()
 
       ann_df <- {
@@ -494,6 +517,7 @@ tpmHeatmapServer <- function(
       )
 
       .last_ht(ht)
+      gc()
     }, res = 120)
 
     output$heatmap_ui <- renderUI({

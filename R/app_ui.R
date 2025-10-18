@@ -42,6 +42,14 @@ get_DTU_dir <- function() {
   }
 }
 
+get_switch_dir <- function() {
+  if (dir.exists("inst/www/switchplot_example.svg")) {
+    return("inst/www/switchplot_example.svg")  # shinyapps.io / local project
+  } else {
+    return(system.file("www", "switchplot_example.svg", package = "FRDATranscriptomicAtlas"))
+  }
+}
+
 app_ui <- function() {
 
   fluidPage(
@@ -92,6 +100,10 @@ app_ui <- function() {
         conditionalPanel(
           condition = "input.tabselected == 7 && input.DTU_tables == 7.1",
           dtuResultsSidebarUI("dtu")
+        ),
+        conditionalPanel(
+          condition = "input.tabselected == 7 && input.DTU_tables == 7.2",
+          dtuVennUI("dtuVenn")
         ),
 
 
@@ -163,7 +175,7 @@ app_ui <- function() {
                      ),
                      tabPanel("Compare Datasets",
                               value = 7.2,
-                              #degCompareUI("deg_compare")
+                              dtuVennMainUI("dtuVenn")
                      )
                    )
           ),

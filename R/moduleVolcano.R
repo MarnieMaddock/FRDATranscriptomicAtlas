@@ -99,24 +99,22 @@ volcanoMainUI <- function(id) {
 #' @param custom_loader optional function(dataset, level, pkg) -> data.frame
 #'        Return columns: gene, log2FC, padj (or pvalue). You may ignore padj if not used.
 #' @noRd
+# Volcano module (drop-in)
 volcanoServer <- function(
     id,
-    level = "genes",
-    pkg = utils::packageName(),
-    custom_loader = deseq_loader
+    level = "genes",                    # "genes" or "transcripts"
+    pkg   = utils::packageName()
 ) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    # helper: allow either string or reactive
+    `%||%` <- function(a, b) if (is.null(a)) b else a
     cur_level <- function() if (is.function(level)) level() else level
 
-    # ---- pretty helpers ----
-    .safe_num <- function(x) as.numeric(as.character(x))
+    .safe_num <- function(x) suppressWarnings(as.numeric(as.character(x)))
     .norm_filename <- function(x) gsub("[^A-Za-z0-9_\\-]+", "_", x)
 
-    # ---- tx2gene mapping helpers ----
+    # -------- tx2gene cache (optional) --------
     .tx2_cache <- NULL
-
     .get_tx2 <- function(pkg) {
       if (!is.null(.tx2_cache)) return(.tx2_cache)
       p <- system.file("extdata", "maps", "tx2gene.tsv", package = pkg, mustWork = FALSE)
@@ -133,124 +131,147 @@ volcanoServer <- function(
     }
 
     .add_display_gene <- function(df, lvl, pkg) {
+      # ensure 'gene' exists and is length nrow(df)
+      if (!"gene" %in% names(df)) {
+        if ("gene_id" %in% names(df)) df$gene <- df$gene_id
+        else if ("ensembl_gene_id" %in% names(df)) df$gene <- df$ensembl_gene_id
+        else if (!is.null(rownames(df))) df$gene <- rownames(df)
+        else df$gene <- NA_character_
+      }
+      if (length(df$gene) != nrow(df)) df$gene <- rep(NA_character_, nrow(df))
+
       m <- .get_tx2(pkg)
       if (is.null(m) || !all(c("transcript_id","gene_id","gene_name") %in% names(m))) {
         df$display_gene <- df$gene
         return(df)
       }
+
       ids <- sub("\\.\\d+$", "", df$gene)
-      if (identical(lvl, "transcripts")) {
-        sym <- m$gene_name[ match(ids, m$transcript_id) ]
+      sym <- if (identical(lvl, "transcripts")) {
+        m$gene_name[ match(ids, m$transcript_id) ]
       } else {
-        sym <- m$gene_name[ match(ids, m$gene_id) ]
+        m$gene_name[ match(ids, m$gene_id) ]
       }
+      if (length(sym) != nrow(df)) sym <- rep(NA_character_, nrow(df))
       df$display_gene <- dplyr::coalesce(sym, df$gene)
       df
     }
 
-
-    # Prefer a custom loader if you pass one; else read from inst/extdata/deg/<level>/
+    # -------- robust loader (data frame files) --------
     load_deg <- function(dataset, level, pkg) {
-      if (is.function(custom_loader)) {
-        out <- custom_loader(dataset, level, pkg)
-      } else {
-        f <- system.file("extdata", "deg", level, paste0(dataset, ".rds"), package = pkg)
-        if (!nzchar(f) || !file.exists(f)) {
-          stop("DEG file not found for dataset '", dataset, "' at: ", f)
+      level <- match.arg(level, c("genes","transcripts"))
+
+      subdir   <- file.path("extdata", "deg", level)
+      base_pkg <- system.file(subdir, package = pkg, mustWork = FALSE)
+      base_dev <- file.path("inst", subdir)
+      bases <- c(base_pkg, base_dev)
+      bases <- bases[nzchar(bases) & dir.exists(bases)]
+      if (!length(bases)) {
+        stop("Data folder not found. Checked:\n  - ", base_pkg, "\n  - ", base_dev)
+      }
+
+      # 1) exact pattern with 0.05
+      pat_exact <- paste0("^DESEQ2_res_", dataset, "_0\\.05_all_", level, "\\.rds$")
+      # 2) any FDR (e.g. 0.10)
+      pat_loose <- paste0("^DESEQ2_res_", dataset, "_0\\.[0-9]+_all_", level, "\\.rds$")
+      # 3) simple <dataset>.rds
+      simple    <- paste0(dataset, ".rds")
+
+      find_one <- function(b) {
+        hits <- list.files(b, pattern = pat_exact, full.names = TRUE)
+        if (!length(hits)) hits <- list.files(b, pattern = pat_loose, full.names = TRUE)
+        if (!length(hits)) {
+          cand <- file.path(b, simple)
+          hits <- cand[file.exists(cand)]
         }
-        out <- readRDS(f)
+        hits[1]
+      }
+      f <- NULL
+      for (b in bases) { f <- find_one(b); if (length(f) && nzchar(f)) break }
+
+      if (is.null(f) || !nzchar(f) || !file.exists(f)) {
+        stop(
+          "DEG file not found for dataset '", dataset, "'. Looked in:\n  - ",
+          paste(bases, collapse = "\n  - "),
+          "\nExpected one of:\n  • DESEQ2_res_", dataset, "_0.05_all_", level, ".rds\n",
+          "  • DESEQ2_res_", dataset, "_0.xx_all_", level, ".rds\n",
+          "  • ", dataset, ".rds"
+        )
       }
 
-      # allow level as string or reactive
-      .cur_level <- function() if (is.function(level)) level() else level
+      x <- readRDS(f); if (!is.data.frame(x)) x <- as.data.frame(x)
+      nm <- names(x)
 
-
-      # ---- Standardise column names here if needed ----
-      # EXPECTED: gene (symbol), log2FC, padj or pvalue
-      # Try to coerce if common variants exist:
-      nm <- names(out)
+      # --- standardize columns ---
       if (!"gene" %in% nm) {
-        if ("symbol" %in% nm) out <- dplyr::rename(out, gene = symbol)
-        else if ("Gene" %in% nm) out <- dplyr::rename(out, gene = Gene)
-      }
-      if (!"log2FC" %in% nm) {
-        if ("log2FoldChange" %in% nm) out <- dplyr::rename(out, log2FC = log2FoldChange)
-      }
-      if (!"padj" %in% names(out) && !"pvalue" %in% names(out)) {
-        stop("Need either 'padj' or 'pvalue' column in DEG table for dataset ", dataset)
+        if ("symbol" %in% nm)                x <- dplyr::rename(x, gene = symbol)
+        else if ("Gene" %in% nm)             x <- dplyr::rename(x, gene = Gene)
+        else if ("external_gene_name" %in% nm) x <- dplyr::rename(x, gene = external_gene_name)
+        else if ("ensembl_gene_id" %in% nm)  x <- dplyr::rename(x, gene = ensembl_gene_id)
+        else if ("gene_id" %in% nm)          x <- dplyr::rename(x, gene = gene_id)
+        else if (!is.null(rownames(x)))      x$gene <- rownames(x)
+        else                                  x$gene <- NA_character_
       }
 
-      out
+      if (!"log2FC" %in% nm) {
+        if ("log2FoldChange" %in% nm) x <- dplyr::rename(x, log2FC = log2FoldChange)
+        else if ("beta" %in% nm)       x <- dplyr::rename(x, log2FC = beta)
+      }
+
+      if (!("padj" %in% names(x) || "pvalue" %in% names(x))) {
+        stop("Need 'padj' or 'pvalue' column in file: ", basename(f))
+      }
+      x
     }
 
-    # Cache/load per dataset
-    deg_tbl <- shiny::eventReactive(
-      input$update_plot,
-      {
-        req(input$dataset)
-        df <- load_deg(input$dataset, cur_level(), pkg)
+    # -------- main reactive table --------
+    deg_tbl <- shiny::eventReactive(input$update_plot, {
+      req(input$dataset)
+      df <- load_deg(input$dataset, cur_level(), pkg)
 
-        # Ensure numeric
-        if ("padj" %in% names(df)) df$padj <- .safe_num(df$padj)
-        if ("pvalue" %in% names(df)) df$pvalue <- .safe_num(df$pvalue)
-        df$log2FC <- .safe_num(df$log2FC)
+      # numeric & choose p column
+      if ("padj" %in% names(df)) {
+        df$P <- .safe_num(df$padj)
+      } else {
+        df$P <- .safe_num(df$pvalue)
+      }
+      df$log2FC <- .safe_num(df$log2FC)
 
-        # Pick p column
-        validate(need("padj" %in% names(df), "padj column is required for this plot."))
-        df$P <- df$padj
-        pcol <- "padj"
+      # derived values
+      df$negLog10P <- -log10(pmax(df$P, .Machine$double.eps))
+      df$negLog10P <- pmin(df$negLog10P, 50)  # cap at 50 (UI note)
 
-        # always use padj (required)
-        df$P <- df$padj
-        df$negLog10P <- -log10(pmax(df$P, .Machine$double.eps))
-        if (isTRUE(input$clip_extremes)) df$negLog10P <- pmin(df$negLog10P, 50)
+      df$row_id <- seq_len(nrow(df))
 
-        df$row_id <- seq_len(nrow(df))
+      # ensure display gene (symbol if available)
+      df <- .add_display_gene(df, cur_level(), pkg)
 
-        # map Ensembl → symbol for hover/labels  👈 ADD THIS
-        df <- .add_display_gene(df, cur_level(), pkg)
+      # status
+      lfc_th  <- input$lfc_thresh %||% 1
+      padj_th <- input$padj_thresh %||% 0.05
+      df$status <- dplyr::case_when(
+        df$P <= padj_th & df$log2FC >=  lfc_th ~ "Up",
+        df$P <= padj_th & df$log2FC <= -lfc_th ~ "Down",
+        TRUE ~ "NS"
+      )
+      df$status <- factor(df$status, levels = c("Down","NS","Up"))
 
+      # highlights (by symbol/display)
+      hi <- trimws(unlist(strsplit(input$highlight_genes %||% "", ",")))
+      hi <- hi[nzchar(hi)]
+      df$highlight <- if (length(hi)) tolower(df$display_gene) %in% tolower(hi) else FALSE
 
-        # status factor
-        lfc_th <- input$lfc_thresh %||% 1
-        padj_th <- input$padj_thresh %||% 0.05
-        df$status <- dplyr::case_when(
-          df$P <= padj_th & df$log2FC >=  lfc_th ~ "Up",
-          df$P <= padj_th & df$log2FC <= -lfc_th ~ "Down",
-          TRUE ~ "NS"
-        )
-        df$status <- factor(df$status, levels = c("Down","NS","Up"))
+      df$.pcol <- if ("padj" %in% names(df)) "padj" else "pvalue"
+      df
+    }, ignoreInit = FALSE)
 
-        # highlight vector (match against symbols)
-        hi <- trimws(unlist(strsplit(input$highlight_genes %||% "", ",")))
-        hi <- hi[nzchar(hi)]
-
-        # add display symbols first
-        df <- .add_display_gene(df, cur_level(), pkg)
-
-        if (length(hi)) {
-          df$highlight <- tolower(df$display_gene) %in% tolower(hi)
-        } else {
-          df$highlight <- FALSE
-        }
-
-
-
-        df$.pcol <- pcol
-        df
-      },
-      ignoreInit = FALSE
-    )
-
-    # Text summary
+    # -------- summary text --------
     output$summary_text <- shiny::renderText({
-      df <- deg_tbl()
-      req(nrow(df))
-      padj_th <- input$padj_thresh
-      lfc_th  <- input$lfc_thresh
-      ns_n  <- sum(df$status == "NS", na.rm = TRUE)
-      up_n  <- sum(df$status == "Up", na.rm = TRUE)
-      dn_n  <- sum(df$status == "Down", na.rm = TRUE)
+      df <- deg_tbl(); req(nrow(df))
+      padj_th <- input$padj_thresh; lfc_th <- input$lfc_thresh
+      ns_n <- sum(df$status == "NS", na.rm = TRUE)
+      up_n <- sum(df$status == "Up", na.rm = TRUE)
+      dn_n <- sum(df$status == "Down", na.rm = TRUE)
       paste0(
         "n = ", nrow(df), " total; Up = ", up_n, ", Down = ", dn_n,
         ", NS = ", ns_n, "  |  thresholds: |log2FC| ≥ ", lfc_th,
@@ -258,16 +279,16 @@ volcanoServer <- function(
       )
     })
 
-    # Build ggplot volcano
-    make_gg <- function(df, show_ns = TRUE, label_sig = TRUE, label_topn = 20) {
+    # -------- gg builder (used for both plotly and downloads) --------
+    make_gg <- function(df, show_ns = TRUE) {
       dplot <- if (isTRUE(show_ns)) df else dplyr::filter(df, status != "NS")
-      dplot <- dplyr::filter(dplot, !is.na(log2FC), !is.na(negLog10P))  # drop NA points
+      dplot <- dplyr::filter(dplot, is.finite(log2FC), is.finite(negLog10P))
 
       col_map <- c("Down" = "#1f77b4", "NS" = "grey80", "Up" = "#d62728")
 
       p <- ggplot2::ggplot(
         dplot,
-        ggplot2::aes(x = log2FC, y = negLog10P, color = status, key = row_id)  # << key!
+        ggplot2::aes(x = log2FC, y = negLog10P, color = status, key = row_id)
       ) +
         ggplot2::geom_point(alpha = 0.8, size = 1.6, stroke = 0) +
         ggplot2::scale_color_manual(values = col_map, drop = FALSE) +
@@ -280,7 +301,7 @@ volcanoServer <- function(
       if (exists("theme_Marnie", inherits = TRUE)) p <- p + get("theme_Marnie", inherits = TRUE) else p <- p + ggplot2::theme_bw()
       p + ggplot2::theme(legend.position = "top", panel.grid.minor = ggplot2::element_blank())
 
-      # Highlight ring for user-specified genes
+      # ring-highlight requested genes
       if (any(dplot$highlight, na.rm = TRUE)) {
         p <- p + ggplot2::geom_point(
           data = dplot[dplot$highlight %in% TRUE, ],
@@ -288,66 +309,38 @@ volcanoServer <- function(
           inherit.aes = FALSE, size = 3.2, shape = 21, fill = NA, color = "black", stroke = 0.6
         )
       }
-
       p
     }
 
-
-    # --- PLOT ---
+    # -------- interactive plot --------
     output$volcano_plot <- plotly::renderPlotly({
       df <- deg_tbl(); req(nrow(df))
-      # force re-evaluation of these so the lines and colours refresh
-      lfc_th <- input$lfc_thresh
-      padj_th <- input$padj_thresh
-
-      # one clean hover field (no duplicates)
       df$hover_txt <- paste0(
         "<b>", df$display_gene, "</b>",
         "<br>log2FC: ", sprintf("%.3f", df$log2FC),
         "<br>-log10(p): ", sprintf("%.3f", df$negLog10P),
-        "<br>FDR (padj): ", ifelse(is.na(df$P), "NA", signif(df$P, 3)),
+        "<br>", toupper(df$.pcol[1]), ": ", ifelse(is.na(df$P), "NA", signif(df$P, 3)),
         "<br>Status: ", df$status
       )
-
-      gp <- make_gg(
-        df,
-        show_ns   = isTRUE(input$show_ns),
-        label_sig = FALSE,                        # no ggrepel in interactive plotly
-        label_topn = 0
-      ) + ggplot2::aes(text = hover_txt)     # attach custom hover
-
+      gp <- make_gg(df, show_ns = isTRUE(input$show_ns)) + ggplot2::aes(text = hover_txt)
       plt <- plotly::ggplotly(gp, tooltip = "text", dynamicTicks = TRUE)
-      plt$x$source <- "volc"                      # plain, non-namespaced id
+      plt$x$source <- "volc"
       plt <- plotly::config(plt, modeBarButtonsToAdd = c("select2d", "lasso2d"))
-      plt <- plotly::event_register(plt, "plotly_selected")
-      plt
+      plotly::event_register(plt, "plotly_selected")
     })
 
-
-    # --- SELECTED POINTS TABLE ---
+    # -------- selection table --------
     output$selected_table <- DT::renderDT({
       df <- deg_tbl(); req(nrow(df))
-
-      # Be tolerant while the plot initializes
-      ev <- tryCatch(plotly::event_data("plotly_selected", source = "volc"),
-                     error = function(e) NULL)
-
+      ev <- tryCatch(plotly::event_data("plotly_selected", source = "volc"), error = function(e) NULL)
       if (is.null(ev) || !nrow(ev) || is.null(ev$key)) {
         sel <- df[0, ]
       } else {
-        keys <- unique(ev$key)        # character or numeric
-        # keys come from plotted data; row_id was assigned in df
-        sel <- df[df$row_id %in% as.integer(keys), , drop = FALSE]
+        sel <- df[df$row_id %in% as.integer(unique(ev$key)), , drop = FALSE]
       }
-
       DT::datatable(
         sel |>
-          dplyr::transmute(
-            gene = display_gene,
-            log2FC,
-            padj = P,
-            status
-          ) |>
+          dplyr::transmute(gene = display_gene, log2FC, padj = P, status) |>
           dplyr::arrange(padj, dplyr::desc(abs(log2FC))),
         rownames = FALSE,
         options = list(pageLength = 10, scrollX = TRUE, dom = "tip"),
@@ -355,54 +348,31 @@ volcanoServer <- function(
       )
     })
 
-
-
-
-
-    # Downloads ---------------------------------------------------------------
-
-    # Filenames
+    # -------- downloads --------
     make_base_name <- function(suffix) {
       ds <- input$dataset %||% "dataset"
-      paste0(
-        .norm_filename(ds), "_volcano_F", input$lfc_thresh,
-        "_", (deg_tbl()$.pcol[1]), input$padj_thresh, "_", suffix
-      )
+      paste0(.norm_filename(ds), "_volcano_F", input$lfc_thresh,
+             "_", (deg_tbl()$.pcol[1]), input$padj_thresh, "_", suffix)
     }
 
-    # SVG
     output$dl_plot_svg <- shiny::downloadHandler(
       filename = function() paste0(make_base_name("plot"), ".svg"),
       content = function(file) {
         df <- deg_tbl()
-        gp <- make_gg(
-          df,
-          show_ns   = isTRUE(input$show_ns),
-          label_sig = isTRUE(input$label_sig),
-          label_topn = input$label_topn %||% 20
-        )
+        gp <- make_gg(df, show_ns = isTRUE(input$show_ns))
         svglite::svglite(file, width = 8, height = 6)
         on.exit(grDevices::dev.off(), add = TRUE)
         print(gp)
       }
     )
 
-    # PNG
     output$dl_plot_png <- shiny::downloadHandler(
       filename = function() paste0(make_base_name("plot"), ".png"),
       content = function(file) {
         df <- deg_tbl()
-        gp <- make_gg(
-          df,
-          show_ns   = isTRUE(input$show_ns),
-          label_sig = isTRUE(input$label_sig),
-          label_topn = input$label_topn %||% 20
-        )
-        ggplot2::ggsave(
-          filename = file, plot = gp, width = 8, height = 6, dpi = 300
-        )
+        gp <- make_gg(df, show_ns = isTRUE(input$show_ns))
+        ggplot2::ggsave(filename = file, plot = gp, width = 8, height = 6, dpi = 300)
       }
     )
-
   })
 }
