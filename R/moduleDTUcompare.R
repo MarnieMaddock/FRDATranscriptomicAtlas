@@ -122,7 +122,7 @@ dtuVennMainUI <- function(id) {
 }
 
 # SERVER
-dtuVennServer <- function(id, pkg = utils::packageName()) {
+dtuVennServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -133,20 +133,47 @@ dtuVennServer <- function(id, pkg = utils::packageName()) {
     requireNamespace("tidyr", quietly = TRUE)
     requireNamespace("DT", quietly = TRUE)
     requireNamespace("svglite", quietly = TRUE)
+    requireNamespace("memoise", quietly = TRUE)
 
     `%||%` <- function(x, y) if (is.null(x)) y else x
     norm_id <- function(x) sub("\\.\\d+$","", as.character(x))
 
     # ---- where the DTU CSVs live ----
-    # Adjust to your package layout if different:
-    # e.g. inst/extdata/dtu/Indelicato_significant_isoforms.csv
-    dtu_dir <- system.file("extdata/dtu", package = pkg, mustWork = FALSE)
-    if (!nzchar(dtu_dir)) dtu_dir <- file.path("inst", "extdata", "dtu")
+    # ---- Resolve DTU directory safely ----
+    # 1) if caller passed data_dir, prefer it
+    dtu_dir <- data_dir
+
+    # 2) else, try installed package paths (both cases)
+    if (is.null(dtu_dir) || !nzchar(dtu_dir) || !dir.exists(dtu_dir)) {
+      # Ensure pkg is a scalar character
+      pkg <- tryCatch(pkg[[1L]], error = function(e) pkg)
+      if (!is.character(pkg) || length(pkg) != 1L || !nzchar(pkg)) {
+        pkg <- "FRDATranscriptomicAtlas"
+      }
+      dtu_dir <- system.file("extdata/DTU", package = pkg, mustWork = FALSE)
+      if (!nzchar(dtu_dir) || !dir.exists(dtu_dir)) {
+        dtu_dir <- system.file("extdata/dtu", package = pkg, mustWork = FALSE)
+      }
+    }
+
+    # 3) else, try project-inst paths (both cases) – for non-installed app mode
+    if (!nzchar(dtu_dir) || !dir.exists(dtu_dir)) {
+      cand <- c(
+        file.path("inst", "extdata", "DTU"),
+        file.path("inst", "extdata", "dtu")
+      )
+      dtu_dir <- cand[file.exists(cand)][1]
+      if (is.na(dtu_dir)) dtu_dir <- ""
+    }
+
+    # Final guard — if still empty, avoid system.file errors downstream
+    if (!nzchar(dtu_dir) || !dir.exists(dtu_dir)) {
+      stop("DTU directory not found. Looked in extdata/DTU, extdata/dtu and inst equivalents.")
+    }
 
     read_cached_csv <- memoise::memoise(function(p) {
       readr::read_csv(p, show_col_types = FALSE)
     })
-
     # ---- pretty dataset labels (optional – reuse/extend yours) ----
     pretty_map <- c(
       "Erwin"             = "Erwin (Lymphoblastoid Cells)",
@@ -403,7 +430,9 @@ dtuVennServer <- function(id, pkg = utils::packageName()) {
 
       map <- dtu_id_symbol_map()
       sym <- map$symbol[match(Universe, map$id)]
-      sym[is.na(sym) | !nzchar(sym)] <- Universe
+      bad <- is.na(sym) | !nzchar(sym)
+      sym[bad] <- Universe[bad]   # <- match lengths (no warning)
+
 
       presence <- as.data.frame(M, stringsAsFactors = FALSE)
       presence[] <- lapply(presence, as.integer)
