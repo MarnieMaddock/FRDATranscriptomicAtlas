@@ -108,6 +108,10 @@ app_ui <- function() {
         conditionalPanel(
           condition = "input.tabselected == 7 && input.DTU_tables == 7.3",
           consequencesSidebarUI("dtu_func_cons")
+        ),
+        conditionalPanel(
+          condition = "input.tabselected == 9",
+          FXNcorrSidebarUI("fxn_corr")
         )
 
 
@@ -195,7 +199,10 @@ app_ui <- function() {
                 switchplotsHelpUI("switchplots_help")   # your full-width module,
               )
             )
-          )
+          ),
+          tabPanel("FXN Correlations", value = 9,
+                   FXNcorrMainUI("fxn_corr")
+                   )
 
         )
       ) #main panel close bracket

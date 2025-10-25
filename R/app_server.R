@@ -11,11 +11,14 @@ app_server <- function(input, output, session) {
   if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
   pkg <- pkg[[1L]]  # ensure length 1
 
-  pkg <- utils::packageName()
   pkg_www <- system.file("www", package = pkg, mustWork = FALSE)
   if (nzchar(pkg_www) && dir.exists(pkg_www)) {
     shiny::addResourcePath("pkgwww", pkg_www)  # /pkgwww → <package>/inst/www
   }
+
+  options(readr.show_progress = FALSE)
+  options(ggplot2.smooth_computation_message = FALSE)
+
 
   # ---- helper for image ----
   # get_switchplot_example_src <- function(pkg) {
@@ -58,6 +61,7 @@ app_server <- function(input, output, session) {
     )
   }
 
+
   get_DTU_dir <- function() {
     p <- file.path("inst", "extdata", "DTU")
     if (dir.exists(p)) return(p)
@@ -94,14 +98,6 @@ app_server <- function(input, output, session) {
     )
   }
 
-  # same resolver you used before
-  get_DTU_dir <- function() {
-    p <- file.path("inst", "extdata", "DTU")
-    if (dir.exists(p)) return(p)
-    # 'pkg' should be defined in your app_server (your package name)
-    system.file("extdata", "DTU", package = pkg)
-  }
-
   # --- ensure pretty_map exists (fallback is harmless) ---
   if (!exists("pretty_map", inherits = TRUE)) {
     pretty_map <- setNames(character(0), character(0))
@@ -121,7 +117,8 @@ app_server <- function(input, output, session) {
     labels     = NULL,
     pretty_map = pretty_map
   )
-  dtuVennServer("dtuVenn")
+  dtuVennServer("dtuVenn", pkg = pkg, data_dir = get_DTU_dir())
+
   tpmHeatmapServer("tpm_hm", pkg = pkg)
   consequencesServer(
     id         = "dtu_func_cons",
@@ -129,6 +126,7 @@ app_server <- function(input, output, session) {
     labels     = NULL,              # we auto-discover with discover_conseq_labels_flat()
     pretty_map = pretty_map         # optional: same pretty labels you use elsewhere
   )
+  FXNcorrServer("fxn_corr", pkg = pkg)
 
   # --- sidebar behavior for SwitchPlots full-width tab ------------------
   observe({
