@@ -16,8 +16,11 @@ app_server <- function(input, output, session) {
     shiny::addResourcePath("pkgwww", pkg_www)  # /pkgwww → <package>/inst/www
   }
 
-  options(readr.show_progress = FALSE)
-  options(ggplot2.smooth_computation_message = FALSE)
+  # Also serve the project copy of inst/www at /projwww (for dev / source tree runs)
+  proj_www <- file.path("inst", "www")
+  if (dir.exists(proj_www)) {
+    shiny::addResourcePath("projwww", proj_www)  # /projwww → <project>/inst/www
+  }
 
 
   # ---- helper for image ----

@@ -145,13 +145,12 @@ switchplotsHelpUI <- function(id) {
                          div(
                            tags$figure(
                              tags$img(
-                               src = get_switch_dir(),
+                               src = get_switch_src(),
                                class = "sp-img",
                                alt   = "Example switchplot"
                              )
                            )
                          ),
-
 
                              tags$figcaption(
                                  HTML(

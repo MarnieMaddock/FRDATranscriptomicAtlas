@@ -42,13 +42,19 @@ get_DTU_dir <- function() {
   }
 }
 
-get_switch_dir <- function() {
-  if (dir.exists("inst/www/switchplot_example.svg")) {
-    return("inst/www/switchplot_example.svg")  # shinyapps.io / local project
-  } else {
-    return(system.file("www", "switchplot_example.svg", package = "FRDATranscriptomicAtlas"))
+get_switch_src <- function() {
+  # Prefer project file during development
+  if (file.exists("inst/www/switchplot_example.svg")) {
+    return("projwww/switchplot_example.svg")   # <-- URL, not a disk path
   }
+  # Fallback to installed package asset (served at /pkgwww)
+  if (nzchar(system.file("www", "switchplot_example.svg",
+                         package = "FRDATranscriptomicAtlas"))) {
+    return("pkgwww/switchplot_example.svg")    # <-- URL, not a disk path
+  }
+  NULL  # nothing found
 }
+
 
 app_ui <- function() {
 
