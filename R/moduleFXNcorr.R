@@ -18,6 +18,7 @@ FXNcorrSidebarUI <- function(id) {
 FXNcorrMainUI <- function(id) {
   ns <- NS(id)
   tagList(
+    tags$br(),
     # Plot
     shinycssloaders::withSpinner(plotOutput(ns("scatter"), height = "420px"),type = 4,  color = "#005249"),
     tags$div(
@@ -35,7 +36,9 @@ FXNcorrMainUI <- function(id) {
     tags$div(
       style = "margin-top: .5rem;",
       downloadButton(ns("dl_corr_csv"), "Download table (CSV)")
-    )
+    ),
+    tags$br(),
+    tags$br()
   )
 }
 
