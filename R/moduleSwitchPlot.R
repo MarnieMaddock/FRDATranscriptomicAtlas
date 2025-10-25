@@ -4,17 +4,18 @@
 # Switchplot help + rationale + OneDrive link + example image
 # =========================
 
-get_switchplot_example_path <- function() {
-  if (file.exists("inst/www/switchplot_example.svg")) {
-    "inst/www/switchplot_example.svg"             # shinyapps.io / project
-  } else {
-    system.file("www", "switchplot_example.svg",
-                package = "FRDATranscriptomicAtlas")  # package install
-  }
+# Returns "pkgwww/..." if the file is present in the installed package
+get_switch_src <- function() {
+  has_file <- nzchar(system.file("www", "switchplot_example.svg",
+                                 package = "FRDATranscriptomicAtlas"))
+  if (!has_file) return(NULL)
+  "pkgwww/switchplot_example.svg"
 }
+
 
 switchplotsHelpUI <- function(id) {
   ns <- shiny::NS(id)
+  src <- get_switch_src()
   shiny::tagList(
     tags$style(HTML("
       .sp-help h4 { margin-top: 0 }
@@ -48,7 +49,7 @@ switchplotsHelpUI <- function(id) {
   </p>
   <p style='margin-top:10px;'>
     <b>Switchplots:</b> To browse or download the full collection, visit the
-    <a href='https://1drv.ms/f/s!abc123yourlink' target='_blank'
+    <a href='https://1drv.ms/f/c/69eb08701a869916/EkHrL4ugs-NKutgTOLhUmVwBDnt6QSG-zONXDhBdgNfnXw?e=ynt8De' target='_blank'
        style='color:#005249; text-decoration:underline; font-weight:bold;'>
        OneDrive folder <i class='fa fa-external-link-alt'></i>
     </a>
@@ -58,7 +59,7 @@ switchplotsHelpUI <- function(id) {
 "),
           HTML("
   <div style='text-align:center; margin-top:15px;'>
-    <a href='https://1drv.ms/f/s!abc123yourlink' target='_blank'
+    <a href='https://1drv.ms/f/c/69eb08701a869916/EkHrL4ugs-NKutgTOLhUmVwBDnt6QSG-zONXDhBdgNfnXw?e=ynt8De' target='_blank'
        style='background:#005249; color:white; padding:10px 20px; border-radius:6px;
               text-decoration:none; font-weight:600;'>
        🔗 Open OneDrive Folder
@@ -145,7 +146,7 @@ switchplotsHelpUI <- function(id) {
                          div(
                            tags$figure(
                              tags$img(
-                               src = get_switch_src(),
+                               src = src,
                                class = "sp-img",
                                alt   = "Example switchplot"
                              )
