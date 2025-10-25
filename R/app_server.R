@@ -130,6 +130,7 @@ app_server <- function(input, output, session) {
     pretty_map = pretty_map         # optional: same pretty labels you use elsewhere
   )
   FXNcorrServer("fxn_corr", pkg = pkg)
+  datasetsServer("datasets")
 
   # --- sidebar behavior for SwitchPlots full-width tab ------------------
   observe({

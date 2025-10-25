@@ -128,12 +128,21 @@ app_ui <- function() {
           type = "tabs",
           id = "tabselected",
           selected = 0, # Default tab selected is 1
-          tabPanel("About", icon = icon("home", lib = "font-awesome"), #display home icon in the tab
-                   aboutUI("about"),
+          tabPanel("Home", icon = icon("home", lib = "font-awesome"), #display home icon in the tab
                    value = 0,
-                   #include daatsets info here
-                   #about_text
-          ), #display about text from source("about.R")
+                   tabsetPanel(
+                     id = "degs_tabs",
+                     type = "tabs",
+                     tabPanel("About",
+                              value = 0.1,
+                              aboutUI("about"),
+                     ),
+                     tabPanel("Datasets",
+                              value = 0.2,
+                              datasetsUI("datasets"),
+                     )
+                   )
+          ),
           tabPanel("PCA", value = 1,
                    PCAMainUI("pca")
           ),
