@@ -20,9 +20,9 @@ aboutUI <- function(id,
       p(
         "The Friedreich’s Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny application ",
         "that provides open access to harmonised transcriptomic analyses across publicly available FRDA RNA-seq datasets. ",
-        "This resource was developed to enable researchers, clinicians, and students to explore and compare differential expression, isoform usage, and splicing patterns across a broad range of FRDA cellular and tissue models. The Atlas serves as a central reference for transcriptome-wide alterations in FRDA,
+        "This resource was developed to enable researchers, clinicians, and students to explore and compare differential expression, isoform usage etc across a broad range of human FRDA models. The Atlas serves as a central reference for transcriptome-wide alterations in FRDA,
         supporting hypothesis generation, candidate gene prioritisation, and data reuse for downstream integrative analyses. ",
-        "All analyses were performed using a consistent bioinformatic framework to ensure comparability across studies. Details of the datasets, quality control, and analytical pipelines are available in the associated publication.
+        "All analyses were performed using a consistent bioinformatic framework to ensure comparability across studies. Details of the datasets, quality control, and analytical pipelines are available in the associated publication <GIVE LINK HERE>.
         Users are encouraged to consult the paper for methodological details and to cite it in any work derived from or informed by this resource."
       ),
 
@@ -67,7 +67,7 @@ aboutUI <- function(id,
       p(HTML(
         paste0(
           "<b>Developed by:</b> Marnie Maddock, Prof. Mirella Dottori, XXXX, XXXXX University of Wollongong, Australia<br/>",
-          "<b>Funding:</b> Friedreich’s Ataxia Research Alliance (FARA)",
+          "<b>Funding:</b> Friedreich’s Ataxia Research Alliance (FARA)<br/>",
           "<b>We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis.</b> "
         )
       )),
