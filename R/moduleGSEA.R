@@ -49,9 +49,22 @@ GSEAMainUI <- function(id) {
 # R/modules/goGSEA_module.R
 # -------------------------
 # Server for GSEA (CSV/RDS-on-disk, on-demand)
-GSEAServer <- function(id, base_dir = NULL, pkg = utils::packageName()) {
+GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
+    # ---- make `pkg` safe here too ----
+    if (is.null(pkg) || !is.character(pkg) || !nzchar(pkg)) {
+      pkg <- tryCatch(utils::packageName(), error = function(e) "")
+      if (!length(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
+      pkg <- pkg[[1L]]  # ensure length 1
+    }
+
+    # optional: guard for pretty_map if it isn't globally defined
+    if (!exists("pretty_map", inherits = TRUE)) {
+      pretty_map <- setNames(character(0), character(0))
+    }
+
     # ---- deps ----
     requireNamespace("DT", quietly = TRUE)
     requireNamespace("ggplot2", quietly = TRUE)

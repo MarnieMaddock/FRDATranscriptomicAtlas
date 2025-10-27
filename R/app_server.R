@@ -131,8 +131,8 @@ app_server <- function(input, output, session) {
   )
   FXNcorrServer("fxn_corr", pkg = pkg)
   datasetsServer("datasets")
-  GSEAServer("gsea")
-  gseaCompareServer("gsea_compare")
+  GSEAServer("gsea",  pkg = pkg)
+  gseaCompareServer("gsea_compare",  pkg = pkg)
 
   # --- sidebar behavior for SwitchPlots full-width tab ------------------
   observe({
