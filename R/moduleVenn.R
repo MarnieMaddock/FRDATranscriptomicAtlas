@@ -2,7 +2,7 @@
 degVennUI <- function(id) {
   ns <- NS(id)
   tagList(
-    h4("Venn of shared DEGs / DEIs"),
+    h4("Venn of shared DEGs / DETs"),
     fluidRow(
       column(
         width = 4,

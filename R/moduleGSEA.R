@@ -15,31 +15,23 @@ GSEASidebarUI <- function(id) {
     br(),
   )
 }
-
 GSEAMainUI <- function(id) {
   ns <- shiny::NS(id)
-  tabPanel(
-    title = "Explore by Dataset",
-
-    # GeneRatio
+  tagList(
     h4("Dotplot (GeneRatio)"),
-    uiOutput(ns("plot_gr_ui")),   # <- dynamic UI sets the right height
+    uiOutput(ns("plot_gr_ui")),
     div(class = "text-center mt-2",
         downloadButton(ns("dl_plot_gr_png"), "Download PNG", class = "btn-sm"),
         downloadButton(ns("dl_plot_gr_svg"), "Download SVG", class = "btn-sm")
     ),
     hr(),
-
-    # NES
     h4("Dotplot (NES)"),
-    uiOutput(ns("plot_nes_ui")),  # <- dynamic UI sets the right height
+    uiOutput(ns("plot_nes_ui")),
     div(class = "text-center mt-2",
         downloadButton(ns("dl_plot_nes_png"), "Download PNG", class = "btn-sm"),
         downloadButton(ns("dl_plot_nes_svg"), "Download SVG", class = "btn-sm")
     ),
     hr(),
-
-    # Table
     h4("All Results (FDR < 0.05)"),
     shinycssloaders::withSpinner(
       DT::DTOutput(ns("tbl")),
@@ -51,7 +43,6 @@ GSEAMainUI <- function(id) {
     br()
   )
 }
-
 
 
 # R/modules/goGSEA_module.R  (replace just the server)

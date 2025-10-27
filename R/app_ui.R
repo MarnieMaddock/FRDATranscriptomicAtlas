@@ -92,8 +92,12 @@ app_ui <- function() {
           volcanoSidebarUI("volc", pretty_map = pretty_map)
         ),
         conditionalPanel(
-          condition = "input.tabselected == 4",
+          condition = "input.tabselected == 4 && input.fe_tabs === 'explore'",
           GSEASidebarUI("gsea")
+        ),
+        conditionalPanel(
+          condition = "input.tabselected == 4 && input.fe_tabs === 'compare'",
+          gseaCompareUI("gsea_compare")
         ),
         conditionalPanel(
           condition = "input.tabselected == 5",
@@ -171,14 +175,23 @@ app_ui <- function() {
           tabPanel("Heatmaps", value = 5,
                    tpmHeatmapMainUI("tpm_hm")
           ),
-          #statistics tab
           tabPanel(
             "Functional Enrichment", value = 4,
             tabsetPanel(
               id = "fe_tabs",
-              GSEAMainUI("gsea")   # <- this is a tabPanel returned by the module UI
+              tabPanel(
+                title = "Explore by Dataset",
+                value = "explore",
+                GSEAMainUI("gsea")
+              ),
+              tabPanel(
+                title = "Compare Datasets",
+                value = "compare",
+                gseaCompareMainUI("gsea_compare")
+              )
             )
           ),
+
 
           #Boxplots or violin plots per gene using {ggplotly} after user selects a gene.
           tabPanel("Gene Plots", value = 6,
