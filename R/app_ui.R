@@ -92,6 +92,10 @@ app_ui <- function() {
           volcanoSidebarUI("volc", pretty_map = pretty_map)
         ),
         conditionalPanel(
+          condition = "input.tabselected == 4",
+          GSEASidebarUI("gsea")
+        ),
+        conditionalPanel(
           condition = "input.tabselected == 5",
           tpmHeatmapSidebarUI("tpm_hm")
         ),
@@ -169,6 +173,7 @@ app_ui <- function() {
           ),
           #statistics tab
           tabPanel("Functional Enrichment", value = 4,
+                   GSEAMainUI("gsea")
           ),
 
           #Boxplots or violin plots per gene using {ggplotly} after user selects a gene.
