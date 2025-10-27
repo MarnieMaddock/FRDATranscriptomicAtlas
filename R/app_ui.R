@@ -172,8 +172,12 @@ app_ui <- function() {
                    tpmHeatmapMainUI("tpm_hm")
           ),
           #statistics tab
-          tabPanel("Functional Enrichment", value = 4,
-                   GSEAMainUI("gsea")
+          tabPanel(
+            "Functional Enrichment", value = 4,
+            tabsetPanel(
+              id = "fe_tabs",
+              GSEAMainUI("gsea")   # <- this is a tabPanel returned by the module UI
+            )
           ),
 
           #Boxplots or violin plots per gene using {ggplotly} after user selects a gene.

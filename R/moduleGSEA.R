@@ -10,56 +10,49 @@ GSEASidebarUI <- function(id) {
     radioButtons(ns("ont"), "Ontology",
                  choices = c("BP", "CC", "MF"), inline = TRUE),
     sliderInput(ns("ncat"), "Show top categories",
-                min = 5, max = 50, value = 10, step = 1),
+                min = 2, max = 500, value = 10, step = 5),
     tags$hr(),
-    strong("Download"),
-    fluidRow(
-      column(6,
-             downloadButton(ns("dl_plot_gr_png"), "GeneRatio PNG", class = "btn-sm"),
-             br(), br(),
-             downloadButton(ns("dl_plot_gr_svg"), "GeneRatio SVG", class = "btn-sm")
-      ),
-      column(6,
-             downloadButton(ns("dl_plot_nes_png"), "NES PNG", class = "btn-sm"),
-             br(), br(),
-             downloadButton(ns("dl_plot_nes_svg"), "NES SVG", class = "btn-sm")
-      )
-    ),
     br(),
-    downloadButton(ns("dl_table_csv"), "Results table (CSV)", class = "btn-sm")
   )
 }
 
-# Main content (plots + table)
 GSEAMainUI <- function(id) {
   ns <- shiny::NS(id)
-  tagList(
-    tabsetPanel(
-      id = ns("tabs"),
-      tabPanel(
-        "Dotplot (GeneRatio)",
-        shinycssloaders::withSpinner(
-          plotOutput(ns("plot_gr"), height = 460),
-          type = 4
-        )
-      ),
-      tabPanel(
-        "Dotplot (NES)",
-        shinycssloaders::withSpinner(
-          plotOutput(ns("plot_nes"), height = 460),
-          type = 4
-        )
-      ),
-      tabPanel(
-        "Results table",
-        shinycssloaders::withSpinner(
-          DT::DTOutput(ns("tbl")),
-          type = 4
-        )
-      )
-    )
+  tabPanel(
+    title = "Explore by Dataset",
+
+    # GeneRatio
+    h4("Dotplot (GeneRatio)"),
+    uiOutput(ns("plot_gr_ui")),   # <- dynamic UI sets the right height
+    div(class = "text-center mt-2",
+        downloadButton(ns("dl_plot_gr_png"), "Download PNG", class = "btn-sm"),
+        downloadButton(ns("dl_plot_gr_svg"), "Download SVG", class = "btn-sm")
+    ),
+    hr(),
+
+    # NES
+    h4("Dotplot (NES)"),
+    uiOutput(ns("plot_nes_ui")),  # <- dynamic UI sets the right height
+    div(class = "text-center mt-2",
+        downloadButton(ns("dl_plot_nes_png"), "Download PNG", class = "btn-sm"),
+        downloadButton(ns("dl_plot_nes_svg"), "Download SVG", class = "btn-sm")
+    ),
+    hr(),
+
+    # Table
+    h4("All Results (FDR < 0.05)"),
+    shinycssloaders::withSpinner(
+      DT::DTOutput(ns("tbl")),
+      type = 4, color = "#005249"
+    ),
+    div(class = "text-center mt-2",
+        downloadButton(ns("dl_table_csv"), "Download table (CSV)", class = "btn-sm")
+    ),
+    br()
   )
 }
+
+
 
 # R/modules/goGSEA_module.R  (replace just the server)
 # R/modules/goGSEA_module.R
@@ -67,7 +60,7 @@ GSEAMainUI <- function(id) {
 # Server for GSEA (CSV/RDS-on-disk, on-demand)
 GSEAServer <- function(id, base_dir = NULL, pkg = utils::packageName()) {
   moduleServer(id, function(input, output, session) {
-
+    ns <- session$ns
     # ---- deps ----
     requireNamespace("DT", quietly = TRUE)
     requireNamespace("ggplot2", quietly = TRUE)
@@ -116,13 +109,26 @@ GSEAServer <- function(id, base_dir = NULL, pkg = utils::packageName()) {
 
     # ---- pretty labels for the dataset select ----
     # expects a global/internal object `pretty_map` (named character vector)
-    base_key <- function(x) sub("_.*$", "", x)   # "Erwin_0.05_all_genes" -> "Erwin"
+    # ---- pretty labels for the dataset select (dataset_key3) ----
+    # keep up to first 3 tokens (e.g., "Lees_FA1", "Maddock_SN_FA2")
+    dataset_key3 <- function(x) {
+      b <- basename(x)
+      b <- sub("\\.rds$", "", b)
+      b <- sub("(_0\\.[0-9].*)$", "", b)  # strip trailing "_0.05_all_genes..." if present
+      parts <- strsplit(b, "_", fixed = TRUE)[[1]]
+      if (length(parts) >= 3) paste(parts[1:3], collapse = "_")
+      else if (length(parts) >= 2) paste(parts[1:2], collapse = "_")
+      else parts[1]
+    }
+
     labels <- vapply(datasets_vec, function(d) {
-      key <- base_key(d)
-      lab <- tryCatch(pretty_map[[key]], error = function(e) NULL)
-      lab %||% key
+      key <- dataset_key3(d)
+      pretty_map[[key]] %||% gsub("_", " ", key)   # fallback: "Lees FA1"
     }, character(1))
+
     choices_named <- stats::setNames(datasets_vec, labels)
+
+    label_from_value <- stats::setNames(labels, datasets_vec)
 
     # ---- reactive: are we safe to render? ----
     ready <- reactive({
@@ -164,9 +170,9 @@ GSEAServer <- function(id, base_dir = NULL, pkg = utils::packageName()) {
 
     # ---- title ----
     title_txt <- reactive({
-      paste0(input$dataset %||% "", " - GO ", input$ont %||% "", " GSEA")
+      ds_label <- label_from_value[[input$dataset %||% ""]] %||% (input$dataset %||% "")
+      paste0(ds_label, " - GO ", input$ont %||% "", " GSEA")
     })
-
     # ---- df accessor (works for gseaResult or data.frame fallback) ----
     r_df <- reactive({
       x <- r_obj()
@@ -182,6 +188,9 @@ GSEAServer <- function(id, base_dir = NULL, pkg = utils::packageName()) {
       }
       df
     })
+
+
+
 
     # ---- plot helpers ----
     make_dotplot <- function(metric = c("GeneRatio","NES")) {
@@ -213,9 +222,66 @@ GSEAServer <- function(id, base_dir = NULL, pkg = utils::packageName()) {
       }
     }
 
-    # ---- outputs ----
-    output$plot_gr  <- renderPlot({ req(ready()); make_dotplot("GeneRatio") }, res = 96, height = 460)
-    output$plot_nes <- renderPlot({ req(ready()); make_dotplot("NES")       }, res = 96, height = 460)
+    # helper to compute how many rows will be drawn (guard against short tables)
+    n_rows_to_plot <- reactive({
+      req(ready())
+      min(as.integer(input$ncat), nrow(r_df()))
+    })
+
+    row_px   <- 50   # pixels per category row (tweak 28–34 as you like)
+    marginpx <- 130  # fixed padding for title/axes/legend
+    minpx    <- 380  # minimum so tiny plots still look decent
+
+    dyn_height <- reactive({
+      h <- row_px * n_rows_to_plot() + marginpx
+      max(h, minpx)
+    })
+
+
+    # dynamic left margin based on longest label (keeps full, unwrapped text)
+    left_margin_px <- reactive({
+      req(ready())
+      d <- head(r_df()[, "Description", drop = TRUE], n_rows_to_plot())
+      # ~6 px per character is a reasonable default for 12–13 pt fonts
+      px <- 6 * max(nchar(d), na.rm = TRUE)
+      px <- max(140, min(px, 320))  # clamp to sensible bounds
+      px
+    })
+
+    # dyn_height() already defined in your server
+    output$plot_gr_ui <- renderUI({
+      req(ready())
+      shinycssloaders::withSpinner(
+        plotOutput(ns("plot_gr"), height = dyn_height()),   # height set in UI
+        type = 4, color = "#005249"
+      )
+    })
+
+    output$plot_nes_ui <- renderUI({
+      req(ready())
+      shinycssloaders::withSpinner(
+        plotOutput(ns("plot_nes"), height = dyn_height()),   # height set in UI
+        type = 4, color = "#005249"
+      )
+    })
+
+    # keep your existing renderPlot() calls:
+    # output$plot_gr  <- renderPlot({ ... }, res = 96)
+    # output$plot_nes <- renderPlot({ ... }, res = 96)
+
+    output$plot_gr <- renderPlot(
+      { req(ready()); make_dotplot("GeneRatio") },
+      res    = 96,
+      height = function() dyn_height()
+    )
+
+
+    output$plot_nes <- renderPlot(
+      { req(ready()); make_dotplot("NES") },
+      res    = 96,
+      height = function() dyn_height()
+    )
+
 
     output$tbl <- DT::renderDT({
       req(ready())
