@@ -38,7 +38,12 @@ GSEAMainUI <- function(id) {
       type = 4, color = "#005249"
     ),
     div(class = "text-center mt-2",
-        downloadButton(ns("dl_table_csv"), "Download table (CSV)", class = "btn-sm")
+        downloadButton(ns("dl_table_csv"), "Download table (CSV)", class = "btn-sm"),
+        div(class = "text-muted small",
+            "Tip: click a row in the table, then use “Show genes” or “Download genes (CSV)”."),
+
+        actionButton(ns("show_genes"), "Show genes for selected term", class = "btn-sm"),
+        downloadButton(ns("dl_genes_csv"), "Download genes (CSV)", class = "btn-sm")
     ),
     br()
   )
@@ -52,6 +57,38 @@ GSEAMainUI <- function(id) {
 GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
+    # --- maps (tx2gene) ---
+    tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
+    if (!nzchar(tx2_path)) tx2_path <- file.path("inst", "extdata", "maps", "tx2gene.tsv")
+
+    tx2gene <- if (nzchar(tx2_path) && file.exists(tx2_path)) {
+      readr::read_tsv(tx2_path, col_types = "ccc") |>
+        dplyr::mutate(
+          transcript_id = sub("\\.\\d+$","", transcript_id),
+          gene_id       = sub("\\.\\d+$","", gene_id)
+        )
+    } else NULL
+
+    norm_id <- function(x) sub("\\.\\d+$","", as.character(x))
+
+    # ENSEMBL -> SYMBOL lookup (vector)
+    ensg_to_symbol <- if (!is.null(tx2gene) && all(c("gene_id","gene_name") %in% names(tx2gene))) {
+      ids  <- norm_id(tx2gene$gene_id)
+      syms <- as.character(tx2gene$gene_name)
+      keep <- !duplicated(ids)
+      stats::setNames(syms[keep], ids[keep])
+    } else stats::setNames(character(0), character(0))
+
+    # Vectorized mapper (returns symbol; if missing, returns cleaned id)
+    map_ids_to_symbol <- function(ids) {
+      if (!length(ids)) return(character())
+      ids2 <- norm_id(ids)
+      hit  <- ensg_to_symbol[ids2]
+      out  <- ifelse(is.na(hit) | !nzchar(hit), ids2, unname(hit))
+      out
+    }
+
 
     # ---- make `pkg` safe here too ----
     if (is.null(pkg) || !is.character(pkg) || !nzchar(pkg)) {
@@ -72,6 +109,32 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     requireNamespace("enrichplot", quietly = TRUE)
 
     `%||%` <- function(x,y) if (is.null(x) || (is.character(x) && !nzchar(x))) y else x
+
+    # --- helper: extract core genes vector from a one-row data.frame
+    .extract_genes_raw <- function(rowdf) {
+      if (nrow(rowdf) < 1) return(character())
+      col <- if ("core_enrichment" %in% names(rowdf)) "core_enrichment"
+      else if ("geneID" %in% names(rowdf)) "geneID" else return(character())
+      unique(norm_id(strsplit(as.character(rowdf[[col]][[1]]), "/", fixed = TRUE)[[1]]))
+    }
+
+    .add_core_cols <- function(df) {
+      if (!nrow(df)) return(df)
+      col <- if ("core_enrichment" %in% names(df)) "core_enrichment"
+      else if ("geneID" %in% names(df)) "geneID" else return(df)
+
+      sp <- strsplit(as.character(df[[col]]), "/", fixed = TRUE)
+      genes_list   <- lapply(sp, function(v) unique(norm_id(v[nzchar(v)])))
+      symbols_list <- lapply(genes_list, map_ids_to_symbol)
+
+      df$core_count   <- vapply(genes_list, length, integer(1))
+      df$core_preview <- vapply(symbols_list, function(v) {
+        if (!length(v)) return("")
+        paste0(paste(utils::head(v, 8), collapse = ", "),
+               if (length(v) > 8) sprintf(" … (+%d)", length(v) - 8) else "")
+      }, character(1))
+      df
+    }
 
     # ---- locate extdata/GSEA_results no matter how the app is run ----
     if (is.null(base_dir) || !nzchar(base_dir)) {
@@ -180,19 +243,12 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     # ---- df accessor (works for gseaResult or data.frame fallback) ----
     r_df <- reactive({
       x <- r_obj()
-      df <- if (inherits(x, "gseaResult")) {
-        as.data.frame(x)
-      } else {
-        # CSV fallback already returns a data.frame
-        x
-      }
-      # order nicely
+      df <- if (inherits(x, "gseaResult")) as.data.frame(x) else x
       if ("p.adjust" %in% names(df)) {
         df <- df[order(df$p.adjust, -abs(df$NES %||% 0)), , drop = FALSE]
       }
-      df
+      .add_core_cols(df)   # uses symbols now
     })
-
 
 
 
@@ -289,9 +345,93 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
 
     output$tbl <- DT::renderDT({
       req(ready())
-      DT::datatable(r_df(), rownames = FALSE, filter = "top",
-                    options = list(pageLength = 10, scrollX = TRUE))
+      df <- r_df()
+      # choose a sensible subset/order if you like:
+      keep <- intersect(c("ID","Description","NES","p.adjust","setSize","core_count","core_preview"),
+                        names(df))
+      DT::datatable(
+        df[, keep, drop = FALSE],
+        rownames = FALSE,
+        filter   = "top",
+        selection = "single",
+        options = list(pageLength = 10, scrollX = TRUE,
+                       columnDefs = list(
+                         list(targets = which(colnames(df[, keep]) == "core_preview") - 1L,
+                              render = DT::JS(
+                                "function(data,type,row,meta){",
+                                " if(type==='display' && data && data.length>120){",
+                                "   return '<span title=\"'+data+'\">'+data.slice(0,120)+'…</span>';",
+                                " } return data; }"
+                              ))
+                       ))
+      )
     })
+    # ---- show genes modal ----
+    observeEvent(input$show_genes, {
+      sel <- input$tbl_rows_selected
+      validate(need(length(sel) == 1, "Select one term in the table first."))
+      df  <- r_df()
+      row <- df[sel, , drop = FALSE]
+
+      # get IDs, then map to symbols for display
+      ids   <- .extract_genes_raw(row)
+      genes <- map_ids_to_symbol(ids)   # pretty names in the modal
+
+      term_title <- if ("Description" %in% names(row)) row$Description[[1]] else "Selected term"
+
+      shiny::showModal(
+        modalDialog(
+          title = term_title,
+          size = "l",
+          easyClose = TRUE,
+          footer = modalButton("Close"),
+          tagList(
+            p(sprintf("Genes in leading edge/core set: %d", length(genes))),
+            tags$div(
+              style = "max-height: 50vh; overflow:auto; font-family: monospace; white-space: pre-wrap;",
+              paste(genes, collapse = ", ")
+            )
+          )
+        )
+      )
+    })
+    # --- download genes CSV ---
+    output$dl_genes_csv <- downloadHandler(
+      filename = function() {
+        sel  <- input$tbl_rows_selected
+        base <- if (length(sel) == 1 && "ID" %in% names(r_df()))
+          paste0("genes_", r_df()$ID[[sel]]) else "genes_selected_term"
+        paste0(gsub("[^A-Za-z0-9_]+", "_", base), ".csv")
+      },
+      contentType = "text/csv; charset=UTF-8",
+      content = function(file) {
+        sel <- input$tbl_rows_selected
+        validate(need(length(sel) == 1, "Select one term in the table first."))
+
+        df  <- r_df()
+        row <- df[sel, , drop = FALSE]
+
+        ids  <- .extract_genes_raw(row)      # cleaned ENSG IDs
+        syms <- map_ids_to_symbol(ids)       # HGNC symbols (or ID fallback)
+
+        out <- data.frame(
+          term_id   = row$ID          %||% NA_character_,
+          term_name = row$Description %||% NA_character_,
+          NES       = row$NES         %||% NA_real_,
+          padj      = row$p.adjust    %||% NA_real_,
+          gene_id   = ids,
+          symbol    = syms,
+          stringsAsFactors = FALSE
+        )
+
+        if (requireNamespace("readr", quietly = TRUE)) {
+          readr::write_excel_csv(out, file)
+        } else {
+          utils::write.csv(out, file, row.names = FALSE)
+        }
+      }
+    )
+
 
     # ---- downloads ----
     output$dl_plot_gr_png <- downloadHandler(
