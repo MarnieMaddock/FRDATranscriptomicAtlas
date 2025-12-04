@@ -35,4 +35,7 @@ suppressPackageStartupMessages({
   library(rlang)
   library(grid)
   library(DT)
+  library(DOSE)
+  library(htmltools)
+  library(upsetjs)
 })

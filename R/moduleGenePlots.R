@@ -275,7 +275,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
                             size = 3.5, color = "#005249", na.rm = TRUE, show.legend = FALSE) +
         ggplot2::labs(title = title_txt, x = " ", y = "Transcripts Per Million") +
         theme_Marnie +
-        ggplot2::facet_wrap(vars(dataset), scales = "free_x", nrow = 1, labeller = lab_ds)
+        ggplot2::facet_wrap(dplyr::vars(dataset), scales = "free_x", nrow = 1, labeller = lab_ds)
       if (isTRUE(logy)) p <- p + ggplot2::scale_y_continuous(trans = "log10")
       p
     }

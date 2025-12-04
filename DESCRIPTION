@@ -42,7 +42,8 @@ Imports:
     memoise, 
     ragg,
     htmltools,
-    upsetjs
+    upsetjs,
+    DOSE
 Suggests:
     enrichplot
 Remotes:
