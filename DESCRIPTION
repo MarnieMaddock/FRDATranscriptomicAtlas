@@ -2,7 +2,7 @@ Package: FRDATranscriptomicAtlas
 Title: FRDA Transcriptomic Atlas
 Version: 0.0.0.9000
 Authors@R: c(person("Marnie", "Maddock", role = c("aut","cre"), email = "mmaddock@uow.edu.au"))
-Description: Explore FRDA RNA Sequencing Data
+Description: Explore FRDA RNA sequencing data through an interactive Shiny interface.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -40,7 +40,10 @@ Imports:
     grid,
     DT,
     memoise, 
-    ragg
+    ragg,
+    htmltools,
+    enrichplot,
+    upsetjs
 Remotes:
     bioc::ComplexHeatmap
 RoxygenNote: 7.3.3
