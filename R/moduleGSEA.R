@@ -253,34 +253,128 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
 
 
     # ---- plot helpers ----
+    # ---- plot helpers ----
     make_dotplot <- function(metric = c("GeneRatio","NES")) {
       metric <- match.arg(metric)
       x <- r_obj()
+
+      # ----------------------------
+      # Case 1: object is a gseaResult from clusterProfiler
+      # ----------------------------
       if (inherits(x, "gseaResult")) {
-        enrichplot::dotplot(x, x = metric, showCategory = input$ncat %||% 10) +
-          ggplot2::ggtitle(title_txt())
-      } else {
-        # data.frame fallback (if you kept only CSVs) — manual dotplot
-        df <- r_df()
-        n  <- max(1, as.integer(input$ncat %||% 10))
-        d  <- head(df, n)
-        if (!"GeneRatio" %in% names(d)) {
-          # compute GeneRatio from core_enrichment/setSize if present
-          if ("core_enrichment" %in% names(d) && "setSize" %in% names(d)) {
-            core_n <- vapply(strsplit(as.character(d$core_enrichment), "/", fixed = TRUE),
-                             function(v) sum(nzchar(v)), integer(1))
-            d$GeneRatio <- core_n / as.numeric(d$setSize)
-          }
+
+        # enrichplot NOT installed → fallback message plot
+        if (!requireNamespace("enrichplot", quietly = TRUE)) {
+          return(
+            ggplot2::ggplot() +
+              ggplot2::annotate(
+                "text",
+                x = 0.5, y = 0.5,
+                hjust = 0.5,
+                label = "Dotplot requires the Bioconductor package 'enrichplot',\nwhich is not available for R ≥ 4.5.\nShowing message instead.",
+                size = 5
+              ) +
+              ggplot2::theme_void()
+          )
         }
-        aes_x <- if (metric == "NES") ggplot2::aes(x = NES) else ggplot2::aes(x = GeneRatio)
-        ggplot2::ggplot(d, aes_x + ggplot2::aes(y = stats::reorder(Description, !!rlang::sym(names(d)[match(metric, c("GeneRatio","NES"))])))) +
-          ggplot2::geom_point(ggplot2::aes(size = setSize, alpha = -log10(p.adjust))) +
-          { if (metric == "NES") ggplot2::geom_vline(xintercept = 0, linetype = 2) else NULL } +
-          ggplot2::labs(x = if (metric == "NES") "Normalized Enrichment Score (NES)" else "GeneRatio (core / set size)",
-                        y = NULL, title = title_txt(), alpha = "-log10(adj.P)") +
-          ggplot2::theme_minimal(base_size = 12)
+
+        # enrichplot available → use standard dotplot
+        return(
+          enrichplot::dotplot(
+            x,
+            x = metric,
+            showCategory = input$ncat %||% 10
+          ) +
+            ggplot2::ggtitle(title_txt())
+        )
       }
+
+      # ----------------------------
+      # Case 2: fallback for data.frame CSV results
+      # ----------------------------
+      df <- r_df()
+      n  <- max(1, as.integer(input$ncat %||% 10))
+      d  <- head(df, n)
+
+      # Compute GeneRatio if missing
+      if (!"GeneRatio" %in% names(d)) {
+        if ("core_enrichment" %in% names(d) && "setSize" %in% names(d)) {
+          core_n <- vapply(
+            strsplit(as.character(d$core_enrichment), "/", fixed = TRUE),
+            function(v) sum(nzchar(v)),
+            integer(1)
+          )
+          d$GeneRatio <- core_n / as.numeric(d$setSize)
+        }
+      }
+
+      metric_col <- switch(metric,
+                           "GeneRatio" = "GeneRatio",
+                           "NES"       = "NES")
+
+      # When metric column is missing → safe fallback
+      if (!metric_col %in% names(d)) {
+        return(
+          ggplot2::ggplot() +
+            ggplot2::annotate(
+              "text",
+              x = 0.5, y = 0.5,
+              hjust = 0.5,
+              label = sprintf("Metric '%s' not available in results.", metric),
+              size = 5
+            ) +
+            ggplot2::theme_void()
+        )
+      }
+
+      # ----------------------------
+      # Clean fallback dotplot (ggplot2 only)
+      # ----------------------------
+      ggplot2::ggplot(
+        d,
+        ggplot2::aes(
+          x = reorder(Description, !!rlang::sym(metric_col)),
+          y = !!rlang::sym(metric_col)
+        )
+      ) +
+        ggplot2::geom_point(size = 3, color = "#3366AA") +
+        ggplot2::coord_flip() +
+        ggplot2::labs(
+          title = title_txt(),
+          x     = "Term",
+          y     = metric
+        ) +
+        ggplot2::theme_bw(base_size = 12)
     }
+
+    # make_dotplot <- function(metric = c("GeneRatio","NES")) {
+    #   metric <- match.arg(metric)
+    #   x <- r_obj()
+    #   if (inherits(x, "gseaResult")) {
+    #     enrichplot::dotplot(x, x = metric, showCategory = input$ncat %||% 10) +
+    #       ggplot2::ggtitle(title_txt())
+    #   } else {
+    #     # data.frame fallback (if you kept only CSVs) — manual dotplot
+    #     df <- r_df()
+    #     n  <- max(1, as.integer(input$ncat %||% 10))
+    #     d  <- head(df, n)
+    #     if (!"GeneRatio" %in% names(d)) {
+    #       # compute GeneRatio from core_enrichment/setSize if present
+    #       if ("core_enrichment" %in% names(d) && "setSize" %in% names(d)) {
+    #         core_n <- vapply(strsplit(as.character(d$core_enrichment), "/", fixed = TRUE),
+    #                          function(v) sum(nzchar(v)), integer(1))
+    #         d$GeneRatio <- core_n / as.numeric(d$setSize)
+    #       }
+    #     }
+    #     aes_x <- if (metric == "NES") ggplot2::aes(x = NES) else ggplot2::aes(x = GeneRatio)
+    #     ggplot2::ggplot(d, aes_x + ggplot2::aes(y = stats::reorder(Description, !!rlang::sym(names(d)[match(metric, c("GeneRatio","NES"))])))) +
+    #       ggplot2::geom_point(ggplot2::aes(size = setSize, alpha = -log10(p.adjust))) +
+    #       { if (metric == "NES") ggplot2::geom_vline(xintercept = 0, linetype = 2) else NULL } +
+    #       ggplot2::labs(x = if (metric == "NES") "Normalized Enrichment Score (NES)" else "GeneRatio (core / set size)",
+    #                     y = NULL, title = title_txt(), alpha = "-log10(adj.P)") +
+    #       ggplot2::theme_minimal(base_size = 12)
+    #   }
+    # }
 
     # helper to compute how many rows will be drawn (guard against short tables)
     n_rows_to_plot <- reactive({

@@ -42,8 +42,9 @@ Imports:
     memoise, 
     ragg,
     htmltools,
-    enrichplot,
     upsetjs
+Suggests:
+    enrichplot
 Remotes:
     bioc::ComplexHeatmap
 RoxygenNote: 7.3.3
