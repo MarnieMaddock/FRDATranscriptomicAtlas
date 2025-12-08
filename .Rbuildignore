@@ -1,3 +1,6 @@
 ^FRDATranscriptomicAtlas\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^rsconnect$
+^app\.R$
+^manifest\.json$
