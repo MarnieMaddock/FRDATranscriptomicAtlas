@@ -1,5 +1,5 @@
 # ---- DTU Venn module ----------------------------------------------------
-# expects CSV files named like "<DATASET>_significant_isoforms.csv"
+# expects rds files named like "<DATASET>_significant_isoforms.rds"
 # with columns at least:
 #   gene_id, gene_name, isoform_id, dIF, isoform_switch_q_value, direction
 # direction strings should be like "Higher in FRDA" / "Higher in Control"
@@ -171,9 +171,10 @@ dtuVennServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
       stop("DTU directory not found. Looked in extdata/DTU, extdata/dtu and inst equivalents.")
     }
 
-    read_cached_csv <- memoise::memoise(function(p) {
-      readr::read_csv(p, show_col_types = FALSE)
+    read_cached_rds <- memoise::memoise(function(p) {
+      readRDS(p)
     })
+
     # ---- pretty dataset labels (optional – reuse/extend yours) ----
     pretty_map <- c(
       "Erwin"             = "Erwin (Lymphoblastoid Cells)",
@@ -201,11 +202,11 @@ dtuVennServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
     # ---- manifest of available DTU CSVs ----
     dtu_manifest <- reactive({
       if (!dir.exists(dtu_dir)) return(tibble::tibble())
-      files <- list.files(dtu_dir, pattern = "_significant_isoforms\\.csv$", full.names = TRUE)
+      files <- list.files(dtu_dir, pattern = "_significant_isoforms\\.rds$", full.names = TRUE)
       if (!length(files)) return(tibble::tibble())
       tibble::tibble(
         path = files,
-        dataset = sub("_significant_isoforms\\.csv$", "", basename(files))
+        dataset = sub("_significant_isoforms\\.rds$", "", basename(files))
       )
     })
 
@@ -230,7 +231,7 @@ dtuVennServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
       f <- dplyr::filter(m, dataset == dataset_id)
       if (!nrow(f)) return(character(0))
 
-      df <- read_cached_csv(f$path[1]) |> as.data.frame()
+      df <- read_cached_rds(f$path[1]) |> as.data.frame()
 
       # Harmonise columns
       if (!("isoform_switch_q_value" %in% names(df))) return(character(0))
@@ -278,7 +279,7 @@ dtuVennServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
 
       # combine from all datasets (dedupe)
       maps <- lapply(m$path, function(p) {
-        df <- read_cached_csv(p) |> as.data.frame()
+        df <- read_cached_rds(p) |> as.data.frame()
         if (lvl == "genes") {
           gid <- norm_id(df$gene_id %||% df$gene_name)
           sym <- if ("gene_name" %in% names(df)) as.character(df$gene_name) else gid

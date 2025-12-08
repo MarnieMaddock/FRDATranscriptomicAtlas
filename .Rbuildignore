@@ -4,3 +4,4 @@
 ^rsconnect$
 ^app\.R$
 ^manifest\.json$
+^rds_converter\.R$

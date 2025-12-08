@@ -3,10 +3,10 @@
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
 # Discover labels from flat files in inst/extdata/DTU
-# e.g. Maddock_SN_FA1_switch_summary.csv -> "Maddock_SN_FA1"
+# e.g. Maddock_SN_FA1_switch_summary.rds -> "Maddock_SN_FA1"
 discover_dtu_labels_flat <- function(data_dir) {
-  fs <- list.files(data_dir, pattern = "_switch_summary\\.csv$", full.names = FALSE)
-  unique(sub("_switch_summary\\.csv$", "", fs))
+  fs <- list.files(data_dir, pattern = "_switch_summary\\.rds$", full.names = FALSE)
+  unique(sub("_switch_summary\\.rds$", "", fs))
 }
 
 # Build choices for selectize: names(shown) = pretty; values = machine labels
@@ -21,9 +21,9 @@ dtu_choice_vector <- function(labels, pretty_map = NULL) {
 # Paths for a given label (flat layout)
 dtu_paths_for_label_flat <- function(data_dir, label) {
   list(
-    summary = file.path(data_dir, paste0(label, "_switch_summary.csv")),
-    genes   = file.path(data_dir, paste0(label, "_gene_switches.csv")),
-    iso     = file.path(data_dir, paste0(label, "_significant_isoforms.csv"))
+    summary = file.path(data_dir, paste0(label, "_switch_summary.rds")),
+    genes   = file.path(data_dir, paste0(label, "_gene_switches.rds")),
+    iso     = file.path(data_dir, paste0(label, "_significant_isoforms.rds"))
   )
 }
 
@@ -155,21 +155,23 @@ dtuResultsServer <- function(id, data_dir, labels = NULL, pretty_map = NULL) {
     sum_tbl <- reactive({
       req(input$label)
       p <- dtu_paths_for_label_flat(data_dir, input$label)$summary
-      req(file.exists(p)); readr::read_csv(p, show_col_types = FALSE)
+      req(file.exists(p))
+      readRDS(p)
     })
 
     genes_tbl <- reactive({
       req(input$label)
       p <- dtu_paths_for_label_flat(data_dir, input$label)$genes
       req(file.exists(p))
-      readr::read_csv(p, show_col_types = FALSE) |>
+      readRDS(p) |>
         dplyr::mutate(gene = dplyr::coalesce(.data$gene_name, .data$gene_id))
     })
 
     iso_tbl_raw <- reactive({
       req(input$label)
       p <- dtu_paths_for_label_flat(data_dir, input$label)$iso
-      req(file.exists(p)); readr::read_csv(p, show_col_types = FALSE)
+      req(file.exists(p))
+      readRDS(p)
     })
 
     # --- headline values ---

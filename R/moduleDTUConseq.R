@@ -6,17 +6,17 @@
 discover_conseq_labels_flat <- function(data_dir) {
   fs <- list.files(
     data_dir,
-    pattern = "_(genes|ISOFORMS)_with_consequences\\.csv$",
+    pattern = "_(genes|ISOFORMS)_with_consequences\\.rds$",
     full.names = FALSE
   )
-  labs <- sub("_(genes|ISOFORMS)_with_consequences\\.csv$", "", fs)
+  labs <- sub("_(genes|ISOFORMS)_with_consequences\\.rds$", "", fs)
   sort(unique(labs))
 }
 
 conseq_paths_for_label_flat <- function(data_dir, label) {
   list(
-    genes = file.path(data_dir, paste0(label, "_genes_with_consequences.csv")),
-    iso   = file.path(data_dir, paste0(label, "_ISOFORMS_with_consequences.csv"))
+    genes = file.path(data_dir, paste0(label, "_genes_with_consequences.rds")),
+    iso   = file.path(data_dir, paste0(label, "_ISOFORMS_with_consequences.rds"))
   )
 }
 
@@ -119,7 +119,7 @@ consequencesServer <- function(id, data_dir, labels = NULL, pretty_map = NULL) {
       }
       validate(need(length(labs) > 0, paste0(
         "No consequence files found in: ", normalizePath(data_dir, winslash = "/"),
-        "\nExpected files like: <LABEL>_genes_with_consequences.csv and <LABEL>_ISOFORMS_with_consequences.csv"
+        "\nExpected files like: <LABEL>_genes_with_consequences.rds and <LABEL>_ISOFORMS_with_consequences.rds"
       )))
       updateSelectInput(session, "label", choices = dtu_choice_vector(labs, pretty_map))
 
@@ -144,7 +144,7 @@ consequencesServer <- function(id, data_dir, labels = NULL, pretty_map = NULL) {
                     "\nSearched in: ", normalizePath(dirname(f), winslash = "/"),
                     "\nNote: filenames are case-sensitive on Linux."))
       )
-      readr::read_csv(f, show_col_types = FALSE)
+      readRDS(f)
     })
 
     # --- table (5 rows/page) ---
