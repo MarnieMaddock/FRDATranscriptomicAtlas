@@ -4,7 +4,7 @@
 \alias{run_app}
 \title{Launch the FRDA Transcriptomic Atlas app}
 \usage{
-run_app(...)
+run_app()
 }
 \value{
 A shiny.appobj that runs the app
