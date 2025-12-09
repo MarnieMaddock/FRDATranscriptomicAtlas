@@ -9,6 +9,7 @@ genePlotsSidebarUI <- function(id) {
       label   = "Datasets (select any number)",
       choices = character(0)   # filled by server
     ),
+    helpText("You may select multiple datasets only within the same study as TPMs are not comparable across studies."),
     uiOutput(ns("gp_datasets_note")),
     tags$br(),
     textInput(
@@ -71,6 +72,34 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
     )
     `%||%` <- function(a, b) if (is.null(a)) b else a
     pretty_label <- function(id) pretty_map[[id]] %||% id
+
+    # Define dataset families based on prefix
+    dataset_family <- function(ds) sub("_.*$", "", ds)
+
+    observeEvent(input$gp_datasets, {
+      req(input$gp_datasets)
+
+      fams <- dataset_family(input$gp_datasets)
+
+      # More than one family selected?
+      if (length(unique(fams)) > 1) {
+
+        # Drop the newly added dataset and keep only the original family
+        original_family <- dataset_family(input$gp_datasets[1])
+        valid <- input$gp_datasets[fams == original_family]
+
+        showNotification(
+          "Please select datasets from only one dataset family (e.g., only Lai, only Maddock).",
+          type = "error",
+          duration = 5
+        )
+
+        updateCheckboxGroupInput(
+          session, "gp_datasets",
+          selected = valid
+        )
+      }
+    })
 
     # Locate and source the theme file (works in both modes)
     if (!exists("theme_Marnie", inherits = TRUE)) {
