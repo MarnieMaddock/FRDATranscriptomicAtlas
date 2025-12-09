@@ -129,7 +129,6 @@ app_server <- function(input, output, session) {
     labels     = NULL,              # we auto-discover with discover_conseq_labels_flat()
     pretty_map = pretty_map         # optional: same pretty labels you use elsewhere
   )
-  FXNcorrServer("fxn_corr", pkg = pkg)
   datasetsServer("datasets")
   GSEAServer("gsea",  pkg = pkg)
   gseaCompareServer("gsea_compare",  pkg = pkg)
