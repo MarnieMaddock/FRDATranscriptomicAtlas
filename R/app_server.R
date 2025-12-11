@@ -132,6 +132,7 @@ app_server <- function(input, output, session) {
   datasetsServer("datasets")
   GSEAServer("gsea",  pkg = pkg)
   gseaCompareServer("gsea_compare",  pkg = pkg)
+  biomarkerServer("biomarkers")
 
   # --- sidebar behavior for SwitchPlots full-width tab ------------------
   observe({

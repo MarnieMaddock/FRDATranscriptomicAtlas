@@ -122,8 +122,11 @@ app_ui <- function() {
         conditionalPanel(
           condition = "input.tabselected == 7 && input.DTU_tables == 7.3",
           consequencesSidebarUI("dtu_func_cons")
+        ),
+        conditionalPanel(
+          condition = "input.tabselected == 9",
+          biomarkerUI("biomarkers")
         )
-
       ), #sidebarPanel closing bracket
 
       mainPanel(id = "main_wrap",
@@ -149,7 +152,6 @@ app_ui <- function() {
                      ),
                      tabPanel("Help",
                               value = 0.4,
-
                      )
                    )
           ),
@@ -193,9 +195,6 @@ app_ui <- function() {
               )
             )
           ),
-
-
-          #Boxplots or violin plots per gene using {ggplotly} after user selects a gene.
           tabPanel("Gene Plots", value = 6,
                    #sub tab with forrest plots to compare across studies
                    tabsetPanel(
@@ -238,6 +237,10 @@ app_ui <- function() {
                 switchplotsHelpUI("switchplots_help")   # your full-width module,
               )
             )
+          ),
+          tabPanel(
+            "Biomarker Discovery", value = 9,
+            biomarkerMainUI("biomarkers")
           )
 
         )
