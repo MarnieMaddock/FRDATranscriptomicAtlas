@@ -20,5 +20,6 @@ pretty_map <- c(
   "Mishra_FF1"        = "Mishra (Neurons) – FF1",
   "Mishra_FF2"        = "Mishra (Neurons) – FF2",
   "Napierala"         = "Napierala (Fibroblasts)",
-  "Vilema"            = "Vilema-Enriquez (Fibroblasts)"
+  "Vilema"            = "Vilema-Enriquez (Fibroblasts)",
+  "Wang"              = "Wang (Fibroblasts)"
 )
