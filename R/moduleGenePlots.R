@@ -68,7 +68,8 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       "Maddock_NCC"  = "Maddock (Neural Crest Cells)",
       "Mishra"       = "Mishra (Neurons)",
       "Napierala"    = "Napierala (Fibroblasts)",
-      "Vilema"       = "Vilema-Enriquez (Fibroblasts)"
+      "Vilema"       = "Vilema-Enriquez (Fibroblasts)",
+      "Wang"         = "Wang (Fibroblasts)"
     )
     `%||%` <- function(a, b) if (is.null(a)) b else a
     pretty_label <- function(id) pretty_map[[id]] %||% id
@@ -201,9 +202,9 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
 
     parse_conditions <- function(df_ds) {
       ds <- unique(df_ds$dataset)
-      repnum <- suppressWarnings(as.integer(sub(".*_REP([0-9]+)$", "\\1", df_ds$sample)))
+      repnum <- suppressWarnings(as.integer(sub("(?i).*_rep([0-9]+)$", "\\1", df_ds$sample, perl = TRUE)))
+      cond   <- sub("(?i)_rep[0-9]+$", "", df_ds$sample, perl = TRUE)
       repnum[is.na(repnum)] <- NA_integer_
-      cond <- sub("_REP[0-9]+$", "", df_ds$sample)
       cond <- strip_dataset_prefix(cond, ds)
 
       if (identical(ds, "Maddock")) {

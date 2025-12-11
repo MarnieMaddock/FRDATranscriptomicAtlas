@@ -61,6 +61,8 @@ tpmHeatmapMainUI <- function(id) {
     br(), br(), br()
   )
 }
+
+
 # --- TPM/VST Heatmap: Server (metadata-aware, single vs multi dataset) ---
 tpmHeatmapServer <- function(
     id,
@@ -79,21 +81,15 @@ tpmHeatmapServer <- function(
 
     # ---------------- helpers ----------------
     # -------- Pretty map (internal default) --------
-    pretty_map  <- c(
-      "Erwin"        = "Erwin (Lymphoblastoid Cells)",
-      "Indelicato"   = "Indelicato (Skeletal Muscle)",
-      "Lai_iPSC"     = "Lai (iPSCs)",
-      "Lai_CNS"      = "Lai (CNS neurons)",
-      "Lai_PNS"      = "Lai (PNS neurons)",
-      "Lees"         = "Lees (Cardiomyocytes)",
-      "Maddock_LMN"  = "Maddock (Lower Motor Neurons)",
-      "Maddock_SN"   = "Maddock (Sensory Neurons)",
-      "Maddock_NCC"  = "Maddock (Neural Crest Cells)",
-      "Mishra"       = "Mishra (Neurons)",
-      "Napierala"    = "Napierala (Fibroblasts)",
-      "Vilema"       = "Vilema-Enriquez (Fibroblasts)"
+    pretty_map <- tryCatch(
+      get("pretty_map", envir = asNamespace(pkg)),
+      error = function(e) {
+        warning("pretty_map not found; using empty vector.")
+        character(0)
+      }
     )
-    pretty_map <- pretty_map %||% PRETTY_MAP_LOCAL
+
+    pretty_label <- function(id) pretty_map[[id]] %||% id
 
     sample_prefix_map <- list(
       Erwin        = "^Erwin_",
@@ -107,7 +103,8 @@ tpmHeatmapServer <- function(
       Maddock_NCC  = "^Maddock_.*NCC_",
       Mishra       = "^Mishra_",
       Napierala    = "^Napierala_",
-      Vilema       = "^Vilema_"
+      Vilema       = "^Vilema_",
+      Wang         = "^Wang_"
     )
 
     # ---- Define your dataset colour palette ----

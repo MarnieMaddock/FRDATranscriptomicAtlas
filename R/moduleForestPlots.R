@@ -239,7 +239,7 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
       Maddock_NCC_FA2="Maddock ML (*) - NCC FA2", Maddock_SN_FA1="Maddock ML (*) - SN FA1",
       Maddock_SN_FA2="Maddock ML (*) - SN FA2", Mishra_223="Mishra P (2024) - N 223",
       Mishra_850="Mishra P (2024) - N 850", Mishra_FF1="Mishra P (2024) - N FF1", Mishra_FF2="Mishra P (2024) - N FF2",
-      Napierala="Napierala JS (2017) - FB", Vilema="Vilema-Enríquez G (2020) - FB"
+      Napierala="Napierala JS (2017) - FB", Vilema="Vilema-Enríquez G (2020) - FB", Wang="Wang F (2022) - FB"
     )
 
     # ---------- models + outputs (unchanged) ------------------------------

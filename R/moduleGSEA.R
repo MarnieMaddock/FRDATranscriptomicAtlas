@@ -181,6 +181,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     dataset_key3 <- function(x) {
       b <- basename(x)
       b <- sub("\\.rds$", "", b)
+      b <- sub("_batchcorrection", "", b, ignore.case = TRUE)
       b <- sub("(_0\\.[0-9].*)$", "", b)  # strip trailing "_0.05_all_genes..." if present
       parts <- strsplit(b, "_", fixed = TRUE)[[1]]
       if (length(parts) >= 3) paste(parts[1:3], collapse = "_")

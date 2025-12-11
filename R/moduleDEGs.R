@@ -122,34 +122,22 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
 
     # ---------- dataset dropdown ----------
     `%||%` <- function(a,b) if (is.null(a)) b else a
-    pretty_map <- c(
-      "Erwin"             = "Erwin (Lymphoblastoid Cells)",
-      "Indelicato"        = "Indelicato (Skeletal Muscle)",
-      "Lai_iPSC"          = "Lai (iPSCs)",
-      "Lai_CNS"           = "Lai (CNS neurons)",
-      "Lai_PNS"           = "Lai (PNS neurons)",
-      "Lees_FA1"          = "Lees (Cardiomyocytes) - FA1",
-      "Lees_FA2"          = "Lees (Cardiomyocytes) - FA2",
-      "Lees_FA3"          = "Lees (Cardiomyocytes) - FA3",
-      "Maddock_LMN_FA2"   = "Maddock (Lower Motor Neurons) - FA2",
-      "Maddock_SN_FA1"    = "Maddock (Sensory Neurons) - FA1",
-      "Maddock_SN_FA2"    = "Maddock (Sensory Neurons) - FA2",
-      "Maddock_NCC_FA1"   = "Maddock (Neural Crest Cells) - FA1",
-      "Maddock_NCC_FA2"   = "Maddock (Neural Crest Cells) - FA2",
-      "Mishra_223"        = "Mishra (Neurons) - 223",
-      "Mishra_850"        = "Mishra (Neurons) - 850",
-      "Mishra_FF1"        = "Mishra (Neurons) - FF1",
-      "Mishra_FF2"        = "Mishra (Neurons) - FF2",
-      "Napierala"         = "Napierala (Fibroblasts)",
-      "Vilema"            = "Vilema-Enriquez (Fibroblasts)"
+    # --- load pretty_map from package namespace (internal object) ----------
+    pretty_map <- tryCatch(
+      get("pretty_map", envir = asNamespace(pkg)),
+      error = function(e) {
+        warning("pretty_map could not be found; using empty vector.")
+        character(0)
+      }
     )
+
 
     observe({
       m <- manifest()
       lvl <- input$feature_level %||% "genes"
       avail_ids <- sort(unique(m$dataset[m$level == lvl]))
 
-      pm_sub <- unname(pretty_map[avail_ids])
+      pm_sub <- pretty_map[avail_ids]
       pm_sub[is.na(pm_sub)] <- avail_ids[is.na(pm_sub)]
       labelled_choices <- stats::setNames(avail_ids, pm_sub)
 
