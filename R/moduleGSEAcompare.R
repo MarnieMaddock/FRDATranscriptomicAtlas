@@ -122,9 +122,22 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
 
     # map column names like "Lees_FA1_0.05_all_genes.rds" -> dataset id "Lees_FA1"
     col_to_dataset_id <- function(x) {
-      # strip trailing "_<p>_all_genes.rds" (e.g., _0.05_all_genes.rds)
-      sub("_0\\.[0-9]+_all_genes\\.rds$", "", x)
+
+      # Remove trailing pattern "_0.05_all_genes.rds"
+      id <- sub("_0\\.[0-9]+_all_genes\\.rds$", "", x)
+
+      # Remove unwanted batchcorrection suffix if present
+      id <- sub("_batchcorrection$", "", id)
+
+      # In case someone used plural or uppercase variants (optional but robust)
+      id <- sub("_batchCorrection$", "", id, ignore.case = TRUE)
+
+      # Ensure valid ID
+      if (!nzchar(id)) return(NA_character_)
+
+      id
     }
+
 
     dataset_ids <- reactive({
       ids <- vapply(dataset_cols(), col_to_dataset_id, "")
@@ -132,35 +145,24 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
     })
 
     # ---- pretty labels (reuse your mapping from DEG module) ----
-    pretty_map <- c(
-      "Erwin"             = "Erwin (Lymphoblastoid Cells)",
-      "Indelicato"        = "Indelicato (Skeletal Muscle)",
-      "Lai_iPSC"          = "Lai (iPSCs)",
-      "Lai_CNS"           = "Lai (CNS neurons)",
-      "Lai_PNS"           = "Lai (PNS neurons)",
-      "Lees_FA1"          = "Lees (Cardiomyocytes) – FA1",
-      "Lees_FA2"          = "Lees (Cardiomyocytes) – FA2",
-      "Lees_FA3"          = "Lees (Cardiomyocytes) – FA3",
-      "Maddock_LMN_FA2"   = "Maddock (Lower Motor Neurons) – FA2",
-      "Maddock_SN_FA1"    = "Maddock (Sensory Neurons) – FA1",
-      "Maddock_SN_FA2"    = "Maddock (Sensory Neurons) – FA2",
-      "Maddock_NCC_FA1"   = "Maddock (Neural Crest Cells) – FA1",
-      "Maddock_NCC_FA2"   = "Maddock (Neural Crest Cells) – FA2",
-      "Mishra_223"        = "Mishra (Neurons) – 223",
-      "Mishra_850"        = "Mishra (Neurons) – 850",
-      "Mishra_FF1"        = "Mishra (Neurons) – FF1",
-      "Mishra_FF2"        = "Mishra (Neurons) – FF2",
-      "Napierala"         = "Napierala (Fibroblasts)",
-      "Vilema"            = "Vilema-Enriquez (Fibroblasts)"
+    pretty_map <- tryCatch(
+      get("pretty_map", envir = asNamespace(pkg)),
+      error = function(e) {
+        warning("pretty_map not found in package namespace; using empty mapping.")
+        character(0)
+      }
     )
+
     pretty_label <- function(id) pretty_map[[id]] %||% id
 
     # ---- populate dataset choices ----
     observe({
       ids <- dataset_ids()
-      labs <- unname(pretty_map[ids]); labs[is.na(labs)] <- ids[is.na(labs)]
-      updateCheckboxGroupInput(session, "gsea_datasets",
-                               choices = stats::setNames(ids, labs))
+      labs <- vapply(ids, pretty_label, character(1))
+      updateCheckboxGroupInput(
+        session, "gsea_datasets",
+        choices = stats::setNames(ids, labs)
+      )
     })
 
     # ---- build term sets per dataset given direction ----
@@ -318,7 +320,7 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
                     "both" = sig_count)
 
       # rename dataset columns to pretty labels for display
-      pretty_names <- stats::setNames(vapply(want_raw, pretty_label, "", USE.NAMES = FALSE), want_cols)
+      pretty_names <- stats::setNames(vapply(want_raw, pretty_label, character(1)), want_cols)
       names(sub)[match(want_cols, names(sub))] <- unname(pretty_names)
 
       # assemble output
