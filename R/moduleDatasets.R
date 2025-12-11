@@ -12,6 +12,7 @@ datasetsUI <- function(id) {
         <strong>Group definitions:</strong><br>
         * = FRDA = patient-derived; CTRL = healthy sibling<br>
         † = FRDA = patient-derived; CTRL = matched control<br>
+        ∴ = FRDA = patient-derived; CTRL = wild-type control<br>
         ‡ = FRDA = patient-derived; CTRL = unaffected control<br>
         § = FRDA = patient-derived; IC = isogenic control<br>
         ¶ = FRDA = patient-derived; IC = isogenic control (GAA excision, or GAA expansion replaced by healthy allele (E35))<br>
@@ -62,7 +63,8 @@ datasetsServer <- function(id) {
       "Maddock ML (*)",   "",            "",           "iPSC-derived neural crest cells; sensory neurons; lower motor neurons",                                 "NCC: FRDA (N = 2, n = 4–5); IC (N = 2, n = 4); SN: FRDA (N = 2, n = 4–5); IC (N = 2, n = 4–5); LMN: FRDA (N = 1, n = 4); IC (N = 1, n = 4) §",         "Shared by authors; accession pending",                                                                          "",
       "Mishra P (2024)",  "PRJNA1025300","GSE244886",  "iPSC-derived neurons",                                                                                   "FRDA (N = 4, n = 2–4); IC (N = 4, n = 2–4) ¶",                                                                  "Gene editing improves endoplasmic reticulum-mitochondrial contacts and unfolded protein response in Friedreich’s ataxia iPSC-derived neurons",   "https://pmc.ncbi.nlm.nih.gov/articles/PMC10899513/",
       "Napierala JS (2017)","PRJNA412241","GSE104288", "Primary fibroblasts",                                                                                    "FRDA (N = 18, n = 1); CTRL (N = 17, n = 1) ‡",                                                                 "Comprehensive analysis of gene expression patterns in Friedreich's ataxia fibroblasts by RNA sequencing reveals altered levels of protein synthesis factors and solute carriers", "https://pmc.ncbi.nlm.nih.gov/articles/PMC5719256/",
-      "Vilema-Enriquez G (2020)","PRJNA606059","GSE145115","Primary fibroblasts",                                                                                "FRDA (N = 1, n = 3); CTRL (N = 1, n = 3) ‡",                                                                   "Inhibition of the SUV4-20 H1 histone methyltransferase increases frataxin expression in Friedreich's ataxia patient cells",                      "https://pmc.ncbi.nlm.nih.gov/articles/PMC7939392/"
+      "Vilema-Enriquez G (2020)","PRJNA606059","GSE145115","Primary fibroblasts",                                                                                "FRDA (N = 1, n = 3); CTRL (N = 1, n = 3) ‡",                                                                   "Inhibition of the SUV4-20 H1 histone methyltransferase increases frataxin expression in Friedreich's ataxia patient cells",                      "https://pmc.ncbi.nlm.nih.gov/articles/PMC7939392/",
+      "Wang F (2022)", "PRJNA846268", "GSE205526", "Primary fibroblasts",                                                                                       "FRDA (N = 1, n = 3); CTRL (N = 1, n = 3) ∴",                                       "G-rich motifs within phosphorothioate-based antisense oligonucleotides (ASOs) drive activation of FXN expression through indirect effects",                        "https://pmc.ncbi.nlm.nih.gov/articles/PMC9825156/"
     )
 
     # ---- build linkified columns ----
@@ -85,7 +87,7 @@ datasetsServer <- function(id) {
         rownames = FALSE,
         options = list(
           dom = "Bfrtip",
-          pageLength = 8,
+          pageLength = 10,
           buttons = c("copy", "excel"),
           scrollX = TRUE
         ),
