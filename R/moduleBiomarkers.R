@@ -116,6 +116,24 @@ biomarkerServer <- function(id,
       baseline_long %>% filter(study %in% input$datasets)
     })
 
+    threshold_valid <- reactive({
+      req(input$datasets)
+
+      n_ds <- length(input$datasets)
+
+      validate(
+        need(
+          input$min_study_count <= n_ds,
+          paste0(
+            "Dataset significance threshold (", input$min_study_count,
+            ") exceeds the number of selected datasets (", n_ds, ")."
+          )
+        )
+      )
+
+      TRUE
+    })
+
     # ============================================================
     # Parse comma-separated gene list (QUERY MODE)
     # ============================================================
@@ -135,9 +153,10 @@ biomarkerServer <- function(id,
     # ============================================================
     ranked_genes <- reactive({
       req(input$gene_mode == "discover")
-
+      req(threshold_valid())
       df <- filtered_baseline()
       min_n <- input$min_study_count %||% 8
+
 
       top_up <- df %>%
         filter(!is.na(padj), padj <= alpha(), log2FoldChange > 0) %>%
@@ -184,6 +203,7 @@ biomarkerServer <- function(id,
     # Build heat_df
     # ============================================================
     heat_df <- reactive({
+      req(threshold_valid())
       genes <- selected_genes()
       req(genes)
 
@@ -193,7 +213,7 @@ biomarkerServer <- function(id,
           direction = case_when(
             is.na(padj) ~ "Filtered (no adjusted p-value)",
             padj < alpha() & log2FoldChange > 0 ~ "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
-            padj < alpha() & log2FoldChange < 0 ~ "Downregualted in FRDA (FDR < 0.05, log2FC < 0)",
+            padj < alpha() & log2FoldChange < 0 ~ "Downregulated in FRDA (FDR < 0.05, log2FC < 0)",
             TRUE ~ "Not significant (FDR ≥ 0.05)"
           ),
           gene_lab = factor(gene_name),
@@ -218,29 +238,28 @@ biomarkerServer <- function(id,
     # Gene ordering
     # ============================================================
     heat_df_reordered <- reactive({
+      req(threshold_valid())
       df <- heat_df()
 
       if (input$gene_mode == "query") {
+
         ord <- feature_query()
+
       } else {
+
         ord <- df %>%
-          filter(direction %in% c(
-            "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
-            "Downregualted in FRDA (FDR < 0.05, log2FC < 0)"
-          )) %>%
-          count(gene_lab, direction) %>%
-          tidyr::complete(
-            gene_lab,
-            direction = c(
-              "Downregualted in FRDA (FDR < 0.05, log2FC < 0)",
-              "Upregulated in FRDA (FDR < 0.05, log2FC > 0)"
+          summarise(
+            up = sum(
+              direction == "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
+              na.rm = TRUE
             ),
-            fill = list(n = 0)
+            down = sum(
+              direction == "Downregulated in FRDA (FDR < 0.05, log2FC < 0)",
+              na.rm = TRUE
+            ),
+            .by = gene_lab
           ) %>%
-          tidyr::pivot_wider(names_from = direction, values_from = n) %>%
-          mutate(score =
-                   `Downregualted in FRDA (FDR < 0.05, log2FC < 0)` -
-                   `Upregulated in FRDA (FDR < 0.05, log2FC > 0)`) %>%
+          mutate(score = down - up) %>%
           arrange(desc(score), gene_lab) %>%
           pull(gene_lab)
       }
@@ -248,10 +267,13 @@ biomarkerServer <- function(id,
       df %>% mutate(gene_lab = factor(gene_lab, levels = ord))
     })
 
+
+
     # ============================================================
     # Plot sizing
     # ============================================================
     plot_height <- reactive({
+      req(threshold_valid())
       df <- heat_df_reordered()
       req(nrow(df) > 0)
 
@@ -278,7 +300,7 @@ biomarkerServer <- function(id,
     # Plot
     # ============================================================
     combined_plot_obj <- reactive({
-
+      req(threshold_valid())
       df <- heat_df_reordered()
       req(nrow(df) > 0)
 
@@ -286,7 +308,7 @@ biomarkerServer <- function(id,
       # Colours
       # ------------------------------------------------------------
       dir_cols <- c(
-        "Downregualted in FRDA (FDR < 0.05, log2FC < 0)"    = "#00B7C7",
+        "Downregulated in FRDA (FDR < 0.05, log2FC < 0)"    = "#00B7C7",
         "Upregulated in FRDA (FDR < 0.05, log2FC > 0)"       = "#DC267F",
         "Not significant (FDR ≥ 0.05)"      = "gray60",
         "Filtered (no adjusted p-value)"         = "gray80"
@@ -345,7 +367,7 @@ biomarkerServer <- function(id,
         "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
         "Not significant (FDR ≥ 0.05)",
         "Filtered (no adjusted p-value)",
-        "Downregualted in FRDA (FDR < 0.05, log2FC < 0)"
+        "Downregulated in FRDA (FDR < 0.05, log2FC < 0)"
       )
 
       counts_long <- df %>%
@@ -402,12 +424,28 @@ biomarkerServer <- function(id,
         )
     })
 
+
     output$combined_plot <- renderPlot({
+
+      req(input$datasets)
+
+      n_ds <- length(input$datasets)
+
+      validate(
+        need(
+          input$min_study_count <= n_ds,
+          paste0(
+            "Dataset significance threshold (", input$min_study_count,
+            ") exceeds the number of selected datasets (", n_ds, ").\n\n",
+            "Lower the slider or select more datasets."
+          )
+        )
+      )
+
       combined_plot_obj()
-    },
-    height = plot_height,
-    width  = plot_width
-    )
+
+    }, height = plot_height, width = plot_width)
+
 
     # ============================================================
     # Downloads
@@ -419,14 +457,27 @@ biomarkerServer <- function(id,
       }
     )
 
+    px_to_in <- function(px, dpi = 96) px / dpi
+
     output$download_plot <- downloadHandler(
       filename = function() "biomarker_plot.svg",
       content = function(file) {
-        svg(file, width = 14, height = 14)
+
+        # Use the SAME dimensions as the on-screen plot
+        w_in <- px_to_in(plot_width())
+        h_in <- px_to_in(plot_height())
+
+        svg(
+          file,
+          width  = w_in,
+          height = h_in
+        )
+
         print(combined_plot_obj())
         dev.off()
       }
     )
+
 
 
   })
