@@ -2,13 +2,30 @@ biomarkerUI <- function(id) {
   ns <- NS(id)
   tagList(
     h4("Biomarker Discovery"),
-
     checkboxGroupInput(
       ns("datasets"),
-      label = "Datasets (select any number)",
+      label = "Datasets",
       choices = character(0)   # populated dynamically
     ),
+    br(),
+    h4("Gene selection mode"),
+    radioButtons(
+      ns("gene_mode"),
+      label = "",
+      choices = c(
+        "Discover top transcriptomic biomarkers" = "discover",
+        "Plot specified genes" = "query"
+      ),
+      selected = "discover",
+      inline = TRUE
+    ),
 
+    textAreaInput(
+      ns("feature_query"),
+      label = "Specify Genes",
+      placeholder = "FXN, PIP5K1B, RPS29 …",
+      rows = 4
+    ),
     hr(),
     sliderInput(
       ns("min_study_count"),
@@ -17,12 +34,15 @@ biomarkerUI <- function(id) {
       value = 8, step = 1
     ),
     helpText("A gene is included only if it is significant in more than this number of datasets."),
+    br(),
     selectInput(
       ns("alpha"),
       "Adjusted p-value threshold:",
       choices = c("0.10", "0.05", "0.01", "0.001"),
       selected = "0.05"
     ),
+    br(),
+    helpText("Comma-separated gene symbols or Ensembl IDs. Leave blank to include all ranked genes."),
     br(),
     downloadButton(ns("download_data"), "Download Ranked Genes"),
     downloadButton(ns("download_plot"), "Download Figure")
@@ -44,6 +64,7 @@ biomarkerMainUI <- function(id, pkg = utils::packageName()) {
   )
 }
 
+
 biomarkerServer <- function(id,
                             baseline_long_path = system.file(
                               "extdata/biomarker/baseline_long.rds",
@@ -52,68 +73,69 @@ biomarkerServer <- function(id,
                             pkg = utils::packageName()) {
 
   moduleServer(id, function(input, output, session) {
+
     ns <- session$ns
+    `%||%` <- function(x, y) if (is.null(x)) y else x
 
     # ============================================================
     # Load data
     # ============================================================
-    baseline_long <- readRDS(baseline_long_path)
-    baseline_long <- baseline_long %>%
+    baseline_long <- readRDS(baseline_long_path) %>%
       mutate(study = gsub("_batchcorrection$", "", study))
 
-
-    alpha <- reactive({
-      as.numeric(input$alpha %||% 0.05)
-    })
-
+    alpha <- reactive(as.numeric(input$alpha %||% 0.05))
 
     # ============================================================
-    # Load pretty_map safely
+    # pretty_map
     # ============================================================
-    `%||%` <- function(x, y) if (is.null(x)) y else x
-
     pretty_map <- tryCatch(
       get("pretty_map", envir = asNamespace(pkg)),
-      error = function(e) {
-        warning("pretty_map not found; using empty vector.")
-        character(0)
-      }
+      error = function(e) character(0)
     )
 
-    # vectorised label function
     pretty_label <- function(ids) {
       out <- pretty_map[ids]
       out[is.na(out)] <- ids[is.na(out)]
-      return(out)
+      out
     }
 
     # ============================================================
-    # Populate dataset choices (checkboxGroupInput)
+    # Dataset selector
     # ============================================================
     observe({
       avail <- sort(unique(baseline_long$study))
-      labs  <- pretty_label(avail)
-
       updateCheckboxGroupInput(
         session, "datasets",
-        choices  = stats::setNames(avail, labs),
-        selected = avail   # default: all datasets included
+        choices  = setNames(avail, pretty_label(avail)),
+        selected = avail
       )
     })
 
-    # ============================================================
-    # Filter baseline_long by selected datasets
-    # ============================================================
     filtered_baseline <- reactive({
       req(input$datasets)
       baseline_long %>% filter(study %in% input$datasets)
     })
 
+    # ============================================================
+    # Parse comma-separated gene list (QUERY MODE)
+    # ============================================================
+    feature_query <- reactive({
+      if (input$gene_mode != "query") return(NULL)
+
+      q <- input$feature_query
+      if (is.null(q) || q == "") return(character(0))
+
+      feats <- unlist(strsplit(q, "[,\\n]+"))
+      feats <- trimws(feats)
+      feats[feats != ""]
+    })
 
     # ============================================================
-    # 1. Gene ranking
+    # DISCOVERY MODE: ranked genes
     # ============================================================
-    rank_df <- reactive({
+    ranked_genes <- reactive({
+      req(input$gene_mode == "discover")
+
       df <- filtered_baseline()
       min_n <- input$min_study_count %||% 8
 
@@ -129,37 +151,56 @@ biomarkerServer <- function(id,
         count(gene_id, gene_name, name = "n_studies") %>%
         filter(n_studies > min_n)
 
-
       bind_rows(top_up, top_down) %>%
-        distinct(gene_id, .keep_all = TRUE) %>%
-        mutate(direction = if_else(gene_id %in% top_up$gene_id, "Up", "Down")) %>%
-        relocate(gene_id, gene_name)
+        distinct(gene_id, gene_name)
     })
 
+    # ============================================================
+    # QUERY MODE: exact user genes
+    # ============================================================
+    queried_genes <- reactive({
+      req(input$gene_mode == "query")
+
+      feats <- feature_query()
+      if (length(feats) == 0) return(NULL)
+
+      filtered_baseline() %>%
+        filter(
+          toupper(gene_name) %in% toupper(feats) |
+            toupper(gene_id)   %in% toupper(feats)
+        ) %>%
+        distinct(gene_id, gene_name)
+    })
 
     # ============================================================
-    # 2. Build heat_df
+    # Unified gene set
+    # ============================================================
+    selected_genes <- reactive({
+      if (input$gene_mode == "discover") ranked_genes()
+      else queried_genes()
+    })
+
+    # ============================================================
+    # Build heat_df
     # ============================================================
     heat_df <- reactive({
+      genes <- selected_genes()
+      req(genes)
 
-      df  <- filtered_baseline()
-      rnk <- rank_df()
-
-      df <- df %>%
-        semi_join(rnk, by = "gene_id") %>%
+      df <- filtered_baseline() %>%
+        semi_join(genes, by = "gene_id") %>%
         mutate(
           direction = case_when(
-            is.na(padj) ~ "No p-value (filtered)",
-            padj < alpha() & log2FoldChange > 0 ~ "p < 0.05, log2FC > 0 (Up)",
-            padj < alpha() & log2FoldChange < 0 ~ "p < 0.05, log2FC < 0 (Down)",
-            TRUE ~ "p ≥ 0.05 (Not significant)"
+            is.na(padj) ~ "Filtered (no adjusted p-value)",
+            padj < alpha() & log2FoldChange > 0 ~ "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
+            padj < alpha() & log2FoldChange < 0 ~ "Downregualted in FRDA (FDR < 0.05, log2FC < 0)",
+            TRUE ~ "Not significant (FDR ≥ 0.05)"
           ),
-          gene_lab = factor(gene_name, levels = rnk$gene_name),
-          outline_class = case_when(
-            is.na(log2FoldChange) ~ "NA",
-            log2FoldChange > 0    ~ "Positive",
-            log2FoldChange < 0    ~ "Negative",
-            log2FoldChange == 0   ~ "Zero"
+          gene_lab = factor(gene_name),
+          outline_class = dplyr::case_when(
+            log2FoldChange > 0    ~ "Higher in FRDA",
+            log2FoldChange < 0    ~ "Lower in FRDA",
+            TRUE   ~ "No change"
           ),
           study        = factor(study, levels = input$datasets),
           study_pretty = factor(pretty_label(study),
@@ -168,54 +209,56 @@ biomarkerServer <- function(id,
                            abs(log2FoldChange), 0)
         )
 
-      lfc_cap <- quantile(df$abs_lfc, 0.99, na.rm = TRUE)
-      df$size_scaled <- pmin(df$abs_lfc, lfc_cap)
-
+      cap <- quantile(df$abs_lfc, 0.99, na.rm = TRUE)
+      df$size_scaled <- pmin(df$abs_lfc, cap)
       df
     })
 
-
     # ============================================================
-    # 3. Reorder genes by (down - up) score
+    # Gene ordering
     # ============================================================
     heat_df_reordered <- reactive({
-
       df <- heat_df()
 
-      gene_levels <- df %>%
-        filter(direction %in% c(
-          "p < 0.05, log2FC > 0 (Up)",
-          "p < 0.05, log2FC < 0 (Down)"
-        )) %>%
-        count(gene_lab, direction, name = "n") %>%
-        tidyr::complete(
-          gene_lab,
-          direction = c(
-            "p < 0.05, log2FC < 0 (Down)",
-            "p < 0.05, log2FC > 0 (Up)"
-          ),
-          fill = list(n = 0)
-        ) %>%
-        tidyr::pivot_wider(names_from = direction, values_from = n) %>%
-        mutate(score = `p < 0.05, log2FC < 0 (Down)` -
-                 `p < 0.05, log2FC > 0 (Up)`) %>%
-        arrange(desc(score), gene_lab) %>%
-        pull(gene_lab)
+      if (input$gene_mode == "query") {
+        ord <- feature_query()
+      } else {
+        ord <- df %>%
+          filter(direction %in% c(
+            "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
+            "Downregualted in FRDA (FDR < 0.05, log2FC < 0)"
+          )) %>%
+          count(gene_lab, direction) %>%
+          tidyr::complete(
+            gene_lab,
+            direction = c(
+              "Downregualted in FRDA (FDR < 0.05, log2FC < 0)",
+              "Upregulated in FRDA (FDR < 0.05, log2FC > 0)"
+            ),
+            fill = list(n = 0)
+          ) %>%
+          tidyr::pivot_wider(names_from = direction, values_from = n) %>%
+          mutate(score =
+                   `Downregualted in FRDA (FDR < 0.05, log2FC < 0)` -
+                   `Upregulated in FRDA (FDR < 0.05, log2FC > 0)`) %>%
+          arrange(desc(score), gene_lab) %>%
+          pull(gene_lab)
+      }
 
-      df %>% mutate(gene_lab = factor(gene_lab, levels = gene_levels))
+      df %>% mutate(gene_lab = factor(gene_lab, levels = ord))
     })
 
-
-
     # ============================================================
-    # 4. Combined plot (heatmap + barplot)
+    # Plot sizing
     # ============================================================
     plot_height <- reactive({
       df <- heat_df_reordered()
+      req(nrow(df) > 0)
+
       n_genes <- length(unique(df$gene_lab))
 
       # pixels per gene row
-      per_gene <- 20
+      per_gene <- 25
 
       # compute base height
       h <- n_genes * per_gene
@@ -223,34 +266,35 @@ biomarkerServer <- function(id,
       # enforce min/max bounds
       h <- max(400, min(h, 3000))
 
-      return(h)
+      h
     })
 
     plot_width <- reactive({
       n_ds <- length(input$datasets)
-      w <- max(800, n_ds * 70)
-      return(w)
+      max(800, n_ds * 70)
     })
 
-    output$combined_plot <- renderPlot({
+    # ============================================================
+    # Plot
+    # ============================================================
+    combined_plot_obj <- reactive({
 
       df <- heat_df_reordered()
+      req(nrow(df) > 0)
 
       # ------------------------------------------------------------
       # Colours
       # ------------------------------------------------------------
       dir_cols <- c(
-        "p < 0.05, log2FC < 0 (Down)"     = "#00B7C7",
-        "p < 0.05, log2FC > 0 (Up)"       = "#DC267F",
-        "p ≥ 0.05 (Not significant)"      = "gray60",
-        "No p-value (filtered)"           = "gray80"
+        "Downregualted in FRDA (FDR < 0.05, log2FC < 0)"    = "#00B7C7",
+        "Upregulated in FRDA (FDR < 0.05, log2FC > 0)"       = "#DC267F",
+        "Not significant (FDR ≥ 0.05)"      = "gray60",
+        "Filtered (no adjusted p-value)"         = "gray80"
       )
-
       outline_cols <- c(
-        "Positive" = "black",
-        "Negative" = "transparent",
-        "Zero"     = "grey50",
-        "NA"       = "grey80"
+        "Higher in FRDA" = "black",
+        "Lower in FRDA" = "transparent",
+        "No change"     = "grey50"
       )
 
       # ------------------------------------------------------------
@@ -264,20 +308,20 @@ biomarkerServer <- function(id,
         ) +
         scale_fill_manual(
           values = dir_cols,
-          name   = "DE Category",
+          name   = "Differential expression",
           guide  = guide_legend(
             override.aes = list(shape = 21, size = 6, stroke = 0.3)
           )
         ) +
         scale_colour_manual(
           values = outline_cols,
-          name   = "Direction (log2FC)",
+          name   = expression("Direction of log"[2]*"FC change"),
           guide  = guide_legend(
             override.aes = list(fill = "white", shape = 21, size = 6, stroke = 1)
           )
         ) +
         scale_size_continuous(
-          name = "abs(log2FC)",
+          name = expression("Effect size ("* "|" *"log"[2]*"FC|)"),
           range = c(2, 10),
           guide = guide_legend(
             override.aes = list(shape = 21, fill = "grey60")
@@ -290,18 +334,18 @@ biomarkerServer <- function(id,
           axis.text.x = element_text(angle = 45, hjust = 1, color = "black"),
           axis.text.y = element_text(face = "italic", color = "black"),
           legend.title = element_text(color = "black"),
-          legend.text  = element_text(color = "black")
-        )
-
-
+          legend.text  = element_text(color = "black"),
+          plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
+        ) +
+        scale_y_discrete(expand = expansion(add = c(0.7, 1)))
       # ------------------------------------------------------------
       # Bar counts for each gene
       # ------------------------------------------------------------
       direction_levels <- c(
-        "p < 0.05, log2FC > 0 (Up)",
-        "p ≥ 0.05 (Not significant)",
-        "No p-value (filtered)",
-        "p < 0.05, log2FC < 0 (Down)"
+        "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
+        "Not significant (FDR ≥ 0.05)",
+        "Filtered (no adjusted p-value)",
+        "Downregualted in FRDA (FDR < 0.05, log2FC < 0)"
       )
 
       counts_long <- df %>%
@@ -336,8 +380,10 @@ biomarkerServer <- function(id,
           panel.grid.major.y = element_blank(),
           axis.text.y = element_blank(),
           axis.text.x = element_text(color = "black"),
-          axis.title.x = element_text(color = "black")
+          axis.title.x = element_text(color = "black"),
+          plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
         ) +
+        scale_y_discrete(expand = expansion(add = c(0.7, 1))) +
         geom_text(
           data = dplyr::filter(counts_long, n > 0),
           aes(label = n),
@@ -346,26 +392,30 @@ biomarkerServer <- function(id,
           color = "black"
         )
 
-
       # ------------------------------------------------------------
       # Combined figure
       # ------------------------------------------------------------
-      p_heat + p_bar + patchwork::plot_layout(
-        widths = c(2, 0.5),
-        guides = "collect"
-      )
-    }, height = plot_height, width = plot_width)
+      p_heat + p_bar +
+        patchwork::plot_layout(
+          widths = c(2, 0.5),
+          guides = "collect"
+        )
+    })
 
-
-
+    output$combined_plot <- renderPlot({
+      combined_plot_obj()
+    },
+    height = plot_height,
+    width  = plot_width
+    )
 
     # ============================================================
-    # 6. Downloads
+    # Downloads
     # ============================================================
     output$download_data <- downloadHandler(
-      filename = function() "biomarker_gene_rank.csv",
+      filename = function() "biomarker_genes.csv",
       content = function(file) {
-        write.csv(rank_df(), file, row.names = FALSE)
+        write.csv(selected_genes(), file, row.names = FALSE)
       }
     )
 
@@ -373,11 +423,11 @@ biomarkerServer <- function(id,
       filename = function() "biomarker_plot.svg",
       content = function(file) {
         svg(file, width = 14, height = 14)
-        print(output$combined_plot())
+        print(combined_plot_obj())
         dev.off()
       }
     )
 
+
   })
 }
-
