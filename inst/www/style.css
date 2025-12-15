@@ -312,3 +312,14 @@ input[type="text"]:active {
   background: #ddd !important;
 }
 
+
+/* === Text input & textarea focus: make green instead of purple === */
+
+textarea:focus,
+input[type="text"]:focus,
+input[type="search"]:focus {
+  border-color: #2a776d !important;   /* your green */
+  box-shadow: 0 0 0 0.2rem rgba(42, 119, 109, 0.25) !important;
+  outline: none !important;
+}
+
