@@ -63,6 +63,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       "Lai_CNS"      = "Lai (CNS neurons)",
       "Lai_PNS"      = "Lai (PNS neurons)",
       "Lees"         = "Lees (Cardiomyocytes)",
+      "Li"           = "Li (Cardiomyocytes)",
       "Maddock_LMN"  = "Maddock (Lower Motor Neurons)",
       "Maddock_SN"   = "Maddock (Sensory Neurons)",
       "Maddock_NCC"  = "Maddock (Neural Crest Cells)",

@@ -10,6 +10,8 @@ pretty_map <- c(
   "Lees_FA1"          = "Lees (Cardiomyocytes) – FA1",
   "Lees_FA2"          = "Lees (Cardiomyocytes) – FA2",
   "Lees_FA3"          = "Lees (Cardiomyocytes) – FA3",
+  "Li_FRDA_CTRL"      = "Li (Cardiomyocytes^)",
+  "Li_FRDA_IC"        = "Li (Cardiomyocytes#)",
   "Maddock_LMN_FA2"   = "Maddock (Lower Motor Neurons) – FA2",
   "Maddock_SN_FA1"    = "Maddock (Sensory Neurons) – FA1",
   "Maddock_SN_FA2"    = "Maddock (Sensory Neurons) – FA2",
