@@ -6,7 +6,7 @@ genePlotsSidebarUI <- function(id) {
     h4("Gene plots"),
     checkboxGroupInput(
       ns("gp_datasets"),
-      label   = "Datasets (select any number)",
+      label   = "Datasets",
       choices = character(0)   # filled by server
     ),
     helpText("You may select multiple datasets only within the same study as TPMs are not comparable across studies."),
@@ -57,6 +57,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
 
     # ----- Pretty labels matching file base names -----
     pretty_map  <- c(
+      "Chutake"      = "Chutake (Lymphoblastoid Cells)",
       "Erwin"        = "Erwin (Lymphoblastoid Cells)",
       "Indelicato"   = "Indelicato (Skeletal Muscle)",
       "Lai_iPSC"     = "Lai (iPSCs)",

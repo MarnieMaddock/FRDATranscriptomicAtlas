@@ -2,6 +2,7 @@
 #' @keywords internal
 #' #mapping of datasets to pretty names
 pretty_map <- c(
+  "Chutake"           = "Chutake (Lymphoblastoid Cells)",
   "Erwin"             = "Erwin (Lymphoblastoid Cells)",
   "Indelicato"        = "Indelicato (Skeletal Muscle)",
   "Lai_iPSC"          = "Lai (iPSCs)",

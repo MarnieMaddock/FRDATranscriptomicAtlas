@@ -80,6 +80,7 @@ tpmHeatmapServer <- function(
     # ---------------- helpers ----------------
     # -------- Pretty map (internal default) --------
     pretty_map  <- c(
+      "Chutake"      = "Chutake (Lymphoblastoid Cells)",
       "Erwin"        = "Erwin (Lymphoblastoid Cells)",
       "Indelicato"   = "Indelicato (Skeletal Muscle)",
       "Lai_iPSC"     = "Lai (iPSCs)",
@@ -98,6 +99,7 @@ tpmHeatmapServer <- function(
     pretty_map <- pretty_map %||% PRETTY_MAP_LOCAL
 
     sample_prefix_map <- list(
+      Chutake      = "^Chutake_",
       Erwin        = "^Erwin_",
       Indelicato   = "^Indelicato_",
       Lai_CNS      = "^Lai_.*_CNS_",

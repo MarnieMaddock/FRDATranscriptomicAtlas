@@ -232,6 +232,7 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
 
     # ---------- pretty study labels (unchanged) ---------------------------
     study_labels <- c(
+      Chutake="Chutake YK (2014) - LCL",
       Erwin="Erwin GS (2017) - LCL", Indelicato="Indelicato E (2023) - SM",
       Lai_CNS="Lai J (2018) - CNS", Lai_PNS="Lai J (2018) - PNS", Lai_iPSC="Lai J (2018) - iPSC",
 
