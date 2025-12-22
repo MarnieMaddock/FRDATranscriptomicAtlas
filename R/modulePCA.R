@@ -83,45 +83,86 @@ pcaServer <- function(id,
     # Load and merge (intersect genes across selections)
     merged_input <- reactive({
       req(input$picked)
+
       paths  <- as.character(input$picked)
       objs   <- lapply(paths, readRDS)
       labels <- sub("_pca_input\\.rds$", "", basename(paths))
 
+      ## --------------------------------------------------
+      ## SINGLE DATASET → standard VST PCA
+      ## --------------------------------------------------
       if (length(objs) == 1L) {
         X <- objs[[1]]$vsd_mat
         M <- as.data.frame(objs[[1]]$meta)
         M$.dataset <- labels[1]
+
         if (anyDuplicated(rownames(M))) {
           rn <- make.unique(rownames(M))
           rownames(M) <- rn
           colnames(X) <- rn
         }
+
         return(list(vsd_mat = X, meta = M, files = labels))
       }
 
-      genes_common <- Reduce(intersect, lapply(objs, \(o) rownames(o$vsd_mat)))
+      ## --------------------------------------------------
+      ## MULTIPLE DATASETS → intersect genes
+      ## --------------------------------------------------
+      genes_common <- Reduce(intersect, lapply(objs, function(o) rownames(o$vsd_mat)))
+
       if (length(genes_common) < 200) {
-        warning("Very small gene intersection (", length(genes_common), "). PCA may be unstable.")
+        warning(
+          "Very small gene intersection (", length(genes_common),
+          "). PCA may be unstable."
+        )
       }
 
       mats  <- list()
       metas <- list()
+
+      ## --------------------------------------------------
+      ## Z-score WITHIN each dataset, then combine
+      ## --------------------------------------------------
       for (i in seq_along(objs)) {
-        Xi <- objs[[i]]$vsd_mat[genes_common, , drop = FALSE]
+
+        # subset to common genes
+        Xi_raw <- objs[[i]]$vsd_mat[genes_common, , drop = FALSE]
+
+        # gene-wise Z-scoring WITHIN this dataset
+        Xi <- t(scale(t(Xi_raw)))
+        Xi[is.na(Xi)] <- 0
+
+        # metadata
         Mi <- as.data.frame(objs[[i]]$meta)
-        new_ids <- paste0(labels[i], "_", colnames(Xi))  # keep IDs unique
+
+        # keep sample IDs unique
+        new_ids <- paste0(labels[i], "_", colnames(Xi))
         colnames(Xi) <- new_ids
         rownames(Mi) <- new_ids
         Mi$.dataset  <- labels[i]
+
         mats[[i]]  <- Xi
         metas[[i]] <- Mi
       }
+
+      ## --------------------------------------------------
+      ## Combine datasets
+      ## --------------------------------------------------
       Xall <- do.call(cbind, mats)
       Mall <- dplyr::bind_rows(metas)
       Mall <- Mall[colnames(Xall), , drop = FALSE]
 
       list(vsd_mat = Xall, meta = Mall, files = labels)
     })
+
+
+    ## Decide PCA input matrix (VST vs Z-scored)
+    pca_matrix <- reactive({
+      X <- merged_input()$vsd_mat
+      req(ncol(X) >= 2)
+      X
+    })
+
 
     # Aesthetic fields (categorical-ish)
     meta_cols <- reactive({
@@ -150,10 +191,8 @@ pcaServer <- function(id,
 
     # PCA
     pr_obj <- reactive({
-      X <- merged_input()$vsd_mat
-      validate(need(ncol(X) >= 2, "Need at least two samples to compute PCA."))
       set.seed(1234)
-      prcomp(t(X), center = TRUE, scale. = FALSE)
+      prcomp(t(pca_matrix()), center = TRUE, scale. = FALSE)
     })
 
     percent_var <- reactive({
@@ -175,25 +214,41 @@ pcaServer <- function(id,
       df <- scores_df()
       aes_color <- rlang::sym(input$color_var)
 
+      p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2, colour = !!aes_color))
+
       if (!is.null(input$shape_var) && input$shape_var != "None") {
         aes_shape <- rlang::sym(input$shape_var)
-        p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2, colour = !!aes_color, shape = !!aes_shape)) +
-          ggplot2::geom_point(size = input$pt_size, alpha = 0.9)
-      } else {
-        p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2, colour = !!aes_color)) +
-          ggplot2::geom_point(size = input$pt_size, alpha = 0.9)
+        p <- p + ggplot2::aes(shape = !!aes_shape)
       }
 
+      p <- p + ggplot2::geom_point(size = input$pt_size, alpha = 0.9)
+
       if (isTRUE(input$label_points)) {
-        p <- p + ggrepel::geom_text_repel(ggplot2::aes(label = sample_id), size = 3, max.overlaps = 50)
+        p <- p + ggrepel::geom_text_repel(
+          ggplot2::aes(label = sample_id),
+          size = 3,
+          max.overlaps = 50
+        )
       }
+
       if (isTRUE(input$draw_ellipses)) {
-        p <- p + ggplot2::stat_ellipse(ggplot2::aes(group = !!aes_color), level = 0.95, linetype = 2)
+        p <- p + ggplot2::stat_ellipse(
+          ggplot2::aes(group = !!aes_color),
+          level = 0.95,
+          linetype = 2
+        )
       }
 
       pv <- percent_var()
+      title_txt <- if (length(input$picked) == 1L) {
+        "PCA (VST)"
+      } else {
+        "PCA (Z-scored, shared genes)"
+      }
+
       p <- p +
         ggplot2::labs(
+          title = title_txt,
           x = sprintf("PC1 (%.2f%%)", pv[1]),
           y = sprintf("PC2 (%.2f%%)", pv[2]),
           color = input$color_var,
@@ -201,21 +256,32 @@ pcaServer <- function(id,
         ) +
         ggplot2::theme_classic(base_size = 14)
 
-      if (exists("theme_Marnie", mode = "function") || exists("theme_Marnie")) p <- p + theme_Marnie
+      if (exists("theme_Marnie", mode = "function") || exists("theme_Marnie")) {
+        p <- p + theme_Marnie
+      }
+
       p
     })
 
-
     output$pca_plot <- renderPlot({
+      validate(
+        need(nrow(scores_df()) > 0, "Not enough samples to compute PCA.")
+      )
       plot_obj()
     })
 
-    # Plotly (lasso)
     output$pca_plotly <- plotly::renderPlotly({
-      gg  <- plot_obj()
-      plt <- plotly::ggplotly(gg, tooltip = c("sample_id", input$color_var))
+      validate(
+        need(nrow(scores_df()) > 0, "Not enough samples to compute PCA.")
+      )
+      plt <- plotly::ggplotly(
+        plot_obj(),
+        tooltip = c("sample_id", input$color_var)
+      )
       plotly::layout(plt, dragmode = "lasso")
     })
+
+
 
     # Downloads
     filename_stub <- reactive({
@@ -225,17 +291,23 @@ pcaServer <- function(id,
 
     output$download_png <- downloadHandler(
       filename = function() sprintf("%s_PCA.png", filename_stub()),
-      content  = function(file) ggplot2::ggsave(file, plot = plot_obj(), width = 7, height = 5.5, dpi = 300)
+      content  = function(file) {
+        ggplot2::ggsave(file, plot = plot_obj(), width = 7, height = 5.5, dpi = 300)
+      }
     )
 
     output$download_svg <- downloadHandler(
       filename = function() sprintf("%s_PCA.svg", filename_stub()),
-      content  = function(file) ggplot2::ggsave(file, plot = plot_obj(), width = 7, height = 5.5, device = "svg")
+      content  = function(file) {
+        ggplot2::ggsave(file, plot = plot_obj(), width = 7, height = 5.5, device = "svg")
+      }
     )
 
     output$download_scores_csv <- downloadHandler(
       filename = function() sprintf("%s_PC_scores.csv", filename_stub()),
-      content  = function(file) readr::write_csv(scores_df(), file)
+      content  = function(file) {
+        readr::write_csv(scores_df(), file)
+      }
     )
   })
 }
