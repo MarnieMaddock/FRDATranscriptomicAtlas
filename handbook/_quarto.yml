@@ -1,0 +1,35 @@
+project:
+  type: website
+  output-dir: ../docs          # write HTML into docs/
+
+website:
+  title: "<img src='images/dottori_lab_pentagon.svg' height='32' style='vertical-align: middle; margin-right: 0.5em;'> FRDA Transcriptomic Atlas Handbook"
+  site-url: "https://marniemaddock.github.io/FRDATranscriptomicAtlas/"
+  favicon: favicon.ico
+
+  navbar:
+    left:
+      - text: "Overview"
+        file: overview.qmd
+
+      - text: "Getting Started"
+        menu:
+          - text: "Local Access"
+            file: local_access.qmd
+
+      - text: "How to Use"
+        menu:
+          - text: "How to Use"
+            file: how_to_use.qmd
+
+      - text: "Version History"
+        file: version_history.qmd
+      - text: "Feature Requests"
+        file: features_issues.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    css: styles.css

@@ -5,7 +5,7 @@
 \alias{pretty_map}
 \title{Human-readable dataset names shown in UI}
 \format{
-An object of class \code{character} of length 19.
+An object of class \code{character} of length 23.
 }
 \usage{
 pretty_map

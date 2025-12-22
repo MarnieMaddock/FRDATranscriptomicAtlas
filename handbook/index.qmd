@@ -1,0 +1,34 @@
+---
+title: "FRDA Transcriptomic Atlas Handbook"
+subtitle: "Quick-start Guide & Full Reference"
+format:
+  html:
+    toc: false        # hide table of contents on this page
+    theme: cosmo
+navbar: false         # HIDE the top nav bar only on this page
+page-layout: full     # optional: no side gutters
+---
+
+::: {.text-center .mt-1}
+
+![](images/dottori_lab_pentagon.svg){width=180px .center}
+
+## Efficient qPCR Data Analysis Software
+
+#### Interactive qPCR Analysis & Visualisation App
+
+[Get Started »](overview.qmd){.btn .btn-lg style="background:#2a776d;border-color:#2a776d;color:#fff;"}
+
+##### **Developed by Marnie Maddock and Prof Mirella Dottori**
+
+:::
+
+::: {.my-5} 
+:::
+
+::: {.text-center .mt-1 .fs-6}
+License Authors retain copyright and release the FRDA Transcriptomic Atlas Handbook work under a Creative Commons Attribution 4.0 International License (CC BY 4.0). The accompanying software code is licensed under the [MIT License](https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/blob/main/LICENSE.md). Please refer to the [LICENSE](https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/blob/main/LICENSE.md) file included with the code for the full terms.
+
+
+![](images/footer.svg){width=700px .center}
+:::

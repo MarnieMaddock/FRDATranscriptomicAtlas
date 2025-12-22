@@ -1,0 +1,25 @@
+---
+title: "Overview"
+---
+The Friedreich’s Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny application that provides open access to harmonised transcriptomic analyses across publicly available FRDA bulk RNA-seq datasets. This resource was developed to enable researchers, clinicians, and students to explore and compare differential expression between FRDA and controls across many diverse cell or tissue types and FRDA models. 
+
+The Atlas serves as a central reference for transcriptome-wide alterations in FRDA, supporting hypothesis generation, biomarker discovery, candidate gene prioritisation, and data reuse for downstream integrative analyses. All analyses were performed using a consistent bioinformatic framework to ensure comparability across studies. Details of the datasets, quality control, and analytical pipelines are available in the associated publication <GIVE LINK HERE>.
+        
+Users are encouraged to consult the paper for methodological details.
+
+We request that users of the FRDA Transcriptomic Atlas cite the associated journal article if any work is derived from or informed by this resource. The citation is as follows:
+
+<br><br>
+
+Please ensure the original journal articles from which the sequencing data came from are also cited.
+
+# Instructions for Use
+
+The FRDA Transcriptomic Atlas is designed to be accessible to users with no programming or coding experience. All interaction with the Atlas occurs through a simple, web-based graphical interface using point-and-click controls.
+
+Although the application is installed using R, no knowledge of R is required. R is free and quick to download. Once installed, the Atlas runs locally in a web browser and can be used without an internet connection.
+
+To run the application FRDA Transcriptomic Atlas, the user needs to download [R](https://cran.r-project.org/) and [RStudio](https://posit.co/downloads/). A step-by-step guide on how to install the FRDA Transcriptomic Atlas application locally can be found in the [Getting Started – Local Access](local_access.qmd) tab. This guide is aimed at users with no programming expertise.
+
+
+

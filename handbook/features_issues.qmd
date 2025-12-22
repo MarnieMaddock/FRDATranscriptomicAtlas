@@ -1,0 +1,14 @@
+---
+title: "Feature Requests and Issues"
+---
+
+If you'd like to request a new feature, suggestions or report an issue/bug, please submit it on GitHub: [GitHub Issues](https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/issues). Please include as much detail as possible to help us address your request effectively.
+
+For information about this resource, first consult the publication:
+
+Maddock, M. et al. (2025). XXXXXXXXXXXXXXXXXX. [Journal details forthcoming].
+
+If you would like to add datasets to this resource, please contact the [developers](mailto:mlm715@uowmail.edu.au?subject=FRDATranscriptomicAtlas%20Query:) directly.
+
+For further information, or clarification on how to use the app, please contact the [developers](mailto:mlm715@uowmail.edu.au?subject=FRDATranscriptomicAtlas%20Query:).
+

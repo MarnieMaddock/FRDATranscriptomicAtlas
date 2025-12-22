@@ -1,0 +1,29 @@
+.gray-box {
+  background-color: #f6f6f6;
+  padding: 0.1em;
+  border-left: 4px solid #999;
+  margin-bottom: 0em;
+  border-radius: 0px;
+}
+
+.btn-md { font-size: 1.05rem; padding: .6rem 1.2rem; }
+
+
+h1, h2, h3 {
+  color: #2a776d;
+}
+
+/* Navbar brand/title */
+.navbar-title {
+  color: #2a776d !important;
+}
+
+/* Navbar links */
+.navbar-nav .nav-link {
+  color: #2a776d !important;
+}
+
+/* Hover effect on nav links */
+.navbar-nav .nav-link:hover {
+  color: #cce0ff !important;
+}
