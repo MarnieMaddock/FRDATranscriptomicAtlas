@@ -1,0 +1,65 @@
+[
+  {
+    "objectID": "version_history.html",
+    "href": "version_history.html",
+    "title": "Version History",
+    "section": "",
+    "text": "FRDA Transcriptomic Atlas was developed in R version 4.5.1, and R Shiny version 1.9.1. All code is available on the GitHub repository:\nVersion 1.0.0:\n• Initial publicly available version.\nVersion 0.0.0.9000:\n• Developer version."
+  },
+  {
+    "objectID": "local_access.html",
+    "href": "local_access.html",
+    "title": "Local Access",
+    "section": "",
+    "text": "Download R and RStudio (Free).\nhttps://rstudio-education.github.io/hopr/starting.html\nOpen RStudio. It will look like this:\n\n\n\nClick to Expand\n\n\n\nWithin the Console, type these pieces of code. After each line of code, highlight the line, or ensure the cursor is on the line of code. Press control/command enter to run it. Press control/command enter after each line of code to run it:\n\n\ninstall.packages(\"pak\")\n\nOnce the installation has completed, a &gt; will appear in the console. It will say something similar to ’the downloaded binary packages are in …`\n\n\n\n\n\n\nNote\n\n\n\nIt may ask you to download Rtools, but this is not necessary to use the FRDA Transcriptomic Atlas. Disregard this message.\n\n\n\n\nClick to Expand\n\n\n\n\nlibrary(pak) \n\n\npak::pkg_install(\"MarnieMaddock/FRDATranscriptomicAtlas\")\n\nThis will download the FRDA Transcriptomic Atlas app from GitHub. It may ask you to update or download some packages. Press 1 and enter to update/download these. If this message does not appear, the required packages are up to date. The app may take up to 20 minutes to download, depending on your internet speed. Once the app is downloaded, it does not need to be downloaded again unless there are updates.\n\n\nClick to Expand\n\n\n\n\n\n\n\n\n\n\nNote\n\n\n\nOccasionally, a pop-up message may appear asking to install from the sources the package which needs compilation. If it does, please press “Yes” to continue. This dialog box doesn’t always appear, and it’s not an issue if it doesn’t.\n\n\nOnce the installation has completed, a &gt; will appear in the console. It will say something similar to ‘* DONE (FRDATranscriptomicAtlas)*’\n\n\nClick to Expand\n\n\n\nFRDA Transcriptomic Atlas has been downloaded, but it has not been loaded into the R session. To do this, type this line of code in the Console and press control/command enter to run it:\n\nlibrary(FRDATranscriptomicAtlas)\n\nThis itself will not open the application. To open the application, run:\n\nrun_app()\n\nThis should open the FRDA Transcriptomic Atlas app in a new window. If not, the http address given in your console following “Listening on” can be copied into a web browser to open FRDA Transcriptomic Atlas.\n\n\nClick to Expand"
+  },
+  {
+    "objectID": "local_access.html#for-new-r-users",
+    "href": "local_access.html#for-new-r-users",
+    "title": "Local Access",
+    "section": "",
+    "text": "Download R and RStudio (Free).\nhttps://rstudio-education.github.io/hopr/starting.html\nOpen RStudio. It will look like this:\n\n\n\nClick to Expand\n\n\n\nWithin the Console, type these pieces of code. After each line of code, highlight the line, or ensure the cursor is on the line of code. Press control/command enter to run it. Press control/command enter after each line of code to run it:\n\n\ninstall.packages(\"pak\")\n\nOnce the installation has completed, a &gt; will appear in the console. It will say something similar to ’the downloaded binary packages are in …`\n\n\n\n\n\n\nNote\n\n\n\nIt may ask you to download Rtools, but this is not necessary to use the FRDA Transcriptomic Atlas. Disregard this message.\n\n\n\n\nClick to Expand\n\n\n\n\nlibrary(pak) \n\n\npak::pkg_install(\"MarnieMaddock/FRDATranscriptomicAtlas\")\n\nThis will download the FRDA Transcriptomic Atlas app from GitHub. It may ask you to update or download some packages. Press 1 and enter to update/download these. If this message does not appear, the required packages are up to date. The app may take up to 20 minutes to download, depending on your internet speed. Once the app is downloaded, it does not need to be downloaded again unless there are updates.\n\n\nClick to Expand\n\n\n\n\n\n\n\n\n\n\nNote\n\n\n\nOccasionally, a pop-up message may appear asking to install from the sources the package which needs compilation. If it does, please press “Yes” to continue. This dialog box doesn’t always appear, and it’s not an issue if it doesn’t.\n\n\nOnce the installation has completed, a &gt; will appear in the console. It will say something similar to ‘* DONE (FRDATranscriptomicAtlas)*’\n\n\nClick to Expand\n\n\n\nFRDA Transcriptomic Atlas has been downloaded, but it has not been loaded into the R session. To do this, type this line of code in the Console and press control/command enter to run it:\n\nlibrary(FRDATranscriptomicAtlas)\n\nThis itself will not open the application. To open the application, run:\n\nrun_app()\n\nThis should open the FRDA Transcriptomic Atlas app in a new window. If not, the http address given in your console following “Listening on” can be copied into a web browser to open FRDA Transcriptomic Atlas.\n\n\nClick to Expand"
+  },
+  {
+    "objectID": "local_access.html#once-installed",
+    "href": "local_access.html#once-installed",
+    "title": "Local Access",
+    "section": "Once Installed:",
+    "text": "Once Installed:\nOnce the pak and FRDA Transcriptomic Atlas packages have been installed on the computer, they do not need to be redownloaded unless there are updates. To run FRDA Transcriptomic Atlas in a new session use:\n\nlibrary(FRDATranscriptomicAtlas)\nrun_app()"
+  },
+  {
+    "objectID": "local_access.html#for-existing-r-users",
+    "href": "local_access.html#for-existing-r-users",
+    "title": "Local Access",
+    "section": "For Existing R Users:",
+    "text": "For Existing R Users:\n\nOpen RStudio and Run:\n\n\ninstall.packages(\"pak\")\nlibrary(pak)\npak::pkg_install(\"MarnieMaddock/FRDATranscriptomicAtlas\")\nlibrary(FRDATranscriptomicAtlas)\nrun_app()\n\n\nFRDA Transcriptomic Atlas will open in a new window.\n\nHow to Use FRDA Transcriptomic Atlas »"
+  },
+  {
+    "objectID": "features_issues.html",
+    "href": "features_issues.html",
+    "title": "Feature Requests and Issues",
+    "section": "",
+    "text": "If you’d like to request a new feature, suggestions or report an issue/bug, please submit it on GitHub: GitHub Issues. Please include as much detail as possible to help us address your request effectively.\nFor information about this resource, first consult the publication:\nMaddock, M. et al. (2025). XXXXXXXXXXXXXXXXXX. [Journal details forthcoming].\nIf you would like to add datasets to this resource, please contact the developers directly.\nFor further information, or clarification on how to use the app, please contact the developers."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "FRDA Transcriptomic Atlas Handbook",
+    "section": "",
+    "text": "Get Started »"
+  },
+  {
+    "objectID": "index.html#efficient-qpcr-data-analysis-software",
+    "href": "index.html#efficient-qpcr-data-analysis-software",
+    "title": "FRDA Transcriptomic Atlas Handbook",
+    "section": "",
+    "text": "Get Started »"
+  },
+  {
+    "objectID": "overview.html",
+    "href": "overview.html",
+    "title": "Overview",
+    "section": "",
+    "text": "The Friedreich’s Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny application that provides open access to harmonised transcriptomic analyses across publicly available FRDA bulk RNA-seq datasets. This resource was developed to enable researchers, clinicians, and students to explore and compare differential expression between FRDA and controls across many diverse cell or tissue types and FRDA models.\nThe Atlas serves as a central reference for transcriptome-wide alterations in FRDA, supporting hypothesis generation, biomarker discovery, candidate gene prioritisation, and data reuse for downstream integrative analyses. All analyses were performed using a consistent bioinformatic framework to ensure comparability across studies. Details of the datasets, quality control, and analytical pipelines are available in the associated publication .\nUsers are encouraged to consult the paper for methodological details.\nWe request that users of the FRDA Transcriptomic Atlas cite the associated journal article if any work is derived from or informed by this resource. The citation is as follows:\n\nPlease ensure the original journal articles from which the sequencing data came from are also cited.\n\nInstructions for Use\nThe FRDA Transcriptomic Atlas is designed to be accessible to users with no programming or coding experience. All interaction with the Atlas occurs through a simple, web-based graphical interface using point-and-click controls.\nAlthough the application is installed using R, no knowledge of R is required. R is free and quick to download. Once installed, the Atlas runs locally in a web browser and can be used without an internet connection.\nTo run the application FRDA Transcriptomic Atlas, the user needs to download R and RStudio. A step-by-step guide on how to install the FRDA Transcriptomic Atlas application locally can be found in the Getting Started – Local Access tab. This guide is aimed at users with no programming expertise."
+  }
+]
