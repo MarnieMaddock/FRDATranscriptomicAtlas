@@ -10,7 +10,7 @@ aboutUI <- function(id,
                     title = "About the FRDA Transcriptomic Atlas",
                     github_url = "https://github.com/MarnieMaddock/FRDATranscriptomicAtlas",
                     issues_url = "https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/issues",
-                    contact_email = "mmaddock@uow.edu.au") {
+                    contact_email = "mlm715@uowmail.edu.au") {
   ns <- NS(id)
   tagList(
     div(
@@ -97,6 +97,18 @@ aboutUI <- function(id,
         tags$li(HTML(paste0("<b>Project GitHub:</b> <a href='", github_url, "' target='_blank'>", github_url, "</a>"))),
         tags$li(HTML(paste0("<b>Report an issue:</b> <a href='", issues_url, "' target='_blank'>", issues_url, "</a>")))
       ),
+      br(),
+      br(),
+      br(),
+      br(),
+      #add footer.svg
+      div(
+        class = "text-center",
+        img(src = "footer.svg", width = "900px")
+      ),
+      br(),
+      br(),
+      br(),
       br()
     )
   )
