@@ -21,6 +21,17 @@ volcanoSidebarUI <- function(id, pretty_map) {
       options = list(placeholder = "Choose a dataset…")
     ),
     shiny::hr(),
+    shiny::radioButtons(
+      ns("deg_level"),
+      label = "Differential level",
+      choices = c(
+        "Genes"      = "genes",
+        "Isoforms"   = "transcripts"
+      ),
+      selected = "genes",
+      inline = TRUE
+    ),
+    shiny::hr(),
     shiny::sliderInput(
       ns("lfc_thresh"),
       label = "Absolute log2FC threshold",
@@ -46,14 +57,12 @@ volcanoSidebarUI <- function(id, pretty_map) {
       label = "Show non-significant points",
       value = TRUE
     ),
-    shiny::actionButton(ns("update_plot"), "Update plot"),
     tags$br(),
     shiny::helpText(
       shiny::HTML(
         "<b>Notes</b><ul style='margin-top:4px'>
           <li>Y-axis uses −log10(FDR) and is <b>capped at 50</b> to avoid extreme values blowing out the scale.</li>
           <li>Use the Plotly toolbar to <b>Box Select</b> or <b>Lasso Select</b> points. This is in the top right corner of the plot. Selected genes appear in the table.</li>
-          <li>After changing thresholds, click <b>Update plot</b> to refresh point colours.</li>
         </ul>"
       )
     ),
@@ -108,7 +117,16 @@ volcanoServer <- function(
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     `%||%` <- function(a, b) if (is.null(a)) b else a
-    cur_level <- function() if (is.function(level)) level() else level
+    cur_level <- function() {
+      if (!is.null(input$deg_level) && nzchar(input$deg_level)) {
+        input$deg_level
+      } else if (is.function(level)) {
+        level()
+      } else {
+        level
+      }
+    }
+
 
     .safe_num <- function(x) suppressWarnings(as.numeric(as.character(x)))
     .norm_filename <- function(x) gsub("[^A-Za-z0-9_\\-]+", "_", x)
@@ -130,38 +148,50 @@ volcanoServer <- function(
       .tx2_cache
     }
 
-    .add_display_gene <- function(df, lvl, pkg) {
-      # ensure 'gene' exists and is length nrow(df)
+    .add_display_label <- function(df, lvl, pkg) {
+
+      # Ensure gene column exists
       if (!"gene" %in% names(df)) {
         if ("gene_id" %in% names(df)) df$gene <- df$gene_id
-        else if ("ensembl_gene_id" %in% names(df)) df$gene <- df$ensembl_gene_id
         else if (!is.null(rownames(df))) df$gene <- rownames(df)
         else df$gene <- NA_character_
       }
-      if (length(df$gene) != nrow(df)) df$gene <- rep(NA_character_, nrow(df))
 
-      m <- .get_tx2(pkg)
-      if (is.null(m) || !all(c("transcript_id","gene_id","gene_name") %in% names(m))) {
-        df$display_gene <- df$gene
+      # Always strip version suffixes for display
+      df$gene <- sub("\\.\\d+$", "", df$gene)
+
+      # ---- transcript mode: show transcript ID ----
+      if (identical(lvl, "transcripts")) {
+        df$display_label <- df$gene
         return(df)
       }
 
-      ids <- sub("\\.\\d+$", "", df$gene)
-      sym <- if (identical(lvl, "transcripts")) {
-        m$gene_name[ match(ids, m$transcript_id) ]
-      } else {
-        m$gene_name[ match(ids, m$gene_id) ]
+      # ---- gene mode: map to symbol if possible ----
+      m <- .get_tx2(pkg)
+
+      if (is.null(m) || !"gene_name" %in% names(m)) {
+        df$display_label <- df$gene
+        return(df)
       }
-      if (length(sym) != nrow(df)) sym <- rep(NA_character_, nrow(df))
-      df$display_gene <- dplyr::coalesce(sym, df$gene)
+
+      sym <- m$gene_name[match(df$gene, m$gene_id)]
+      df$display_label <- dplyr::coalesce(sym, df$gene)
+
       df
     }
+
 
     # -------- robust loader (data frame files) --------
     load_deg <- function(dataset, level, pkg) {
       level <- match.arg(level, c("genes","transcripts"))
 
-      subdir   <- file.path("extdata", "deg", level)
+      level_dir <- c(
+        genes       = "genes",
+        transcripts = "txs"
+      )
+
+      subdir <- file.path("extdata", "deg", level_dir[[level]])
+
       base_pkg <- system.file(subdir, package = pkg, mustWork = FALSE)
       base_dev <- file.path("inst", subdir)
       bases <- c(base_pkg, base_dev)
@@ -224,8 +254,13 @@ volcanoServer <- function(
       x
     }
 
+    update_trigger <- shiny::reactive({
+      input$update_plot
+      input$deg_level
+    })
+
     # -------- main reactive table --------
-    deg_tbl <- shiny::eventReactive(input$update_plot, {
+    deg_tbl <- shiny::reactive({
       req(input$dataset)
       df <- load_deg(input$dataset, cur_level(), pkg)
 
@@ -244,7 +279,7 @@ volcanoServer <- function(
       df$row_id <- seq_len(nrow(df))
 
       # ensure display gene (symbol if available)
-      df <- .add_display_gene(df, cur_level(), pkg)
+      df <- .add_display_label(df, cur_level(), pkg)
 
       # status
       lfc_th  <- input$lfc_thresh %||% 1
@@ -259,11 +294,11 @@ volcanoServer <- function(
       # highlights (by symbol/display)
       hi <- trimws(unlist(strsplit(input$highlight_genes %||% "", ",")))
       hi <- hi[nzchar(hi)]
-      df$highlight <- if (length(hi)) tolower(df$display_gene) %in% tolower(hi) else FALSE
+      df$highlight <- if (length(hi)) tolower(df$display_label) %in% tolower(hi) else FALSE
 
       df$.pcol <- if ("padj" %in% names(df)) "padj" else "pvalue"
       df
-    }, ignoreInit = FALSE)
+    })
 
     # -------- summary text --------
     output$summary_text <- shiny::renderText({
@@ -296,7 +331,10 @@ volcanoServer <- function(
                             linetype = "dashed", linewidth = 0.4) +
         ggplot2::geom_hline(yintercept = -log10(input$padj_thresh),
                             linetype = "dashed", linewidth = 0.4) +
-        ggplot2::labs(x = "log2 Fold Change", y = "-log10(p.adj)", color = NULL)
+        ggplot2::labs(x = "log2 Fold Change", y = "-log10(p.adj)",
+                      subtitle = if (cur_level() == "transcripts") "Isoform-level differential expression"
+                      else "Gene-level differential expression",
+                      color = NULL)
 
       if (exists("theme_Marnie", inherits = TRUE)) p <- p + get("theme_Marnie", inherits = TRUE) else p <- p + ggplot2::theme_bw()
       p + ggplot2::theme(legend.position = "top", panel.grid.minor = ggplot2::element_blank())
@@ -312,11 +350,12 @@ volcanoServer <- function(
       p
     }
 
+
     # -------- interactive plot --------
     output$volcano_plot <- plotly::renderPlotly({
       df <- deg_tbl(); req(nrow(df))
       df$hover_txt <- paste0(
-        "<b>", df$display_gene, "</b>",
+        "<b>", df$display_label, "</b>",
         "<br>log2FC: ", sprintf("%.3f", df$log2FC),
         "<br>-log10(p): ", sprintf("%.3f", df$negLog10P),
         "<br>", toupper(df$.pcol[1]), ": ", ifelse(is.na(df$P), "NA", signif(df$P, 3)),
@@ -338,9 +377,17 @@ volcanoServer <- function(
       } else {
         sel <- df[df$row_id %in% as.integer(unique(ev$key)), , drop = FALSE]
       }
+
+      id_col <- if (cur_level() == "transcripts") "Transcript ID" else "Gene"
+
       DT::datatable(
         sel |>
-          dplyr::transmute(gene = display_gene, log2FC, padj = P, status) |>
+          dplyr::transmute(
+            !!id_col := display_label,
+            log2FC,
+            padj = P,
+            status
+          ) |>
           dplyr::arrange(padj, dplyr::desc(abs(log2FC))),
         rownames = FALSE,
         options = list(pageLength = 10, scrollX = TRUE, dom = "tip"),
