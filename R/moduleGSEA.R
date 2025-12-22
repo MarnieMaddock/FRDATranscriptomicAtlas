@@ -155,11 +155,8 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
         map <- setNames(vector("list", 3), c("BP","CC","MF"))
         for (ont in c("BP","CC","MF")) {
           p_rds <- file.path(d, sprintf("gsea_GO_%s.rds", ont))
-          p_csv <- file.path(d, sprintf("gsea_GO_%s.csv", ont))
           if (file.exists(p_rds)) {
             map[[ont]] <- p_rds
-          } else if (file.exists(p_csv)) {
-            map[[ont]] <- p_csv
           } else {
             map[[ont]] <- ""
           }

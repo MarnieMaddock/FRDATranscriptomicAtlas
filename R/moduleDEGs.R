@@ -89,7 +89,7 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
 
     # one-time loads
     deg_dir_genes       <- resolve_dir(file.path("extdata", "deg", "genes"))
-    deg_dir_transcripts <- resolve_dir(file.path("extdata", "deg", "transcripts"))
+    deg_dir_transcripts <- resolve_dir(file.path("extdata", "deg", "txs"))
 
     tx2_path <- resolve_file(file.path("extdata", "maps"), "tx2gene.tsv")
     tx2 <- if (nzchar(tx2_path) && file.exists(tx2_path)) {

@@ -5,3 +5,6 @@
 ^app\.R$
 ^manifest\.json$
 ^rds_converter\.R$
+^docs$
+^handbook$
+^\.quarto$

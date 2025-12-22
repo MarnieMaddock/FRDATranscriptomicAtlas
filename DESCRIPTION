@@ -33,7 +33,9 @@ Imports:
     memoise, 
     ragg,
     htmltools,
-    upsetjs
+    upsetjs,
+    SummarizedExperiment,
+    patchwork
 Suggests:
     enrichplot
 Remotes:
