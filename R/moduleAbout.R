@@ -98,16 +98,15 @@ aboutUI <- function(id,
         tags$li(HTML(paste0("<b>Report an issue:</b> <a href='", issues_url, "' target='_blank'>", issues_url, "</a>")))
       ),
       br(),
-      br(),
-      br(),
-      br(),
       #add footer.svg
       div(
         class = "text-center",
-        img(src = "footer.svg", width = "900px")
+        bslib::card_image(
+          file  = system.file("www", "footer.svg", package = "FRDATranscriptomicAtlas"),
+          fill  = FALSE,
+          width = "1200px"
+        )
       ),
-      br(),
-      br(),
       br(),
       br()
     )

@@ -9,7 +9,7 @@ aboutUI(
   title = "About the FRDA Transcriptomic Atlas",
   github_url = "https://github.com/MarnieMaddock/FRDATranscriptomicAtlas",
   issues_url = "https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/issues",
-  contact_email = "mmaddock@uow.edu.au"
+  contact_email = "mlm715@uowmail.edu.au"
 )
 }
 \arguments{

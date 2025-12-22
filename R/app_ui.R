@@ -146,12 +146,6 @@ app_ui <- function() {
                      tabPanel("Datasets",
                               value = 0.2,
                               datasetsUI("datasets"),
-                     ),
-                     tabPanel("Contact",
-                              value = 0.3,
-                     ),
-                     tabPanel("Help",
-                              value = 0.4,
                      )
                    )
           ),
