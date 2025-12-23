@@ -405,8 +405,6 @@ pcaServer <- function(id,
       plotly::layout(plt, dragmode = "lasso")
     })
 
-
-
     # Downloads
     filename_stub <- reactive({
       paste0(
@@ -414,7 +412,6 @@ pcaServer <- function(id,
         format(Sys.time(), "%Y%m%d_%H%M%S")
       )
     })
-
 
     output$download_png <- downloadHandler(
       filename = function() sprintf("%s_PCA.png", filename_stub()),

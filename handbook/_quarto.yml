@@ -17,10 +17,8 @@ website:
           - text: "Local Access"
             file: local_access.qmd
 
-      - text: "How to Use"
-        menu:
-          - text: "How to Use"
-            file: how_to_use.qmd
+      - text: "Features"
+        file: how_to_use.qmd
 
       - text: "Version History"
         file: version_history.qmd

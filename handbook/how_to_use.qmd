@@ -1,5 +1,70 @@
 ---
-title: "how_to_use"
-format: html
+title: "Features Guide"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    number-sections: true
 ---
+
+The FRDA Transcriptomic Atlas is designed to be user-friendly and accessible. All interactions with the Atlas occur through a simple, web-based graphical interface using point-and-click controls. This guide provides a brief overview of each feature in the FRDA Transcriptomic Atlas.
+
+
+# Available Features
+
+- **Principal Component Analysis (PCA) Plots:** Visualise how similar or different samples are from each other within a dataset, or across multiple datasets.
+- **Differentially Expressed Genes (DEGs):** Identify genes or isoforms whose expression levels differ significantly between FRDA and controls within a dataset.
+
+
+## Principal Component Analysis (PCA) Plots
+
+Principal Component Analysis (PCA) is used to provide a high-level overview of how samples relate to one another based on their global gene expression profiles. Each point represents a single sample, and the distance between points reflects overall similarity or dissimilarity across thousands of genes simultaneously.
+
+This view is intended as an exploratory and quality-control step rather than a gene-level analysis. PCA can be used to:
+
+- Assess whether disease and control samples show global separation
+- Examine clustering by dataset, study, or cell type
+- Identify potential outlier samples
+- Evaluate consistency between related datasets or experimental batches
+
+Samples that cluster closely share similar expression patterns, while samples that are far apart differ more substantially.
+
+Users may colour or shape points by biologically meaningful annotations (e.g. dataset, disease status, or cell type) to help interpret observed clustering patterns.
+
+![](images/Picture1.png){width="600"}
+
+
+### Technical Details
+
+PCA is performed on variance-stabilized gene expression matrices derived from DESeq2. When a single dataset is selected, all genes from that dataset are used directly. When multiple datasets are selected, analysis is restricted to genes shared across all datasets. If all selected datasets originate from the same parent study, PCA is computed on the variance-stabilized values. When datasets originate from different studies, gene-wise Z-score scaling is applied within each dataset prior to merging to reduce study-specific scale effects. Sample identifiers are made globally unique and expression matrices are strictly aligned with sample metadata. PCA is computed using singular value decomposition on the transposed expression matrix (samples × genes), with centering enabled and no additional scaling. The first two principal components are visualised, with optional 95% confidence ellipses to summarise group dispersion.
+
+## Differentially Expressed Genes (DEGs)
+
+Differential expression analysis identifies genes or isoforms (transcripts) whose expression levels differ between experimental conditions within a dataset. In this case all comparisons are between FRDA and the controls as defined by the original study. 
+
+Each row in the DEG table represents a single gene or isoform and summarises both the magnitude of expression change (log₂ fold change) and the statistical confidence in that change (adjusted p-value, FDR).
+
+Users can explore DEG results by:
+
+- Switching between gene-level and isoform-level analyses
+- Selecting a specific dataset
+- Applying adjusted p-value thresholds
+- Requiring a minimum absolute log₂ fold change
+- Restricting results to upregulated, downregulated, or all genes/isoforms
+
+Filtered tables can be explored interactively and downloaded for further analysis.
+
+**Key**
+
+- If the log₂ fold change is **positive**, this means that gene is expressed **higher in the FRDA group** compared to controls
+- If the log₂ fold change is **negative**, this means that gene is expressed **lower in the FRDA group** compared to controls
+
+![](images/Picture2.png){width="600"}
+
+### Technical Details
+
+DEGs were computed using DESeq2 in R. See original publication for more details.
+
+
 

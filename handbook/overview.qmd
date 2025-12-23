@@ -5,13 +5,11 @@ The Friedreich’s Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny ap
 
 The Atlas serves as a central reference for transcriptome-wide alterations in FRDA, supporting hypothesis generation, biomarker discovery, candidate gene prioritisation, and data reuse for downstream integrative analyses. All analyses were performed using a consistent bioinformatic framework to ensure comparability across studies. Details of the datasets, quality control, and analytical pipelines are available in the associated publication <GIVE LINK HERE>.
         
-Users are encouraged to consult the paper for methodological details.
-
-We request that users of the FRDA Transcriptomic Atlas cite the associated journal article if any work is derived from or informed by this resource. The citation is as follows:
+Users are encouraged to consult the paper for methodological details:
 
 <br><br>
 
-Please ensure the original journal articles from which the sequencing data came from are also cited.
+Users must cite the publication in any derivative analyses, figures, or reports generated from this resource. Users must also cite the original studies from which the data were derived. Please refer to the 'Datasets' section within the app for details on each dataset and its original publication.
 
 # Instructions for Use
 

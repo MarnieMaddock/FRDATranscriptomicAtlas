@@ -6,7 +6,7 @@
 degTablesSidebarUI <- function(id) {
   ns <- NS(id)
   tagList(
-    h4("DEG filters"),
+    h4("Differentially Expressed Genes (DEGs) Explorer"),
 
     radioButtons(
       ns("feature_level"),
@@ -24,7 +24,7 @@ degTablesSidebarUI <- function(id) {
     ),
     radioButtons(
       ns("p_filter_mode"),
-      "P-value threshold",
+      "Adjusted P-value Threshold",
       inline = FALSE,
       choices = c("None" = NA,
                   "≤ 0.10" = 0.10,
@@ -219,6 +219,14 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
             dplyr::relocate(transcript_id, gene_id, symbol, .before = dplyr::everything())
         }
       }
+      # ---- round numeric columns except pvalue and padj ----
+      x <- x |>
+        dplyr::mutate(
+          dplyr::across(
+            .cols = where(is.numeric) & !c(pvalue, padj),
+            ~ round(.x, 4)
+          )
+        )
 
       x
     })
