@@ -44,6 +44,20 @@ pcaServer <- function(id,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    `%||%` <- function(a, b) if (is.null(a)) b else a
+
+    # Set your package name here if you want it explicit
+    pkg <- "FRDATranscriptomicAtlas"
+
+    pretty_map <- tryCatch(
+      get("pretty_map", envir = asNamespace(pkg)),
+      error = function(e) {
+        warning("pretty_map could not be found; using empty vector.")
+        character(0)
+      }
+    )
+
+
     # Locate directory with *_pca_input.rds
     dir_use <- reactive({
       if (dir.exists(data_dir)) return(data_dir)
@@ -63,21 +77,39 @@ pcaServer <- function(id,
 
     output$pick_files_ui <- renderUI({
       req(nrow(pca_files()) > 0)
-      pf <- pca_files()   # tibble(label, path)
+      pf <- pca_files()
+
+      # Extract study key (e.g. Lai_PNS, Maddock_SN_FA1, Li)
+      study_key <- sub("(_FRDA.*$)", "", pf$label)
+
+      # Default mapping via pretty_map
+      pretty_label <- pretty_map[study_key]
+
+      # ---- SPECIAL CASE: Li PCA ----
+      is_li <- study_key == "Li"
+      pretty_label[is_li] <- "Li (Cardiomyocytes)"
+
+      # Fallback if not in pretty_map
+      pretty_label[is.na(pretty_label)] <- study_key[is.na(pretty_label)]
+
+      # Named vector: values = file paths, names = pretty labels
+      choices_named <- stats::setNames(pf$path, pretty_label)
 
       wanted <- c("Lai_iPSC_FRDA_vs_IC", "Lai_CNS_FRDA_vs_IC", "Lai_PNS_FRDA_vs_IC")
-      sel <- pf$path[match(wanted, pf$label, nomatch = 0)]   # keep those that exist
-
-      if (length(sel) == 0) sel <- pf$path[1]  # fallback
+      sel <- pf$path[match(wanted, pf$label, nomatch = 0)]
+      if (length(sel) == 0) sel <- pf$path[1]
 
       selectizeInput(
         ns("picked"), "Comparison(s)",
-        choices  = setNames(pf$path, pf$label),
+        choices  = choices_named,
         selected = sel,
         multiple = TRUE,
         options  = list(plugins = list("remove_button"))
       )
     })
+
+
+
 
 
     # Load and merge (intersect genes across selections)
@@ -92,23 +124,44 @@ pcaServer <- function(id,
       ## SINGLE DATASET → standard VST PCA
       ## --------------------------------------------------
       if (length(objs) == 1L) {
+
         X <- objs[[1]]$vsd_mat
         M <- as.data.frame(objs[[1]]$meta)
+
         M$.dataset <- labels[1]
 
-        if (anyDuplicated(rownames(M))) {
-          rn <- make.unique(rownames(M))
-          rownames(M) <- rn
-          colnames(X) <- rn
+        study_key <- sub("(_FRDA.*$)", "", labels[1])
+
+        pretty_label <- pretty_map[study_key]
+        pretty_label <- pretty_label %||% study_key
+
+        # SPECIAL CASE: Li PCA
+        if (identical(study_key, "Li")) {
+          pretty_label <- "Li (Cardiomyocytes)"
         }
 
-        return(list(vsd_mat = X, meta = M, files = labels))
+        M$.dataset_pretty <- pretty_label
+
+        # ---- CRITICAL FIX: align samples ----
+        common_ids <- intersect(colnames(X), rownames(M))
+        X <- X[, common_ids, drop = FALSE]
+        M <- M[common_ids, , drop = FALSE]
+
+        return(list(
+          vsd_mat = X,
+          meta    = M,
+          files   = labels
+        ))
       }
 
+
       ## --------------------------------------------------
-      ## MULTIPLE DATASETS → intersect genes
+      ## MULTIPLE DATASETS → intersect genes + Z-score
       ## --------------------------------------------------
-      genes_common <- Reduce(intersect, lapply(objs, function(o) rownames(o$vsd_mat)))
+      genes_common <- Reduce(
+        intersect,
+        lapply(objs, function(o) rownames(o$vsd_mat))
+      )
 
       if (length(genes_common) < 200) {
         warning(
@@ -120,41 +173,81 @@ pcaServer <- function(id,
       mats  <- list()
       metas <- list()
 
-      ## --------------------------------------------------
-      ## Z-score WITHIN each dataset, then combine
-      ## --------------------------------------------------
       for (i in seq_along(objs)) {
 
-        # subset to common genes
+        ## ---- subset to shared genes ----
         Xi_raw <- objs[[i]]$vsd_mat[genes_common, , drop = FALSE]
 
-        # gene-wise Z-scoring WITHIN this dataset
+        ## ---- gene-wise Z-scoring WITHIN dataset ----
         Xi <- t(scale(t(Xi_raw)))
         Xi[is.na(Xi)] <- 0
 
-        # metadata
+        ## ---- metadata ----
         Mi <- as.data.frame(objs[[i]]$meta)
 
-        # keep sample IDs unique
-        new_ids <- paste0(labels[i], "_", colnames(Xi))
+        # enforce sample_id from expression matrix ONLY
+        Mi$sample_id <- colnames(Xi)
+
+        # make sample IDs globally unique
+        new_ids <- paste0(labels[i], "_", Mi$sample_id)
+
+        # apply consistently
+        Mi$sample_id <- new_ids
         colnames(Xi) <- new_ids
-        rownames(Mi) <- new_ids
-        Mi$.dataset  <- labels[i]
+
+
+        Mi$.dataset <- labels[i]
+
+        # ---- dataset pretty name (PCA-specific) ----
+        study_key <- sub("(_FRDA.*$)", "", labels[i])
+
+        pretty_label <- pretty_map[study_key]
+        pretty_label <- pretty_label %||% study_key
+
+        # SPECIAL CASE: Li PCA
+        if (identical(study_key, "Li")) {
+          pretty_label <- "Li (Cardiomyocytes)"
+        }
+
+        Mi$.dataset_pretty <- pretty_label
+
 
         mats[[i]]  <- Xi
         metas[[i]] <- Mi
       }
 
-      ## --------------------------------------------------
-      ## Combine datasets
-      ## --------------------------------------------------
+      ## ---- combine matrices + metadata ----
       Xall <- do.call(cbind, mats)
       Mall <- dplyr::bind_rows(metas)
-      Mall <- Mall[colnames(Xall), , drop = FALSE]
 
-      list(vsd_mat = Xall, meta = Mall, files = labels)
+      # final hard alignment (authoritative)
+      Mall <- Mall[match(colnames(Xall), Mall$sample_id), , drop = FALSE]
+
+      stopifnot(identical(colnames(Xall), Mall$sample_id))
+
+
+      # ensure sample_id exists ONCE and is stable
+      if (!"sample_id" %in% names(Mall)) {
+        Mall$sample_id <- rownames(Mall)
+      }
+
+      # sanity check: every expression column must have metadata
+      missing_meta <- setdiff(colnames(Xall), Mall$sample_id)
+      if (length(missing_meta) > 0) {
+        stop(
+          "Metadata missing for samples: ",
+          paste(missing_meta, collapse = ", ")
+        )
+      }
+
+      list(
+        vsd_mat = Xall,
+        meta    = Mall,
+        files   = labels
+      )
+
+
     })
-
 
     ## Decide PCA input matrix (VST vs Z-scored)
     pca_matrix <- reactive({
@@ -171,12 +264,13 @@ pcaServer <- function(id,
       M2    <- M[, keep, drop = FALSE]
       small <- vapply(M2, \(x) length(unique(x)) <= 50, logical(1))
       nm    <- names(M2[, small, drop = FALSE])
-      unique(c(".dataset", nm))
+      unique(c(".dataset_pretty", nm))
+
     })
 
     output$color_var_ui <- renderUI({
       req(meta_cols())
-      preferred <- c(".dataset", "group", "FRDA_CTRL", "cell_type", "Study_Alias")
+      preferred <- c(".dataset_pretty", "FRDA_CTRL", "group", "cell_type", "Study_Alias")
       default   <- intersect(preferred, meta_cols())
       selectInput(ns("color_var"), "Colour by",
                   choices = meta_cols(),
@@ -204,7 +298,12 @@ pcaServer <- function(id,
       df <- as.data.frame(pr_obj()$x)
       df$sample_id <- rownames(df)
       M  <- merged_input()$meta
-      M$sample_id <- rownames(M)
+
+      # Ensure M has sample_id; in single-dataset branch it doesn't yet, so add it safely
+      if (!"sample_id" %in% names(M)) {
+        M$sample_id <- rownames(M)
+      }
+
       dplyr::left_join(df, M, by = "sample_id")
     })
 
