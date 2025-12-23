@@ -1,5 +1,5 @@
 #' @importFrom stats prcomp
-PCASidebarUI <- function(id, title = "PCA (VST)") {
+PCASidebarUI <- function(id, title = "Principal Component Analysis") {
   ns <- NS(id)
   tagList(
     h4(title),
@@ -8,7 +8,6 @@ PCASidebarUI <- function(id, title = "PCA (VST)") {
     tags$hr(),
     uiOutput(ns("color_var_ui")),
     uiOutput(ns("shape_var_ui")),
-    checkboxInput(ns("label_points"), "Show sample labels", FALSE),
     checkboxInput(ns("draw_ellipses"), "Group ellipses (95%)", FALSE),
     sliderInput(ns("pt_size"), "Point size", min = 1, max = 6, value = 3, step = 0.5),
     radioButtons(ns("engine"), "Plot engine", inline = TRUE,
@@ -55,6 +54,12 @@ pcaServer <- function(id,
         warning("pretty_map could not be found; using empty vector.")
         character(0)
       }
+    )
+    aesthetic_map <- c(
+      "Study"                  = "Study",
+      ".dataset_pretty"        = "Dataset",
+      "case_diff_controls"     = "Disease Status",
+      "cell_type"              = "Cell Type"
     )
 
 
@@ -108,18 +113,19 @@ pcaServer <- function(id,
       )
     })
 
-
-
-
-
     # Load and merge (intersect genes across selections)
     merged_input <- reactive({
       req(input$picked)
-
       paths  <- as.character(input$picked)
       objs   <- lapply(paths, readRDS)
       labels <- sub("_pca_input\\.rds$", "", basename(paths))
 
+      # parent study inferred from dataset label
+      parent_studies <- sub("_.*$", "", labels)
+
+
+      # Z-score only if more than one study is present
+      zscore_required <- length(unique(parent_studies)) > 1
       ## --------------------------------------------------
       ## SINGLE DATASET → standard VST PCA
       ## --------------------------------------------------
@@ -150,8 +156,10 @@ pcaServer <- function(id,
         return(list(
           vsd_mat = X,
           meta    = M,
-          files   = labels
+          files   = labels,
+          zscore  = FALSE
         ))
+
       }
 
 
@@ -178,9 +186,13 @@ pcaServer <- function(id,
         ## ---- subset to shared genes ----
         Xi_raw <- objs[[i]]$vsd_mat[genes_common, , drop = FALSE]
 
-        ## ---- gene-wise Z-scoring WITHIN dataset ----
-        Xi <- t(scale(t(Xi_raw)))
-        Xi[is.na(Xi)] <- 0
+        if (zscore_required) {
+          Xi <- t(scale(t(Xi_raw)))
+          Xi[is.na(Xi)] <- 0
+        } else {
+          Xi <- Xi_raw
+        }
+
 
         ## ---- metadata ----
         Mi <- as.data.frame(objs[[i]]$meta)
@@ -225,28 +237,12 @@ pcaServer <- function(id,
 
       stopifnot(identical(colnames(Xall), Mall$sample_id))
 
-
-      # ensure sample_id exists ONCE and is stable
-      if (!"sample_id" %in% names(Mall)) {
-        Mall$sample_id <- rownames(Mall)
-      }
-
-      # sanity check: every expression column must have metadata
-      missing_meta <- setdiff(colnames(Xall), Mall$sample_id)
-      if (length(missing_meta) > 0) {
-        stop(
-          "Metadata missing for samples: ",
-          paste(missing_meta, collapse = ", ")
-        )
-      }
-
       list(
         vsd_mat = Xall,
         meta    = Mall,
-        files   = labels
+        files   = labels,
+        zscore  = zscore_required
       )
-
-
     })
 
     ## Decide PCA input matrix (VST vs Z-scored)
@@ -260,28 +256,56 @@ pcaServer <- function(id,
     # Aesthetic fields (categorical-ish)
     meta_cols <- reactive({
       M <- merged_input()$meta
-      keep  <- vapply(M, \(x) is.factor(x) || is.character(x) || is.logical(x), logical(1))
-      M2    <- M[, keep, drop = FALSE]
-      small <- vapply(M2, \(x) length(unique(x)) <= 50, logical(1))
-      nm    <- names(M2[, small, drop = FALSE])
-      unique(c(".dataset_pretty", nm))
 
+      # only categorical-ish fields
+      keep <- vapply(
+        M,
+        function(x) is.factor(x) || is.character(x) || is.logical(x),
+        logical(1)
+      )
+
+      M2 <- M[, keep, drop = FALSE]
+
+      # drop high-cardinality junk
+      small <- vapply(
+        M2,
+        function(x) length(unique(x)) <= 50,
+        logical(1)
+      )
+
+      available <- names(M2[, small, drop = FALSE])
+
+      # intersect with allowed aesthetic variables
+      allowed <- intersect(names(aesthetic_map), available)
+
+      # named vector: values = column names, names = pretty labels
+      stats::setNames(allowed, aesthetic_map[allowed])
     })
 
     output$color_var_ui <- renderUI({
-      req(meta_cols())
-      preferred <- c(".dataset_pretty", "FRDA_CTRL", "group", "cell_type", "Study_Alias")
-      default   <- intersect(preferred, meta_cols())
-      selectInput(ns("color_var"), "Colour by",
-                  choices = meta_cols(),
-                  selected = if (length(default)) default[1] else meta_cols()[1])
+      choices <- meta_cols()
+      req(length(choices) > 0)
+
+      selectInput(
+        ns("color_var"),
+        "Colour by",
+        choices  = choices,
+        selected = ".dataset_pretty"
+      )
     })
 
     output$shape_var_ui <- renderUI({
-      req(meta_cols())
-      choices <- c("None", meta_cols())
-      selectInput(ns("shape_var"), "Shape by", choices = choices, selected = "None")
+      choices <- meta_cols()
+      req(length(choices) > 0)
+
+      selectInput(
+        ns("shape_var"),
+        "Shape by",
+        choices  = c("None" = "None", choices),
+        selected = "case_diff_controls"
+      )
     })
+
 
     # PCA
     pr_obj <- reactive({
@@ -322,13 +346,6 @@ pcaServer <- function(id,
 
       p <- p + ggplot2::geom_point(size = input$pt_size, alpha = 0.9)
 
-      if (isTRUE(input$label_points)) {
-        p <- p + ggrepel::geom_text_repel(
-          ggplot2::aes(label = sample_id),
-          size = 3,
-          max.overlaps = 50
-        )
-      }
 
       if (isTRUE(input$draw_ellipses)) {
         p <- p + ggplot2::stat_ellipse(
@@ -339,10 +356,18 @@ pcaServer <- function(id,
       }
 
       pv <- percent_var()
-      title_txt <- if (length(input$picked) == 1L) {
+      title_txt <- if (!merged_input()$zscore) {
         "PCA (VST)"
       } else {
-        "PCA (Z-scored, shared genes)"
+        "PCA (Z-scored across studies)"
+      }
+
+
+      color_label <- aesthetic_map[[input$color_var]] %||% input$color_var
+      shape_label <- if (!is.null(input$shape_var) && input$shape_var != "None") {
+        aesthetic_map[[input$shape_var]] %||% input$shape_var
+      } else {
+        NULL
       }
 
       p <- p +
@@ -350,8 +375,8 @@ pcaServer <- function(id,
           title = title_txt,
           x = sprintf("PC1 (%.2f%%)", pv[1]),
           y = sprintf("PC2 (%.2f%%)", pv[2]),
-          color = input$color_var,
-          shape = if (!is.null(input$shape_var) && input$shape_var != "None") input$shape_var else NULL
+          color = color_label,
+          shape = shape_label
         ) +
         ggplot2::theme_classic(base_size = 14)
 
@@ -384,9 +409,12 @@ pcaServer <- function(id,
 
     # Downloads
     filename_stub <- reactive({
-      labs <- merged_input()$files
-      if (length(labs) == 1L) labs else paste0("MULTI_", paste(labs, collapse = "_"))
+      paste0(
+        "PCA_",
+        format(Sys.time(), "%Y%m%d_%H%M%S")
+      )
     })
+
 
     output$download_png <- downloadHandler(
       filename = function() sprintf("%s_PCA.png", filename_stub()),
