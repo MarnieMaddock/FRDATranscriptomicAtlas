@@ -10,7 +10,7 @@ GSEASidebarUI <- function(id) {
     radioButtons(ns("ont"), "Ontology",
                  choices = c("BP", "CC", "MF"), inline = TRUE),
     sliderInput(ns("ncat"), "Show top categories",
-                min = 2, max = 500, value = 10, step = 5),
+                min = 2, max = 500, value = 10, step = 1),
     tags$hr(),
     br(),
   )

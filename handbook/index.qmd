@@ -1,6 +1,6 @@
 ---
 title: "FRDA Transcriptomic Atlas Handbook"
-subtitle: "Quick-start Guide & Full Reference"
+subtitle: "A User Guide and Reference Manual"
 format:
   html:
     toc: false        # hide table of contents on this page
@@ -13,9 +13,9 @@ page-layout: full     # optional: no side gutters
 
 ![](images/dottori_lab_pentagon.svg){width=180px .center}
 
-## Efficient qPCR Data Analysis Software
+## Exploring Friedreich’s Ataxia RNA-seq Data
 
-#### Interactive qPCR Analysis & Visualisation App
+#### An interactive platform for RNA-seq visualisation and cross-study meta-analysis for FRDA datasets
 
 [Get Started »](overview.qmd){.btn .btn-lg style="background:#2a776d;border-color:#2a776d;color:#fff;"}
 

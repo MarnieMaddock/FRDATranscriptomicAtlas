@@ -131,10 +131,15 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul class="collapse">
-  <li><a href="#available-features" id="toc-available-features" class="nav-link active" data-scroll-target="#available-features"><span class="header-section-number">1</span> Available Features</a>
-  <ul class="collapse">
-  <li><a href="#principal-component-analysis-pca-plots" id="toc-principal-component-analysis-pca-plots" class="nav-link" data-scroll-target="#principal-component-analysis-pca-plots"><span class="header-section-number">1.1</span> Principal Component Analysis (PCA) Plots</a></li>
-  </ul></li>
+  <li><a href="#principal-component-analysis-pca-plots" id="toc-principal-component-analysis-pca-plots" class="nav-link active" data-scroll-target="#principal-component-analysis-pca-plots"><span class="header-section-number">1</span> Principal Component Analysis (PCA) Plots</a></li>
+  <li><a href="#differentially-expressed-genes-degs" id="toc-differentially-expressed-genes-degs" class="nav-link" data-scroll-target="#differentially-expressed-genes-degs"><span class="header-section-number">2</span> Differentially Expressed Genes (DEGs)</a></li>
+  <li><a href="#venn-diagrams-of-shared-degs-dets" id="toc-venn-diagrams-of-shared-degs-dets" class="nav-link" data-scroll-target="#venn-diagrams-of-shared-degs-dets"><span class="header-section-number">3</span> Venn Diagrams of Shared DEGs / DETs</a></li>
+  <li><a href="#volcano-plots" id="toc-volcano-plots" class="nav-link" data-scroll-target="#volcano-plots"><span class="header-section-number">4</span> Volcano Plots</a></li>
+  <li><a href="#heatmaps" id="toc-heatmaps" class="nav-link" data-scroll-target="#heatmaps"><span class="header-section-number">5</span> Heatmaps</a></li>
+  <li><a href="#functional-enrichment-analysis-gsea" id="toc-functional-enrichment-analysis-gsea" class="nav-link" data-scroll-target="#functional-enrichment-analysis-gsea"><span class="header-section-number">6</span> Functional Enrichment Analysis (GSEA)</a></li>
+  <li><a href="#comparative-pathway-analysis" id="toc-comparative-pathway-analysis" class="nav-link" data-scroll-target="#comparative-pathway-analysis"><span class="header-section-number">7</span> Comparative Pathway Analysis:</a></li>
+  <li><a href="#gene-expression-plots" id="toc-gene-expression-plots" class="nav-link" data-scroll-target="#gene-expression-plots"><span class="header-section-number">8</span> Gene Expression Plots</a></li>
+  <li><a href="#forest-plot-meta-analysis" id="toc-forest-plot-meta-analysis" class="nav-link" data-scroll-target="#forest-plot-meta-analysis"><span class="header-section-number">9</span> Forest Plot (Meta-analysis)</a></li>
   </ul>
 </nav>
 </nav>
@@ -165,15 +170,22 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>The FRDA Transcriptomic Atlas is designed to be user-friendly and accessible. All interactions with the Atlas occur through a simple, web-based graphical interface using point-and-click controls. This guide provides a brief overview of each feature in the FRDA Transcriptomic Atlas.</p>
-<section id="available-features" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Available Features</h1>
+<section id="available-features" class="level4" data-number="0.0.1">
+<h4 data-number="0.0.1" class="anchored" data-anchor-id="available-features"><span class="header-section-number">0.0.1</span> Available Features</h4>
 <ul>
-<li><p><strong>Principal Component Analysis (PCA) Plots:</strong> Visualise how similar or different samples are from each other within a dataset, or across multiple datasets.</p></li>
-<li><p><strong>Differential Expression Analysis</strong><br>
-Explore genes that are differentially expressed between FRDA and control samples across datasets.</p></li>
+<li><strong>Principal Component Analysis (PCA) Plots:</strong> Visualise how similar or different samples are from each other within a dataset, or across multiple datasets. Found in the <code>PCA</code> tab.</li>
+<li><strong>Differentially Expressed Genes (DEGs):</strong> Identify genes or isoforms whose expression levels differ significantly between FRDA and controls within a dataset. Found in the <code>DEGs</code> –&gt; <code>Explore by Dataset</code> tabs.</li>
+<li><strong>Venn Diagrams:</strong>: Compare differentially expressed genes and isoforms between FRDA and controls across multiple datasets. Found in the <code>DEGs</code> –&gt; <code>Compare Datasets</code> tab.</li>
+<li><strong>Volcano Plots:</strong> Visualise the overall distribution of differential expression results within a dataset. Found in the <code>Volcano Plots</code> tab.</li>
+<li><strong>Heatmaps:</strong> Visualise expression patterns of selected genes or isoforms across samples within a dataset, or across multiple datasets. Found in the <code>Heatmaps</code> tab.</li>
+<li><strong>Functional Enrichment Analysis (GSEA):</strong> Identify pathways that are consistently associated with differential gene expression in FRDA for each individual dataset. Found in the <code>Functional Enrichment</code> –&gt; <code>Explore by Dataset</code> tab.</li>
+<li><strong>Comparative Pathway Analysis:</strong> Compare pathway-level enrichment results across multiple datasets to identify common biological themes in FRDA. Found in the <code>Functional Enrichment</code> –&gt; <code>Compare Datasets</code> tab.</li>
+<li><strong>Gene Plots:</strong> Visualise expression levels of your favourite gene or isoform across samples within a dataset. Found in the <code>Gene Plots</code> –&gt; <code>Explore by Dataset</code> tab.</li>
+<li><strong>Forest Plot:</strong> Compare gene or isoform expression between FRDA and control across multiple datasets. Found in the <code>Gene Plots</code> –&gt; <code>Compare Datasets</code> tab.</li>
 </ul>
-<section id="principal-component-analysis-pca-plots" class="level2" data-number="1.1">
-<h2 data-number="1.1" class="anchored" data-anchor-id="principal-component-analysis-pca-plots"><span class="header-section-number">1.1</span> Principal Component Analysis (PCA) Plots</h2>
+</section>
+<section id="principal-component-analysis-pca-plots" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="principal-component-analysis-pca-plots"><span class="header-section-number">1</span> Principal Component Analysis (PCA) Plots</h2>
 <p>Principal Component Analysis (PCA) is used to provide a high-level overview of how samples relate to one another based on their global gene expression profiles. Each point represents a single sample, and the distance between points reflects overall similarity or dissimilarity across thousands of genes simultaneously.</p>
 <p>This view is intended as an exploratory and quality-control step rather than a gene-level analysis. PCA can be used to:</p>
 <ul>
@@ -184,13 +196,204 @@ Explore genes that are differentially expressed between FRDA and control samples
 </ul>
 <p>Samples that cluster closely share similar expression patterns, while samples that are far apart differ more substantially.</p>
 <p>Users may colour or shape points by biologically meaningful annotations (e.g.&nbsp;dataset, disease status, or cell type) to help interpret observed clustering patterns.</p>
-<p><img src="images/Picture1.png" class="img-fluid" width="600"></p>
-<section id="technical-details" class="level3" data-number="1.1.1">
-<h3 data-number="1.1.1" class="anchored" data-anchor-id="technical-details"><span class="header-section-number">1.1.1</span> Technical Details</h3>
+<p><img src="images/Picture1.png" class="img-fluid" width="700"></p>
+<section id="technical-details" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="technical-details"><span class="header-section-number">1.1</span> Technical Details</h3>
 <p>PCA is performed on variance-stabilized gene expression matrices derived from DESeq2. When a single dataset is selected, all genes from that dataset are used directly. When multiple datasets are selected, analysis is restricted to genes shared across all datasets. If all selected datasets originate from the same parent study, PCA is computed on the variance-stabilized values. When datasets originate from different studies, gene-wise Z-score scaling is applied within each dataset prior to merging to reduce study-specific scale effects. Sample identifiers are made globally unique and expression matrices are strictly aligned with sample metadata. PCA is computed using singular value decomposition on the transposed expression matrix (samples × genes), with centering enabled and no additional scaling. The first two principal components are visualised, with optional 95% confidence ellipses to summarise group dispersion.</p>
-
-
 </section>
+</section>
+<section id="differentially-expressed-genes-degs" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="differentially-expressed-genes-degs"><span class="header-section-number">2</span> Differentially Expressed Genes (DEGs)</h2>
+<p>Differential expression analysis identifies genes or isoforms (transcripts) whose expression levels differ between experimental conditions within a dataset. In this case all comparisons are between FRDA and the controls as defined by the original study.</p>
+<p>Each row in the DEG table represents a single gene or isoform and summarises both the magnitude of expression change (log₂ fold change) and the statistical confidence in that change (adjusted p-value, FDR).</p>
+<p>Users can explore DEG results by:</p>
+<ul>
+<li>Switching between gene-level and isoform-level analyses</li>
+<li>Selecting a specific dataset</li>
+<li>Applying adjusted p-value thresholds</li>
+<li>Requiring a minimum absolute log₂ fold change</li>
+<li>Restricting results to upregulated, downregulated, or all genes/isoforms</li>
+</ul>
+<p>Filtered tables can be explored interactively and downloaded for further analysis.</p>
+<p><strong>Key</strong></p>
+<ul>
+<li>If the log₂ fold change is <strong>positive</strong>, this means that gene is expressed <strong>higher in the FRDA group</strong> compared to controls</li>
+<li>If the log₂ fold change is <strong>negative</strong>, this means that gene is expressed <strong>lower in the FRDA group</strong> compared to controls</li>
+</ul>
+<p><img src="images/Picture2.png" class="img-fluid" width="700"></p>
+<section id="technical-details-1" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="technical-details-1"><span class="header-section-number">2.1</span> Technical Details</h3>
+<p>DEGs were computed using DESeq2 in R. See original publication for more details.</p>
+</section>
+</section>
+<section id="venn-diagrams-of-shared-degs-dets" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="venn-diagrams-of-shared-degs-dets"><span class="header-section-number">3</span> Venn Diagrams of Shared DEGs / DETs</h2>
+<p>Venn diagrams are used to compare overlap and uniqueness of differentially expressed genes (DEGs) or differentially expressed transcripts (DETs) across multiple datasets. This feature helps identify genes or isoforms that are consistently altered in FRDA across studies, as well as those that appear dataset-specific.</p>
+<p>Each dataset contributes a set of filtered DEGs/DETs, and overlaps represent features that meet the same statistical and effect-size criteria in more than one dataset.</p>
+<p>Users can control which features are included in the comparison by:</p>
+<ul>
+<li>Switching between gene-level and isoform-level analyses</li>
+<li>Selecting any number of datasets</li>
+<li>Applying adjusted p-value thresholds</li>
+<li>Requiring a minimum absolute log₂ fold change</li>
+<li>Restricting results to upregulated, downregulated, or all features</li>
+</ul>
+<p>For clarity and accuracy, Venn diagrams are displayed when up to six datasets are selected. When more than six datasets are chosen, overlap is summarised in tables instead. The overlapping differentially expressed genes and isoforms are given in tables below the Venn diagram for download.</p>
+<p>See section Biomarker Discovery for an alternate view of overlapping genes.</p>
+<p><img src="images/Picture3.png" class="img-fluid" width="700"></p>
+<p><img src="images/Picture4.png" class="img-fluid" width="700"></p>
+</section>
+<section id="volcano-plots" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="volcano-plots"><span class="header-section-number">4</span> Volcano Plots</h2>
+<p>Volcano plots provide a concise visual summary of differential expression results by displaying both the magnitude of change and the statistical significance for each gene or isoform within a dataset.</p>
+<p>Each point represents a single gene or isoform. The x-axis shows the log₂ fold change between FRDA and control samples, while the y-axis shows statistical significance as −log₁₀(adjusted p-value). Genes with large expression changes and strong statistical support appear further from the centre and higher on the plot.</p>
+<p>This view is intended to support rapid interpretation and prioritisation of results. Volcano plots can be used to:</p>
+<ul>
+<li>Identify strongly upregulated or downregulated genes in FRDA</li>
+<li>Assess the overall distribution of differential expression within a dataset</li>
+<li>Highlight genes of particular interest</li>
+<li>Compare gene-level versus isoform-level differential expression</li>
+</ul>
+<p>Users can interactively customise the plot by:</p>
+<ul>
+<li>Switching between gene-level and isoform-level results</li>
+<li>Adjusting log₂ fold change and adjusted p-value thresholds</li>
+<li>Showing or hiding non-significant points</li>
+<li>Highlighting specific genes by name</li>
+<li>Selecting points directly on the plot using box or lasso tools</li>
+</ul>
+<p>Selected genes appear in a table below the plot and can be inspected or exported.</p>
+<p>Key</p>
+<ul>
+<li>Points to the right indicate higher expression in FRDA vs controls</li>
+<li>Points to the left indicate lower expression in FRDA vs controls</li>
+<li>Points above the significance threshold represent statistically significant changes</li>
+</ul>
+<p><img src="images/Picture5.png" class="img-fluid" width="700"></p>
+</section>
+<section id="heatmaps" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="heatmaps"><span class="header-section-number">5</span> Heatmaps</h2>
+<p>Expression heatmaps provide a visual overview of gene or isoform expression patterns across samples and datasets. Each row represents a gene or transcript, and each column represents an individual sample. Colours reflect relative expression levels, allowing patterns of similarity and difference to be assessed at a glance.</p>
+<p>This feature is intended for exploratory analysis and comparison of expression patterns rather than statistical testing. Heatmaps can be used to:</p>
+<ul>
+<li>Compare expression patterns between FRDA and control samples</li>
+<li>Visualise expression of selected genes across samples</li>
+<li>Assess consistency of expression trends across datasets</li>
+<li>Identify groups of samples or genes with similar expression profiles</li>
+</ul>
+<p>Users can customise the heatmap by:</p>
+<ul>
+<li>Switching between gene-level and isoform-level expression</li>
+<li>Selecting one or multiple datasets</li>
+<li>Entering a custom list of genes or transcripts</li>
+<li>Filtering samples by group (FRDA, control, or both)</li>
+<li>Enabling or disabling clustering of rows and columns. When clustering is disabled, samples can be ordered by dataset or by disease status to aid interpretation.</li>
+</ul>
+<p><img src="images/Picture6.png" class="img-fluid" width="700"></p>
+<section id="technical-details-2" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="technical-details-2"><span class="header-section-number">5.1</span> Technical Details</h3>
+<p>For a single dataset, heatmaps are generated from transcript per million (TPM) values using either log₂(TPM + 1) transformation or row-wise Z-score scaling. When multiple datasets are selected, expression values are derived from DESeq2 variance-stabilised counts (VST) and scaled within each dataset using row-wise Z-scores prior to merging. This approach reduces dataset-specific scale effects and enables cross-dataset comparison. Heatmaps are rendered using the ComplexHeatmap framework, with annotations indicating dataset and disease status. Clustering is performed using hierarchical clustering.</p>
+</section>
+</section>
+<section id="functional-enrichment-analysis-gsea" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="functional-enrichment-analysis-gsea"><span class="header-section-number">6</span> Functional Enrichment Analysis (GSEA)</h2>
+<p>Functional enrichment analysis is used to identify biological processes and pathways that are consistently associated with differential gene expression in FRDA. Rather than focusing on individual genes, this approach tests whether groups of functionally related genes show coordinated changes between FRDA and control samples.</p>
+<p>In the FRDA Transcriptomic Atlas, enrichment analysis is performed separately for each dataset using Gene Set Enrichment Analysis (GSEA). Results are presented for Gene Ontology (GO) categories, including:</p>
+<ul>
+<li>Biological Process (BP)</li>
+<li>Molecular Function (MF)</li>
+<li>Cellular Component (CC)</li>
+</ul>
+<p>This view is intended to support biological interpretation and hypothesis generation. GSEA can be used to:</p>
+<ul>
+<li>Identify biological processes altered in FRDA</li>
+<li>Compare functional signatures across datasets (see next section)</li>
+<li>Prioritise pathways supported by coordinated gene-level changes</li>
+<li>Explore consistency of pathway-level effects across studies (see next section)</li>
+</ul>
+<p>Results are visualised using dot plots and tables, and users can inspect or download the genes contributing to each enriched term.</p>
+<p><img src="images/Picture7.png" class="img-fluid" width="700"></p>
+<p><strong>Interpreting the Plots</strong></p>
+<ul>
+<li>GeneRatio reflects the proportion of genes in a pathway contributing to the enrichment signal.</li>
+<li>NES (Normalised Enrichment Score) indicates the direction and strength of enrichment, with positive values reflecting enrichment in FRDA and negative values reflecting enrichment in controls.</li>
+<li>Adjusted p-values (FDR) indicate statistical significance after correction for multiple testing.</li>
+</ul>
+<section id="technical-details-3" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="technical-details-3"><span class="header-section-number">6.1</span> Technical Details</h3>
+<p>GSEA is performed using the clusterProfiler framework on ranked gene lists derived from DESeq2 results (run pre dataset). Genes are ranked by test statistic, and enrichment is assessed using a permutation-based approach. Enrichment results are reported for GO BP, MF, and CC ontologies, with leading-edge (core enrichment) genes available for inspection and download in a table below the graphs.</p>
+</section>
+</section>
+<section id="comparative-pathway-analysis" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="comparative-pathway-analysis"><span class="header-section-number">7</span> Comparative Pathway Analysis:</h2>
+<p>This feature compares functional enrichment results across multiple datasets to identify biological pathways that are shared or unique between studies. Rather than comparing individual genes, it focuses on overlap at the pathway level, highlighting consistent functional signatures of FRDA across datasets.</p>
+<p>Each dataset contributes a set of significantly enriched Gene Ontology (GO) terms derived from GSEA. Overlaps represent pathways that are enriched in more than one dataset under the same statistical criteria. This view is intended to support cross-study synthesis and reproducibility assessment. Pathway comparison can be used to:</p>
+<ul>
+<li>Identify biological processes consistently enriched across datasets</li>
+<li>Distinguish shared versus dataset-specific functional signatures</li>
+<li>Compare enrichment direction (upregulated vs downregulated pathways)</li>
+<li>Prioritise pathways supported by multiple independent studies</li>
+</ul>
+<p>Users can customise the comparison by:</p>
+<ul>
+<li>Selecting any number of datasets</li>
+<li>Restricting analysis to upregulated, downregulated, or all enriched pathways</li>
+<li>Viewing overlap as a Venn diagram (≤ 6 datasets) or as summary tables (&gt; 6 datasets)</li>
+</ul>
+<p><img src="images/Picture8.png" class="img-fluid" width="700"></p>
+<p><strong>Interpreting the Tables</strong></p>
+<ul>
+<li>Total terms per dataset report the number of significantly enriched pathways after filtering</li>
+<li>Shared terms summarise how many pathways are common to different dataset combinations</li>
+<li>Term lists show the presence and direction of enrichment for each pathway across datasets</li>
+<li>Pathway direction is encoded consistently across views:
+<ul>
+<li>+1 indicates significant enrichment (positive NES)</li>
+<li>−1 indicates significant depletion (negative NES)</li>
+<li>0 indicates not significant or not detected</li>
+</ul></li>
+</ul>
+<p><img src="images/Picture9.png" class="img-fluid" width="700"></p>
+<section id="technical-details-4" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="technical-details-4"><span class="header-section-number">7.1</span> Technical Details</h3>
+<p>Pathway overlap is computed from precomputed GSEA results using Gene Ontology (BP, MF, CC) terms from the previous section. For each dataset, terms are classified by enrichment direction based on the sign of the Normalised Enrichment Score (NES) and filtered by adjusted p-value. Overlaps are defined as pathways meeting significance criteria in two or more datasets under the selected direction filter.</p>
+</section>
+</section>
+<section id="gene-expression-plots" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="gene-expression-plots"><span class="header-section-number">8</span> Gene Expression Plots</h2>
+<p>This feature allows users to visualise your favorite gene as a dot plot within a selected dataset.</p>
+<p>Expression values are shown as Transcripts Per Million (TPM).</p>
+<p>Users can:</p>
+<ul>
+<li>Select a gene by symbol (e.g.&nbsp;FXN)</li>
+<li>Choose one or more datasets from the same study</li>
+<li>Compare FRDA and control groups for the selected gene</li>
+<li>Export plots and underlying data for reporting or downstream analysis</li>
+</ul>
+<p><img src="images/Picture10.png" class="img-fluid" width="700"></p>
+<section id="technical-details-5" class="level3" data-number="8.1">
+<h3 data-number="8.1" class="anchored" data-anchor-id="technical-details-5"><span class="header-section-number">8.1</span> Technical Details</h3>
+<p>Gene expression values are loaded from precomputed TPM matrices that come from the analysis pipeline (see original publication for methods). TPM values are not directly comparable across independent studies due to differences in library preparation, sequencing depth, and processing pipelines. For this reason, multiple datasets may only be selected within the same dataset family (e.g.&nbsp;only Lai datasets or only Maddock datasets). If datasets from different families are selected, the interface automatically restricts the selection and displays a warning. This ensures that all comparisons shown are biologically and technically valid. The plot is intended for descriptive exploration, not formal statistical testing.</p>
+</section>
+</section>
+<section id="forest-plot-meta-analysis" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="forest-plot-meta-analysis"><span class="header-section-number">9</span> Forest Plot (Meta-analysis)</h2>
+<p>Forest plots are used to summarise gene-level differential expression across multiple independent studies. Each plot combines effect size estimates for a single gene to provide an overall assessment of expression change in FRDA relative to controls.</p>
+<p>Each row in the plot represents an individual study, displayed as a square centred on the study-specific log₂ fold change. The size of the square reflects the relative weight of the study in the meta-analysis, and horizontal lines indicate the corresponding 95% confidence interval. The diamond at the bottom represents the pooled summary estimate from a random-effects model, with its width indicating the 95% confidence interval of the combined effect.</p>
+<p>Forest plots can be used to:</p>
+<ul>
+<li>Assess whether a gene shows consistent differential expression across studies</li>
+<li>Compare the magnitude and direction of effects between datasets</li>
+<li>Identify studies that deviate from the overall trend</li>
+<li>Quantify between-study heterogeneity</li>
+</ul>
+<p>Effect sizes greater than zero indicate higher expression in FRDA relative to controls, while negative values indicate lower expression in FRDA relative to controls.</p>
+<p><img src="images/Picture11.png" class="img-fluid" width="700"></p>
+<section id="technical-details-6" class="level3" data-number="9.1">
+<h3 data-number="9.1" class="anchored" data-anchor-id="technical-details-6"><span class="header-section-number">9.1</span> Technical Details</h3>
+<p>For each gene, study-specific log₂ fold changes and their standard errors are extracted from DESeq2 results. Meta-analysis is performed using random-effects models. Between-study heterogeneity is assessed using I². Forest plots are generated using standard meta-analysis visualisation conventions, with a reference line at zero to indicate no differential expression.</p>
+
+
 </section>
 </section>
 
