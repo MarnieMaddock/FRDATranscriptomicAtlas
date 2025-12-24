@@ -64,24 +64,41 @@ biomarkerMainUI <- function(id, pkg = utils::packageName()) {
   )
 }
 
-
 biomarkerServer <- function(id,
-                            baseline_long_path = system.file(
-                              "extdata/biomarker/baseline_long.rds",
-                              package = "FRDATranscriptomicAtlas"
-                            ),
-                            pkg = utils::packageName()) {
+                            pkg = utils::packageName(),
+                            data_dir = NULL) {
 
   moduleServer(id, function(input, output, session) {
-
     ns <- session$ns
     `%||%` <- function(x, y) if (is.null(x)) y else x
 
-    # ============================================================
-    # Load data
-    # ============================================================
-    baseline_long <- readRDS(baseline_long_path) %>%
-      mutate(study = gsub("_batchcorrection$", "", study))
+    ensure_atlas_data(
+      keys    = "biomarker",
+      package = pkg
+    )
+    biomarker_dir <- function(package) {
+      file.path(
+        tools::R_user_dir(package, "cache"),
+        "biomarker"
+      )
+    }
+
+    baseline_path <- if (!is.null(data_dir)) {
+      file.path(data_dir, "baseline_long.rds")
+    } else {
+      file.path(biomarker_dir(pkg), "baseline_long.rds")
+    }
+
+    validate(
+      need(
+        file.exists(baseline_path),
+        "Biomarker baseline data not found. Please ensure data download completed."
+      )
+    )
+
+    baseline_long <- readRDS(baseline_path) |>
+      dplyr::mutate(study = gsub("_batchcorrection$", "", study))
+
 
     alpha <- reactive(as.numeric(input$alpha %||% 0.05))
 

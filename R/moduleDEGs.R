@@ -76,20 +76,21 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
     if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
     pkg <- pkg[[1L]]
 
-    # --- resolve paths with package-or-project fallback -------------------
-    resolve_dir <- function(subpath) {
-      d <- system.file(subpath, package = pkg, mustWork = FALSE)
-      if (!nzchar(d)) d <- file.path("inst", subpath)
-      d
-    }
-    resolve_file <- function(subpath, fname) {
-      d <- resolve_dir(subpath)
-      file.path(d, fname)
-    }
+    ensure_atlas_data(
+      keys    = c("deg_genes", "deg_transcripts"),
+      package = pkg
+    )
 
-    # one-time loads
-    deg_dir_genes       <- resolve_dir(file.path("extdata", "deg", "genes"))
-    deg_dir_transcripts <- resolve_dir(file.path("extdata", "deg", "txs"))
+    cache_root <- tools::R_user_dir(pkg, which = "cache")
+
+    deg_dir_genes <- file.path(cache_root, "deg", "genes")
+    deg_dir_transcripts <- file.path(cache_root, "deg", "txs")
+
+    validate(
+      need(dir.exists(deg_dir_genes), "Gene-level DEG data not found."),
+      need(dir.exists(deg_dir_transcripts), "Transcript-level DEG data not found.")
+    )
+
 
     tx2_path <- resolve_file(file.path("extdata", "maps"), "tx2gene.tsv")
     tx2 <- if (nzchar(tx2_path) && file.exists(tx2_path)) {

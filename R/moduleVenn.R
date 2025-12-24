@@ -87,13 +87,22 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     requireNamespace("stringr", quietly = TRUE)
     requireNamespace("svglite", quietly = TRUE)
 
-    # --- paths + cached reader ---
-    deg_dir_genes <- system.file("extdata/deg/genes", package = pkg, mustWork = FALSE)
-    if (!nzchar(deg_dir_genes)) deg_dir_genes <- file.path("inst", "extdata", "deg", "genes")
+    ensure_atlas_data(
+      keys    = c("deg_genes", "deg_transcripts"),
+      package = pkg
+    )
 
-    deg_dir_transcripts <- system.file("extdata/deg/transcripts", package = pkg, mustWork = FALSE)
-    if (!nzchar(deg_dir_transcripts)) deg_dir_transcripts <- file.path("inst", "extdata", "deg", "transcripts")
-    read_cached <- memoise::memoise(readRDS)
+    # --- paths + cached reader ---
+    cache_root <- tools::R_user_dir(pkg, which = "cache")
+
+    deg_dir_genes <- file.path(cache_root, "deg", "genes")
+    deg_dir_transcripts <- file.path(cache_root, "deg", "txs")
+
+    validate(
+      need(dir.exists(deg_dir_genes), "Gene-level DEG data not available."),
+      need(dir.exists(deg_dir_transcripts), "Transcript-level DEG data not available.")
+    )
+
 
     # --- maps (tx2gene) ---
     tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)

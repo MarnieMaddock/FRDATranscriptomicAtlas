@@ -180,84 +180,101 @@ volcanoServer <- function(
       df
     }
 
+    .deg_data_ready <- reactiveValues(
+      genes = FALSE,
+      transcripts = FALSE
+    )
 
     # -------- robust loader (data frame files) --------
+    # -------- robust loader (Zenodo-backed DEG files) --------
     load_deg <- function(dataset, level, pkg) {
-      level <- match.arg(level, c("genes","transcripts"))
 
-      level_dir <- c(
-        genes       = "genes",
-        transcripts = "txs"
-      )
+      level <- match.arg(level, c("genes", "transcripts"))
 
-      subdir <- file.path("extdata", "deg", level_dir[[level]])
+      # ---- map level -> manifest key + cache subdir ----
+      manifest_key <- if (level == "genes") "deg_genes" else "deg_transcripts"
+      level_dir    <- if (level == "genes") "genes"     else "txs"
 
-      base_pkg <- system.file(subdir, package = pkg, mustWork = FALSE)
-      base_dev <- file.path("inst", subdir)
-      bases <- c(base_pkg, base_dev)
-      bases <- bases[nzchar(bases) & dir.exists(bases)]
-      if (!length(bases)) {
-        stop("Data folder not found. Checked:\n  - ", base_pkg, "\n  - ", base_dev)
+      # ---- ensure data are present locally (download if needed) ----
+      if (!.deg_data_ready[[level]]) {
+        ensure_atlas_data(
+          keys    = manifest_key,
+          package = pkg
+        )
+        .deg_data_ready[[level]] <- TRUE
       }
 
-      # 1) exact pattern with 0.05
-      pat_exact <- paste0("^DESEQ2_res_", dataset, "_0\\.05_all_", level, "\\.rds$")
-      # 2) any FDR (e.g. 0.10)
-      pat_loose <- paste0("^DESEQ2_res_", dataset, "_0\\.[0-9]+_all_", level, "\\.rds$")
-      # 3) simple <dataset>.rds
-      simple    <- paste0(dataset, ".rds")
 
-      find_one <- function(b) {
-        hits <- list.files(b, pattern = pat_exact, full.names = TRUE)
-        if (!length(hits)) hits <- list.files(b, pattern = pat_loose, full.names = TRUE)
-        if (!length(hits)) {
-          cand <- file.path(b, simple)
-          hits <- cand[file.exists(cand)]
-        }
-        hits[1]
-      }
-      f <- NULL
-      for (b in bases) { f <- find_one(b); if (length(f) && nzchar(f)) break }
+      # ---- cached DEG directory ----
+      cache_root <- tools::R_user_dir(pkg, which = "cache")
+      deg_dir    <- file.path(cache_root, "deg", level_dir)
 
-      if (is.null(f) || !nzchar(f) || !file.exists(f)) {
+      if (!dir.exists(deg_dir)) {
         stop(
-          "DEG file not found for dataset '", dataset, "'. Looked in:\n  - ",
-          paste(bases, collapse = "\n  - "),
-          "\nExpected one of:\n  • DESEQ2_res_", dataset, "_0.05_all_", level, ".rds\n",
-          "  • DESEQ2_res_", dataset, "_0.xx_all_", level, ".rds\n",
-          "  • ", dataset, ".rds"
+          "Cached DEG directory not found after download:\n  ",
+          deg_dir,
+          call. = FALSE
         )
       }
 
-      x <- readRDS(f); if (!is.data.frame(x)) x <- as.data.frame(x)
-      nm <- names(x)
+      # ---- filename patterns ----
+      pat_exact <- paste0("^DESEQ2_res_", dataset, "_0\\.05_all_", level, "\\.rds$")
+      pat_loose <- paste0("^DESEQ2_res_", dataset, "_0\\.[0-9]+_all_", level, "\\.rds$")
+      simple    <- paste0("^", dataset, "\\.rds$")
 
-      # --- standardize columns ---
-      if (!"gene" %in% nm) {
-        if ("symbol" %in% nm)                x <- dplyr::rename(x, gene = symbol)
-        else if ("Gene" %in% nm)             x <- dplyr::rename(x, gene = Gene)
-        else if ("external_gene_name" %in% nm) x <- dplyr::rename(x, gene = external_gene_name)
-        else if ("ensembl_gene_id" %in% nm)  x <- dplyr::rename(x, gene = ensembl_gene_id)
-        else if ("gene_id" %in% nm)          x <- dplyr::rename(x, gene = gene_id)
-        else if (!is.null(rownames(x)))      x$gene <- rownames(x)
-        else                                  x$gene <- NA_character_
+      files <- list.files(deg_dir, full.names = TRUE)
+
+      f <- files[grepl(pat_exact, basename(files))]
+      if (!length(f)) f <- files[grepl(pat_loose, basename(files))]
+      if (!length(f)) f <- files[grepl(simple, basename(files))]
+
+      if (!length(f)) {
+        stop(
+          "DEG file not found for dataset '", dataset, "'.\n",
+          "Looked in:\n  ", deg_dir, "\n",
+          "Expected one of:\n",
+          "  • DESEQ2_res_", dataset, "_0.05_all_", level, ".rds\n",
+          "  • DESEQ2_res_", dataset, "_0.xx_all_", level, ".rds\n",
+          "  • ", dataset, ".rds",
+          call. = FALSE
+        )
       }
 
+      # ---- load file ----
+      x <- readRDS(f[1])
+      if (!is.data.frame(x)) x <- as.data.frame(x)
+      nm <- names(x)
+
+      # ---- standardise ID column ----
+      if (!"gene" %in% nm) {
+        if ("symbol" %in% nm)                  x <- dplyr::rename(x, gene = symbol)
+        else if ("Gene" %in% nm)               x <- dplyr::rename(x, gene = Gene)
+        else if ("external_gene_name" %in% nm) x <- dplyr::rename(x, gene = external_gene_name)
+        else if ("ensembl_gene_id" %in% nm)    x <- dplyr::rename(x, gene = ensembl_gene_id)
+        else if ("gene_id" %in% nm)            x <- dplyr::rename(x, gene = gene_id)
+        else if (!is.null(rownames(x)))        x$gene <- rownames(x)
+        else                                   x$gene <- NA_character_
+      }
+
+      # ---- standardise log2FC ----
       if (!"log2FC" %in% nm) {
         if ("log2FoldChange" %in% nm) x <- dplyr::rename(x, log2FC = log2FoldChange)
         else if ("beta" %in% nm)       x <- dplyr::rename(x, log2FC = beta)
       }
 
+      # ---- sanity check for p-values ----
       if (!("padj" %in% names(x) || "pvalue" %in% names(x))) {
-        stop("Need 'padj' or 'pvalue' column in file: ", basename(f))
+        stop(
+          "Need 'padj' or 'pvalue' column in DEG file:\n  ",
+          basename(f[1]),
+          call. = FALSE
+        )
       }
+
       x
     }
 
-    update_trigger <- shiny::reactive({
-      input$update_plot
-      input$deg_level
-    })
+
 
     # -------- main reactive table --------
     deg_tbl <- shiny::reactive({

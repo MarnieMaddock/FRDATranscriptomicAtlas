@@ -122,7 +122,7 @@ dtuVennMainUI <- function(id) {
 }
 
 # SERVER
-dtuVennServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
+dtuVennServer <- function(id, pkg = utils::packageName()){
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -138,42 +138,23 @@ dtuVennServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
     `%||%` <- function(x, y) if (is.null(x)) y else x
     norm_id <- function(x) sub("\\.\\d+$","", as.character(x))
 
-    # ---- where the DTU CSVs live ----
-    # ---- Resolve DTU directory safely ----
-    # 1) if caller passed data_dir, prefer it
-    dtu_dir <- data_dir
+    # ---- ensure DTU data are available (Zenodo cache) ----
+    ensure_atlas_data(
+      keys    = "dtu_results",
+      package = pkg
+    )
 
-    # 2) else, try installed package paths (both cases)
-    if (is.null(dtu_dir) || !nzchar(dtu_dir) || !dir.exists(dtu_dir)) {
-      # Ensure pkg is a scalar character
-      pkg <- tryCatch(pkg[[1L]], error = function(e) pkg)
-      if (!is.character(pkg) || length(pkg) != 1L || !nzchar(pkg)) {
-        pkg <- "FRDATranscriptomicAtlas"
-      }
-      dtu_dir <- system.file("extdata/DTU", package = pkg, mustWork = FALSE)
-      if (!nzchar(dtu_dir) || !dir.exists(dtu_dir)) {
-        dtu_dir <- system.file("extdata/dtu", package = pkg, mustWork = FALSE)
-      }
-    }
+    cache_root <- tools::R_user_dir(pkg, which = "cache")
+    dtu_dir    <- file.path(cache_root, "dtu")
 
-    # 3) else, try project-inst paths (both cases) – for non-installed app mode
-    if (!nzchar(dtu_dir) || !dir.exists(dtu_dir)) {
-      cand <- c(
-        file.path("inst", "extdata", "DTU"),
-        file.path("inst", "extdata", "dtu")
+    if (!dir.exists(dtu_dir)) {
+      stop(
+        "DTU cache directory not found after download:\n  ",
+        dtu_dir,
+        call. = FALSE
       )
-      dtu_dir <- cand[file.exists(cand)][1]
-      if (is.na(dtu_dir)) dtu_dir <- ""
     }
 
-    # Final guard — if still empty, avoid system.file errors downstream
-    if (!nzchar(dtu_dir) || !dir.exists(dtu_dir)) {
-      stop("DTU directory not found. Looked in extdata/DTU, extdata/dtu and inst equivalents.")
-    }
-
-    read_cached_rds <- memoise::memoise(function(p) {
-      readRDS(p)
-    })
 
     # ---- pretty dataset labels (optional – reuse/extend yours) ----
     pretty_map <- c(

@@ -136,15 +136,24 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       df
     }
 
-    # ---- locate extdata/GSEA_results no matter how the app is run ----
-    if (is.null(base_dir) || !nzchar(base_dir)) {
-      # installed package path
-      base_dir <- system.file("extdata", "GSEA_results", package = pkg, mustWork = FALSE)
-      # project (dev) fallback
-      if (!nzchar(base_dir) || !dir.exists(base_dir)) {
-        base_dir <- file.path("inst", "extdata", "GSEA_results")
-      }
+    # ---- ensure GSEA data are available (Zenodo-backed) ----
+    ensure_atlas_data(
+      keys    = "gsea_results",
+      package = pkg
+    )
+
+    # ---- cached GSEA directory ----
+    cache_root <- tools::R_user_dir(pkg, which = "cache")
+    base_dir   <- file.path(cache_root, "GSEA_results")
+
+    if (!dir.exists(base_dir)) {
+      stop(
+        "Cached GSEA_results directory not found after download:\n  ",
+        base_dir,
+        call. = FALSE
+      )
     }
+
 
     # ---- index: dataset folder -> {BP,CC,MF} -> file path ----
     build_index <- function(root) {

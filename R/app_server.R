@@ -22,25 +22,8 @@ app_server <- function(input, output, session) {
     shiny::addResourcePath("projwww", proj_www)  # /projwww → <project>/inst/www
   }
 
-
-  # ---- helper for image ----
-  # get_switchplot_example_src <- function(pkg) {
-  #   # prefer packaged www
-  #   pkg_file <- system.file("www", "switchplot_example.svg", package = pkg, mustWork = FALSE)
-  #   if (nzchar(pkg_file) && file.exists(pkg_file)) {
-  #     return("pkgwww/switchplot_example.svg")   # web-accessible path
-  #   }
-  #
-  #   # fallback: if you’re running locally from the project root
-  #   if (file.exists("www/switchplot_example.svg")) {
-  #     return("switchplot_example.svg")          # Shiny serves /www automatically
-  #   }
-  #
-  #   NULL
-  # }
-
   # ---- Build long-format DEGs (uses robust `pkg`) ----
-  deg_long_df <- build_deg_long(pkg = pkg, p_thr = 0.05, lfc_min = 0, level = "genes")
+  #deg_long_df <- build_deg_long(pkg = pkg, p_thr = 0.05, lfc_min = 0, level = "genes")
 
   # --- Optional helpers you already have ---
   discover_dtu_labels_flat <- function(data_dir) {
@@ -107,32 +90,65 @@ app_server <- function(input, output, session) {
   }
 
   # --- Call modules (pass the same `pkg`) -------------------------------
+  # aboutServer("about")
+  # pcaServer("pca")
+  # genePlotsServer("gene_plots", pkg = pkg)
+  # degTablesServer("deg_tables", pkg = pkg)
+  # degVennServer("deg_venn", pkg = pkg)
+  # volcanoServer("volc", level = "genes", pkg = pkg)
+  # forestPlotsServer("forest", pkg = pkg)
+  # dtuResultsServer(
+  #   id         = "dtu",
+  #   data_dir   = get_DTU_dir(),
+  #   labels     = NULL,
+  #   pretty_map = pretty_map
+  # )
+  # dtuVennServer("dtuVenn", pkg = pkg, data_dir = get_DTU_dir())
+  #
+  # tpmHeatmapServer("tpm_hm", pkg = pkg)
+  # consequencesServer(
+  #   id         = "dtu_func_cons",
+  #   data_dir   = get_DTU_dir(),
+  #   labels     = NULL,              # we auto-discover with discover_conseq_labels_flat()
+  #   pretty_map = pretty_map         # optional: same pretty labels you use elsewhere
+  # )
+  # datasetsServer("datasets")
+  # GSEAServer("gsea",  pkg = pkg)
+  # gseaCompareServer("gsea_compare",  pkg = pkg)
+  # biomarkerServer("biomarkers")
+
+  # --- Modules that are SAFE right now ---
   aboutServer("about")
-  pcaServer("pca")
+  datasetsServer("datasets")
+  tpmHeatmapServer("tpm_hm", pkg = pkg)
+  volcanoServer("volc", level = "genes", pkg = pkg)
+  GSEAServer("gsea",  pkg = pkg)
+  gseaCompareServer("gsea_compare",  pkg = pkg)
   genePlotsServer("gene_plots", pkg = pkg)
+  forestPlotsServer("forest", pkg = pkg)
+  biomarkerServer("biomarkers")
   degTablesServer("deg_tables", pkg = pkg)
   degVennServer("deg_venn", pkg = pkg)
-  volcanoServer("volc", level = "genes", pkg = pkg)
-  forestPlotsServer("forest", pkg = pkg)
   dtuResultsServer(
     id         = "dtu",
-    data_dir   = get_DTU_dir(),
+    pkg        = pkg,
     labels     = NULL,
     pretty_map = pretty_map
   )
-  dtuVennServer("dtuVenn", pkg = pkg, data_dir = get_DTU_dir())
-
-  tpmHeatmapServer("tpm_hm", pkg = pkg)
+  dtuVennServer(
+    id  = "dtuVenn",
+    pkg = pkg
+  )
   consequencesServer(
     id         = "dtu_func_cons",
-    data_dir   = get_DTU_dir(),
-    labels     = NULL,              # we auto-discover with discover_conseq_labels_flat()
-    pretty_map = pretty_map         # optional: same pretty labels you use elsewhere
+    pkg        = pkg,
+    labels     = NULL,
+    pretty_map = pretty_map
   )
-  datasetsServer("datasets")
-  GSEAServer("gsea",  pkg = pkg)
-  gseaCompareServer("gsea_compare",  pkg = pkg)
-  biomarkerServer("biomarkers")
+
+
+  pcaServer("pca")
+
 
   # --- sidebar behavior for SwitchPlots full-width tab ------------------
   observe({

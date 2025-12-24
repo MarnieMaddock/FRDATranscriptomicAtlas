@@ -108,8 +108,22 @@ consequencesMainUI <- function(id) {
 #' @param data_dir folder containing <LABEL>_genes_with_consequences.csv and <LABEL>_ISOFORMS_with_consequences.csv
 #' @param labels optional vector of labels; if NULL they are auto-discovered from data_dir
 #' @param pretty_map optional named vector: names = raw labels, values = display names
-consequencesServer <- function(id, data_dir, labels = NULL, pretty_map = NULL) {
+consequencesServer <- function(id, pkg = utils::packageName(), labels = NULL, pretty_map = NULL) {
   moduleServer(id, function(input, output, session) {
+
+    # ---- ensure consequences data are available (Zenodo cache) ----
+    ensure_atlas_data(
+      keys    = "consequences_results",  # <-- your manifest key
+      package = pkg
+    )
+
+    cache_root <- tools::R_user_dir(pkg, which = "cache")
+    data_dir   <- file.path(cache_root, "consequences")  # <-- your cache subdir name
+
+    if (!dir.exists(data_dir)) {
+      stop("Consequences cache directory not found after download:\n  ", data_dir, call. = FALSE)
+    }
+
 
     # --- populate dataset choices (labels) ---
     observe({
@@ -166,11 +180,20 @@ consequencesServer <- function(id, data_dir, labels = NULL, pretty_map = NULL) {
     output$dl_filtered <- downloadHandler(
       filename = function() paste0("consequences_", input$label, "_", input$level, "_filtered_", Sys.Date(), ".csv"),
       content  = function(file) {
-        idx <- input$tbl_rows_all  # respects current search/filter
-        df  <- dat()
-        readr::write_csv(if (!is.null(idx)) df[idx, , drop = FALSE] else df, file)
+        df <- dat()
+
+        # DT sends the global search term here:
+        search <- input$tbl_search
+        if (!is.null(search) && nzchar(search$search)) {
+          pat <- search$search
+          keep <- apply(df, 1, function(row) any(grepl(pat, row, ignore.case = TRUE)))
+          df <- df[keep, , drop = FALSE]
+        }
+
+        readr::write_csv(df, file)
       }
     )
+
 
     output$dl_full <- downloadHandler(
       filename = function() paste0("consequences_", input$label, "_", input$level, "_full_", Sys.Date(), ".csv"),

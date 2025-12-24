@@ -50,6 +50,15 @@ genePlotsMainUI <- function(id) {
 genePlotsServer <- function(id, pkg = utils::packageName()) {
   moduleServer(id, function(input, output, session) {
 
+    observeEvent(TRUE, {
+      ensure_atlas_data("tpm_gene", package = pkg)
+    }, once = TRUE)
+
+    tpm_dir <- file.path(
+      tools::R_user_dir(pkg, which = "cache"),
+      "tpm"
+    )
+
     # --- make pkg safe for both project + installed package modes ---
     pkg <- tryCatch(pkg, error = function(e) "")
     if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
@@ -112,8 +121,8 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
     }
 
     # ----- Locate TPM RDS files (package OR project) -----
-    tpm_dir <- system.file("extdata/tpm", package = pkg, mustWork = FALSE)
-    if (!nzchar(tpm_dir)) tpm_dir <- file.path("inst", "extdata", "tpm")
+    # tpm_dir <- system.file("extdata/tpm", package = pkg, mustWork = FALSE)
+    # if (!nzchar(tpm_dir)) tpm_dir <- file.path("inst", "extdata", "tpm")
 
     manifest <- reactive({
       files <- if (nzchar(tpm_dir) && dir.exists(tpm_dir)) {

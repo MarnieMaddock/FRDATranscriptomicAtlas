@@ -4,14 +4,19 @@
 \alias{consequencesServer}
 \title{Consequences — Server (flat layout, same style as DTU module)}
 \usage{
-consequencesServer(id, data_dir, labels = NULL, pretty_map = NULL)
+consequencesServer(
+  id,
+  pkg = utils::packageName(),
+  labels = NULL,
+  pretty_map = NULL
+)
 }
 \arguments{
-\item{data_dir}{folder containing \if{html}{\out{<LABEL>}}_genes_with_consequences.csv and \if{html}{\out{<LABEL>}}_ISOFORMS_with_consequences.csv}
-
 \item{labels}{optional vector of labels; if NULL they are auto-discovered from data_dir}
 
 \item{pretty_map}{optional named vector: names = raw labels, values = display names}
+
+\item{data_dir}{folder containing \if{html}{\out{<LABEL>}}_genes_with_consequences.csv and \if{html}{\out{<LABEL>}}_ISOFORMS_with_consequences.csv}
 }
 \description{
 Consequences — Server (flat layout, same style as DTU module)

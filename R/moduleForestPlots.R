@@ -58,6 +58,18 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    ensure_atlas_data(
+      keys    = "deg_genes",
+      package = pkg
+    )
+
+    deg_gene_dir <- function(package) {
+      file.path(
+        tools::R_user_dir(package, "cache"),
+        "deg/genes"
+      )
+    }
+
     # --- make pkg safe (length-1 string) ---------------------------------
     pkg <- tryCatch(pkg, error = function(e) "")
     if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
@@ -93,8 +105,9 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
     data_path <- if (!is.null(data_dir)) {
       data_dir
     } else {
-      resolve_dir(file.path("extdata", "deg", "genes"))
+      deg_gene_dir(pkg)
     }
+
     validate(need(nzchar(data_path) && dir.exists(data_path),
                   paste0("Data folder not found: ", data_path)))
 

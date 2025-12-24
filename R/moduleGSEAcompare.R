@@ -95,14 +95,30 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
 
     `%||%` <- function(x, y) if (is.null(x)) y else x
 
-    # ---- locate CSV (package-installed OR dev mode) ----
-    csv_path <- system.file(
-      "extdata", "GSEA_results", "summary", "GO_GSEA_direction_summary.csv",
-      package = pkg, mustWork = FALSE
+    # ---- ensure GSEA summary data are available (Zenodo-backed) ----
+    ensure_atlas_data(
+      keys    = "gsea_summary",
+      package = pkg
     )
-    if (!nzchar(csv_path)) {
-      csv_path <- file.path("inst", "extdata", "GSEA_results", "summary", "GO_GSEA_direction_summary.csv")
-    }
+
+    # ---- resolve cached summary CSV ----
+    cache_root <- tools::R_user_dir(pkg, which = "cache")
+
+    csv_path <- file.path(
+      cache_root,
+      "GSEA_results", "summary",
+      "GO_GSEA_direction_summary.csv"
+    )
+
+    validate(
+      need(
+        file.exists(csv_path),
+        paste0(
+          "GSEA summary CSV not found after download.\nExpected at:\n",
+          csv_path
+        )
+      )
+    )
 
     # ---- read summary table once ----
     gsea_tbl <- reactive({

@@ -139,9 +139,17 @@ dtuResultsMainUI <- function(id) {
 
 
 # Server
-dtuResultsServer <- function(id, data_dir, labels = NULL, pretty_map = NULL) {
+dtuResultsServer <- function(id, pkg = utils::packageName(), labels = NULL, pretty_map = NULL){
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    # ---- ensure DTU data are available (Zenodo cache) ----
+    ensure_atlas_data(
+      keys    = "dtu_results",
+      package = pkg
+    )
+
+    cache_root <- tools::R_user_dir(pkg, which = "cache")
+    data_dir   <- file.path(cache_root, "dtu")
 
     # --- choices ---
     if (is.null(labels) || !length(labels)) labels <- discover_dtu_labels_flat(data_dir)

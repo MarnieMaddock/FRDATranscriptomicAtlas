@@ -77,6 +77,16 @@ tpmHeatmapServer <- function(
 
     `%||%` <- function(a, b) if (is.null(a)) b else a
 
+    ensure_atlas_data(
+      keys = c(
+        "tpm_gene",
+        "tpm_transcript",
+        "vst"
+      ),
+      package = pkg
+    )
+
+
     # ---------------- helpers ----------------
     # -------- Pretty map (internal default) --------
     pretty_map  <- c(
@@ -169,11 +179,8 @@ tpmHeatmapServer <- function(
       }
     }
 
-    # extdata path resolver (works for installed pkg or dev tree)
-    extdata_path <- function(..., package = utils::packageName()) {
-      p <- system.file("extdata", package = package)
-      if (nzchar(p)) return(file.path(p, ...))
-      file.path(getwd(), "inst", "extdata", ...)
+    cache_path <- function(..., package) {
+      file.path(tools::R_user_dir(package, which = "cache"), ...)
     }
 
     # ---- TPM loader (your original files) ----
@@ -182,7 +189,12 @@ tpmHeatmapServer <- function(
       subdir <- if (level == "genes") "tpm" else "transcript_tpm"
       fname  <- if (level == "genes")
         paste0(dataset_id, "_gene_tpm.rds") else paste0(dataset_id, "_transcript_tpm.rds")
-      path <- extdata_path(subdir, fname, package = pkg)
+      path <- cache_path(subdir, fname, package = pkg)
+
+      if (!file.exists(path)) {
+        stop("Missing TPM file in cache: ", path)
+      }
+
       if (!file.exists(path)) stop("Missing TPM file: ", path)
       readRDS(path)
     }
@@ -190,7 +202,12 @@ tpmHeatmapServer <- function(
     # ---- VST loader from existing *_vsd.rds ----
     load_vsd <- function(dataset_id) {
 
-      ddir <- extdata_path("deseq_objects", package = pkg)
+      ddir <- cache_path("deseq_objects", package = pkg)
+
+      if (!dir.exists(ddir)) {
+        stop("VST cache directory not found: ", ddir)
+      }
+
 
       # Load ALL matching VSDs, not just one
       pat <- paste0("^", dataset_id, ".*_vsd\\.rds$")
