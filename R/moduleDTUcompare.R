@@ -15,17 +15,17 @@ dtuOverlapSidebarHelp <- function(ns) {
     )),
     tags$ul(
       tags$li(HTML("<strong>Switching genes</strong>: a gene is counted if <em>any</em> isoform switches in that dataset (higher recall, tolerant to which isoform switched). i.e. Do the same genes show isoform switching across datasets? Note: It can hide heterogeneity. Two datasets might overlap at gene FXN, but one switched ENST00000A and the other ENST00000B.")),
-      tags$li(HTML("<strong>Switching isoforms</strong>: matches by exact transcript ID (ENST…); reveals shared mechanisms (higher specificity, lower recall). i.e. Is the same transcript switching across datasets?"))
+      HTML("<strong>Switching isoforms</strong>: matches by exact transcript ID (ENST&hellip;); reveals shared mechanisms (higher specificity, lower recall). i.e. Is the same transcript switching across datasets?")
     ),
     tags$h6("Filters"),
     tags$ul(
       tags$li(HTML("<code>q-value</code> (isoform_switch_q_value): FDR threshold for switching calls.")),
       tags$li(HTML("<code>|dIF|</code>: minimum absolute change in isoform fraction.")),
-      tags$li(HTML("<strong>Direction</strong>: “Higher in FRDA”, “Higher in Control”, or Both."))
+      HTML("<strong>Direction</strong>: &ldquo;Higher in FRDA&rdquo;, &ldquo;Higher in Control&rdquo;, or Both.")
     ),
     tags$h6("Outputs"),
     tags$ul(
-      tags$li(HTML("<strong>Venn diagram</strong> (≤ 6 datasets): visual overlap of the selected sets.")),
+      HTML("<strong>Venn diagram</strong> (&le; 6 datasets): visual overlap of the selected sets."),
       tags$li(HTML("<strong>Totals</strong>: number of filtered switching items per dataset.")),
       tags$li(HTML("<strong>Shared combinations</strong>: counts for each dataset combination.")),
       tags$li(HTML("<strong>Presence matrix</strong>: list of IDs (+ symbols) with a 0/1 membership per dataset."))
@@ -54,9 +54,23 @@ dtuVennUI <- function(id) {
           selected = "both"
         ),
         radioButtons(
-          ns("dtu_q_thr"), "q-value threshold (isoform_switch_q_value)",
-          choices = c("≤ 0.10" = "0.10", "≤ 0.05" = "0.05",
-                      "≤ 0.01" = "0.01", "≤ 0.001" = "0.001", "None" = "NA"),
+          ns("dtu_q_thr"),
+          "q-value threshold (isoform_switch_q_value)",
+          inline = FALSE,
+          choiceNames = list(
+            "None",
+            HTML("&le; 0.10"),
+            HTML("&le; 0.05"),
+            HTML("&le; 0.01"),
+            HTML("&le; 0.001")
+          ),
+          choiceValues = list(
+            "NA",
+            "0.10",
+            "0.05",
+            "0.01",
+            "0.001"
+          ),
           selected = "0.05"
         ),
         numericInput(
@@ -160,28 +174,31 @@ dtuVennServer <- function(id, pkg = utils::packageName()){
 
 
 
-    # ---- pretty dataset labels (optional – reuse/extend yours) ----
+    # ---- pretty dataset labels (optional - reuse/extend yours) ----
     pretty_map <- c(
       "Erwin"             = "Erwin (Lymphoblastoid Cells)",
       "Indelicato"        = "Indelicato (Skeletal Muscle)",
       "Lai_iPSC"          = "Lai (iPSCs)",
       "Lai_CNS"           = "Lai (CNS neurons)",
       "Lai_PNS"           = "Lai (PNS neurons)",
-      "Lees_FA1"          = "Lees (Cardiomyocytes) – FA1",
-      "Lees_FA2"          = "Lees (Cardiomyocytes) – FA2",
-      "Lees_FA3"          = "Lees (Cardiomyocytes) – FA3",
-      "Maddock_LMN_FA2"   = "Maddock (Lower Motor Neurons) – FA2",
-      "Maddock_SN_FA1"    = "Maddock (Sensory Neurons) – FA1",
-      "Maddock_SN_FA2"    = "Maddock (Sensory Neurons) – FA2",
-      "Maddock_NCC_FA1"   = "Maddock (Neural Crest Cells) – FA1",
-      "Maddock_NCC_FA2"   = "Maddock (Neural Crest Cells) – FA2",
-      "Mishra_223"        = "Mishra (Neurons) – 223",
-      "Mishra_850"        = "Mishra (Neurons) – 850",
-      "Mishra_FF1"        = "Mishra (Neurons) – FF1",
-      "Mishra_FF2"        = "Mishra (Neurons) – FF2",
+      "Lees_FA1"          = "Lees (Cardiomyocytes) - FA1",
+      "Lees_FA2"          = "Lees (Cardiomyocytes) - FA2",
+      "Lees_FA3"          = "Lees (Cardiomyocytes) - FA3",
+      "Maddock_LMN_FA2"   = "Maddock (Lower Motor Neurons) - FA2",
+      "Maddock_SN_FA1"    = "Maddock (Sensory Neurons) - FA1",
+      "Maddock_SN_FA2"    = "Maddock (Sensory Neurons) - FA2",
+      "Maddock_NCC_FA1"   = "Maddock (Neural Crest Cells) - FA1",
+      "Maddock_NCC_FA2"   = "Maddock (Neural Crest Cells) - FA2",
+      "Mishra_223"        = "Mishra (Neurons) - 223",
+      "Mishra_850"        = "Mishra (Neurons) - 850",
+      "Mishra_FF1"        = "Mishra (Neurons) - FF1",
+      "Mishra_FF2"        = "Mishra (Neurons) - FF2",
       "Napierala"         = "Napierala (Fibroblasts)",
       "Vilema"            = "Vilema-Enriquez (Fibroblasts)"
     )
+
+
+
     pretty_label <- function(id) pretty_map[[id]] %||% id
 
     # ---- manifest of available DTU CSVs ----
@@ -372,26 +389,35 @@ dtuVennServer <- function(id, pkg = utils::packageName()){
     dtu_venn_plot_obj <- reactive({
       s <- dtu_sets_list()
       if (length(s) > 6) return(NULL)
-      labs <- names(s)
-      labs <- stringr::str_wrap(labs, width = 24)
+
+      labs <- stringr::str_wrap(names(s), width = 24)
       names(s) <- labs
-      ggVennDiagram::ggVennDiagram(s, label = "count", label_size = 8, set_size = 10) +
-        ggplot2::scale_fill_gradient(low = "#ccdcda", high = "#005249") +
-        ggplot2::theme_void(base_size = 30) +
-        ggplot2::theme(legend.position = "right",
-                       plot.margin = ggplot2::margin(60, 120, 60, 120)) +
-        ggplot2::coord_cartesian(clip = "off")
+
+      suppressWarnings(suppressMessages(
+        ggVennDiagram::ggVennDiagram(s, label = "count", label_size = 8, set_size = 10) +
+          ggplot2::scale_fill_gradient(low = "#ccdcda", high = "#005249") +
+          ggplot2::theme_void(base_size = 30) +
+          ggplot2::theme(
+            legend.position = "right",
+            plot.margin = ggplot2::margin(60, 120, 60, 120)
+          ) +
+          ggplot2::coord_cartesian(clip = "off")
+      ))
     })
+
 
     # ---- plot render ----
     output$dtu_venn_plot <- renderPlot({
       p <- dtu_venn_plot_obj()
       if (is.null(p)) {
-        plot.new(); text(0.5, 0.5, "Overlap tables shown below", cex = 1.6)
+        plot.new()
+        text(0.5, 0.5, "Overlap tables shown below", cex = 1.6)
       } else {
         suppressWarnings(print(p))
       }
     })
+
+
 
     observe({
       have_plot <- !is.null(dtu_venn_plot_obj())

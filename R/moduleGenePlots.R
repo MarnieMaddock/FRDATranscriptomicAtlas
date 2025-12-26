@@ -29,7 +29,7 @@ genePlotsSidebarUI <- function(id) {
   )
 }
 
-#' Gene Plots – main UI
+#' Gene Plots - main UI
 #' @noRd
 genePlotsMainUI <- function(id) {
   ns <- NS(id)
@@ -45,7 +45,7 @@ genePlotsMainUI <- function(id) {
   )
 }
 
-#' Gene Plots server – multi-dataset (checkboxes)
+#' Gene Plots server - multi-dataset (checkboxes)
 #' @noRd
 genePlotsServer <- function(id, pkg = utils::packageName()) {
   moduleServer(id, function(input, output, session) {
@@ -159,7 +159,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       htmltools::HTML(sprintf("<small>Selected: <b>%s</b></small>", paste(labs, collapse = ", ")))
     })
 
-    # ----- Files → load → tidy → plot/table (unchanged below this line) -----
+    # ----- Files -> load -> tidy -> plot/table (unchanged below this line) -----
     file_paths <- reactive({
       req(input$gp_datasets)
       m <- manifest()
@@ -285,7 +285,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       df <- tpms_long_parsed() |>
         dplyr::filter(dataset %in% input$gp_datasets, gene_name == gene_input)
       if (nrow(df) == 0) {
-        shiny::showNotification(sprintf("⚠️ Gene '%s' was not found in the selected datasets.", gene_input),
+        shiny::showNotification(sprintf("Warning - Gene '%s' was not found in the selected datasets.", gene_input),
                                 type = "error", duration = 5)
       }
       df
@@ -326,7 +326,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       validate(need(nrow(pts) > 0, "No TPM values for this selection."))
       ds_lab <- if (length(input$gp_datasets) == 1) pretty_label(input$gp_datasets)
       else paste0(length(input$gp_datasets), " datasets")
-      build_plot(pts, sms, input$gp_logy, paste(input$gp_gene, "—", ds_lab))
+      build_plot(pts, sms, input$gp_logy, paste(input$gp_gene, "-", ds_lab))
     })
 
     output$gp_table <- DT::renderDataTable({
@@ -365,7 +365,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
           else paste0(length(input$gp_datasets), " datasets"))
         grDevices::svg(file, width = 11, height = 7, onefile = TRUE)
         print(build_plot(pts, sms, isolate(input$gp_logy),
-                         paste(isolate(input$gp_gene), "—", ds_lab)))
+                         paste(isolate(input$gp_gene), "-", ds_lab)))
         grDevices::dev.off()
       }
     )

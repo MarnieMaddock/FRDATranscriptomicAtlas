@@ -20,18 +20,27 @@ degTablesSidebarUI <- function(id) {
       ns("dataset"),
       "Dataset",
       choices = NULL, multiple = FALSE,
-      options = list(placeholder = "Select a dataset…")
+      options = list(placeholder = "Select a dataset...")
     ),
     radioButtons(
       ns("p_filter_mode"),
       "Adjusted P-value Threshold",
       inline = FALSE,
-      choices = c("None" = NA,
-                  "≤ 0.10" = 0.10,
-                  "≤ 0.05"  = 0.05,
-                  "≤ 0.01"  = 0.01,
-                  "≤ 0.001" = 0.001),
-      selected = "0.05"
+      choiceNames = list(
+        "None",
+        HTML("&le; 0.10"),
+        HTML("&le; 0.05"),
+        HTML("&le; 0.01"),
+        HTML("&le; 0.001")
+      ),
+      choiceValues = list(
+        NA,
+        0.10,
+        0.05,
+        0.01,
+        0.001
+      ),
+      selected = 0.05
     ),
     numericInput(
       ns("lfc_min"),
@@ -243,12 +252,20 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
     output$summary_bar <- renderUI({
       req(dat())
       x <- dat()
+
       tags$div(
         class = "alert alert-info",
-        sprintf("Level: %s | Dataset: %s | p ≤ %s | |log2FC| ≥ %s | Number of Results: %s",
-                input$feature_level, pretty_label(input$dataset),
-                input$p_filter_mode, input$lfc_min, format(nrow(x), big.mark=",")))
+        HTML(sprintf(
+          "Level: %s | Dataset: %s | p &le; %s | |log2FC| &ge; %s | Number of Results: %s",
+          input$feature_level,
+          pretty_label(input$dataset),
+          input$p_filter_mode,
+          input$lfc_min,
+          format(nrow(x), big.mark = ",")
+        ))
+      )
     })
+
 
     output$deg_table <- DT::renderDataTable({
       req(dat())

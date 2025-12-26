@@ -25,10 +25,12 @@ forestPlotsUI <- function(id) {
         style = "margin-top:.5rem; margin-bottom:.5rem;",
         HTML("
               <strong>Interpretation</strong><br/>
-              Squares are study estimates, sized by weight; horizontal bars are 95% CIs. The diamond is the random-effects summary (95% CI).<br/><br/>
+              Squares are study estimates, sized by weight; horizontal bars are 95% CIs.
+              The diamond is the random-effects summary (95% CI).<br/><br/>
               <strong>Direction</strong><br/>
-              • <em>log2FC &gt; 0</em> → higher expression in FRDA.<br/>
-              • <em>log2FC &lt; 0</em> → lower expression in FRDA.")
+              &bull; <em>log2FC &gt; 0</em> &rarr; higher expression in FRDA.<br/>
+              &bull; <em>log2FC &lt; 0</em> &rarr; lower expression in FRDA.
+            ")
       ),
       tags$br(),
       shinycssloaders::withSpinner(
@@ -255,7 +257,7 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
       Maddock_NCC_FA2="Maddock ML (*) - NCC FA2", Maddock_SN_FA1="Maddock ML (*) - SN FA1",
       Maddock_SN_FA2="Maddock ML (*) - SN FA2", Mishra_223="Mishra P (2024) - N 223",
       Mishra_850="Mishra P (2024) - N 850", Mishra_FF1="Mishra P (2024) - N FF1", Mishra_FF2="Mishra P (2024) - N FF2",
-      Napierala="Napierala JS (2017) - FB", Vilema="Vilema-Enríquez G (2020) - FB", Wang="Wang F (2022) - FB"
+      Napierala="Napierala JS (2017) - FB", Vilema="Vilema-Enriquez G (2020) - FB", Wang="Wang F (2022) - FB"
     )
 
     # ---------- models + outputs (unchanged) ------------------------------

@@ -18,7 +18,7 @@ aboutUI <- function(id,
       h2(title, class = "mb-3"),
       uiOutput(ns("pkg_version")),
       p(
-        "The Friedreich’s Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny application ",
+        "The Friedreich's Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny application ",
         "that provides open access to harmonised transcriptomic analyses across publicly available FRDA RNA-seq datasets. ",
         "This resource was developed to enable researchers, clinicians, and students to explore and compare differential expression, isoform usage etc across a broad range of human FRDA models. The Atlas serves as a central reference for transcriptome-wide alterations in FRDA,
         supporting hypothesis generation, candidate gene prioritisation, and data reuse for downstream integrative analyses. ",
@@ -29,37 +29,37 @@ aboutUI <- function(id,
       h3("Features"),
       tags$ul(
         tags$li(
-          strong("Principal Component Analysis (PCA)"), " — Inspect global sample structure and separation by condition, tissue/cell type, or other metadata."
+          strong("Principal Component Analysis (PCA)"), " - Inspect global sample structure and separation by condition, tissue/cell type, or other metadata."
         ),
         tags$li(
-          strong("Differential Expression (DEG/DEI) Tables"), " — Gene- and isoform-level results ",
+          strong("Differential Expression (DEG/DEI) Tables"), " - Gene- and isoform-level results ",
           "with log2 fold-change and adjusted p-values, filterable by direction and significance."
         ),
         tags$li(
-          strong("Volcano Plots"), " — Fold-change vs. significance visualisation with options to highlight genes and adjust thresholds."
+          strong("Volcano Plots"), " - Fold-change vs. significance visualisation with options to highlight genes and adjust thresholds."
         ),
         tags$li(
-          strong("Venn Diagrams"), " — Overlap of differentially expressed genes or isoforms across datasets."
+          strong("Venn Diagrams"), " - Overlap of differentially expressed genes or isoforms across datasets."
         ),
         tags$li(
-          strong("Expression Heatmaps"), " — Compare transcript abundance patterns across conditions and datasets."
+          strong("Expression Heatmaps"), " - Compare transcript abundance patterns across conditions and datasets."
         ),
 
         tags$li(
-          strong("Differential Transcript Usage (DTU)"), " — Isoform usage differences and switching events, including counts of isoforms tested and those meeting significance cutoffs."
+          strong("Differential Transcript Usage (DTU)"), " - Isoform usage differences and switching events, including counts of isoforms tested and those meeting significance cutoffs."
         ),
         tags$li(
-          strong("Isoform Switch Tables"), " — Summaries of switching isoforms and predicted functional consequences derived from ",
+          strong("Isoform Switch Tables"), " - Summaries of switching isoforms and predicted functional consequences derived from ",
           em("IsoformSwitchAnalyzeR"), "."
         ),
         tags$li(
-          strong("Gene TPM Plots (Gene Plots)"), " — Visualise expression of selected genes (TPM) by condition, replicate, and dataset for direct comparison."
+          strong("Gene TPM Plots (Gene Plots)"), " - Visualise expression of selected genes (TPM) by condition, replicate, and dataset for direct comparison."
         ),
         tags$li(
-          strong("Cross-Dataset Forest Plots"), " — Compare per-dataset effect sizes for selected genes to assess concordance and heterogeneity across studies."
+          strong("Cross-Dataset Forest Plots"), " - Compare per-dataset effect sizes for selected genes to assess concordance and heterogeneity across studies."
         ),
         tags$li(
-          strong("Download and Export"), " — Tables and plots can be exported for reporting and reuse."
+          strong("Download and Export"), " - Tables and plots can be exported for reporting and reuse."
         )
       ),
 
@@ -67,7 +67,7 @@ aboutUI <- function(id,
       p(HTML(
         paste0(
           "<b>Developed by:</b> Marnie Maddock, Prof. Mirella Dottori, XXXX, XXXXX University of Wollongong, Australia<br/>",
-          "<b>Funding:</b> Friedreich’s Ataxia Research Alliance (FARA)<br/>",
+          "<b>Funding:</b> Friedreich's Ataxia Research Alliance (FARA)<br/>",
           "<b>We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis.</b> "
         )
       )),

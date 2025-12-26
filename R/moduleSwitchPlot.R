@@ -62,7 +62,7 @@ switchplotsHelpUI <- function(id) {
     <a href='https://1drv.ms/f/c/69eb08701a869916/EkHrL4ugs-NKutgTOLhUmVwBDnt6QSG-zONXDhBdgNfnXw?e=ynt8De' target='_blank'
        style='background:#005249; color:white; padding:10px 20px; border-radius:6px;
               text-decoration:none; font-weight:600;'>
-       🔗 Open OneDrive Folder
+       Open OneDrive Folder
     </a>
   </div>
 ")
@@ -85,7 +85,7 @@ switchplotsHelpUI <- function(id) {
                                  tags$li(class="sp-li", "Highlights transcript-level regulation that is hidden when analysing only gene-level expression."),
                                  tags$li(class="sp-li", "Reveals functional consequences of isoform switching, such as domain gain/loss, altered localisation signals, or nonsense-mediated decay (NMD) activation."),
                                  tags$li(class="sp-li", "Quantifies changes in isoform usage through ",
-                                         tags$span(class="sp-kbd","ΔIF (dIF)"),
+                                         tags$span(class = "sp-kbd", HTML("&Delta;IF (dIF)")),
                                          ", providing a measure of the magnitude of the switch between conditions."),
                                  tags$li(class="sp-li", "Facilitates mechanistic interpretation by integrating transcript architecture with predicted protein features.")
                                )
@@ -120,7 +120,9 @@ switchplotsHelpUI <- function(id) {
                                           tags$li(
                                             tags$b("Isoform Usage (bottom right):"),
                                             " Shows the proportion of each isoform relative to total gene expression (Isoform Fraction, IF). ",
-                                            "Bars and asterisks indicate ΔIF (difference in IF) and its statistical significance; larger |ΔIF| and more asterisks denote stronger, significant switching."
+                                            HTML(
+                                              "Bars and asterisks indicate &Delta;IF (difference in IF) and its statistical significance; larger |&Delta;IF| and more asterisks denote stronger, significant switching."
+                                            )
                                           ),
                                           tags$li(
                                             tags$b("Overall interpretation:"),
@@ -129,7 +131,7 @@ switchplotsHelpUI <- function(id) {
                                           ),
                                           tags$li(
                                             tags$b("Additional notes:"),
-                                            " Isoform switchplots are generated only for transcripts with significant differential usage (adjusted p-value ≤ 0.05) between the specified conditions. P values are not displayed on the gene expression or isoform expression graphs."
+                                            " Isoform switchplots are generated only for transcripts with significant differential usage (adjusted p-value <= 0.05) between the specified conditions. P values are not displayed on the gene expression or isoform expression graphs."
                                         )
                                         )
                            ),
@@ -137,7 +139,7 @@ switchplotsHelpUI <- function(id) {
 
                            div(
                              tags$p(
-                               HTML("To explore all switchplots, access the&nbsp;<a href='https://1drv.ms/f/s!abc123yourlink' target='_blank'>OneDrive folder</a> (≈2.5&nbsp;GB), where each dataset’s results are organised into separate subfolders.")
+                               HTML("To explore all switchplots, access the&nbsp;<a href='https://1drv.ms/f/s!abc123yourlink' target='_blank'>OneDrive folder</a> (2.5 GB), where each dataset's results are organised into separate subfolders.")
                              )
                            )
                          ),

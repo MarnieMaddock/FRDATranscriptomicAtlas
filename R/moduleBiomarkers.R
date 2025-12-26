@@ -24,7 +24,7 @@ biomarkerUI <- function(id) {
     textAreaInput(
       ns("feature_query"),
       label = "Specify Genes",
-      placeholder = "FXN, PIP5K1B, RPS29 …",
+      placeholder = "FXN, PIP5K1B, RPS29 ...",
       rows = 4
     ),
     hr(),
@@ -232,7 +232,7 @@ biomarkerServer <- function(id,
             is.na(padj) ~ "Filtered (no adjusted p-value)",
             padj < alpha() & log2FoldChange > 0 ~ "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
             padj < alpha() & log2FoldChange < 0 ~ "Downregulated in FRDA (FDR < 0.05, log2FC < 0)",
-            TRUE ~ "Not significant (FDR ≥ 0.05)"
+            TRUE ~ "Not significant (FDR >= 0.05)"
           ),
           gene_lab = factor(gene_name),
           outline_class = dplyr::case_when(
@@ -328,7 +328,7 @@ biomarkerServer <- function(id,
       dir_cols <- c(
         "Downregulated in FRDA (FDR < 0.05, log2FC < 0)"    = "#00B7C7",
         "Upregulated in FRDA (FDR < 0.05, log2FC > 0)"       = "#DC267F",
-        "Not significant (FDR ≥ 0.05)"      = "gray60",
+        "Not significant (FDR >= 0.05)"     = "gray60",
         "Filtered (no adjusted p-value)"         = "gray80"
       )
       outline_cols <- c(
@@ -356,6 +356,11 @@ biomarkerServer <- function(id,
         scale_colour_manual(
           values = outline_cols,
           name   = expression("Direction of log"[2]*"FC change"),
+          labels = c(
+            "Up (FDR < 0.05)"              = expression("Up (FDR " < " 0.05)"),
+            "Down (FDR < 0.05)"            = expression("Down (FDR " < " 0.05)"),
+            "Not significant (FDR >= 0.05)" = expression("Not significant (FDR " >= " 0.05)")
+          ),
           guide  = guide_legend(
             override.aes = list(fill = "white", shape = 21, size = 6, stroke = 1)
           )
@@ -387,7 +392,7 @@ biomarkerServer <- function(id,
       # ------------------------------------------------------------
       direction_levels <- c(
         "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
-        "Not significant (FDR ≥ 0.05)",
+        "Not significant (FDR >= 0.05)",
         "Filtered (no adjusted p-value)",
         "Downregulated in FRDA (FDR < 0.05, log2FC < 0)"
       )

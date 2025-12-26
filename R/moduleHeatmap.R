@@ -17,7 +17,7 @@ tpmHeatmapSidebarUI <- function(id) {
     textAreaInput(
       ns("feature_query"),
       label = "Genes / transcripts",
-      placeholder = "FXN, PIP5K1B, RPS29 …",
+      placeholder = "FXN, PIP5K1B, RPS29 ...",
       value = "FXN, PIP5K1B, RPS29",
       rows = 4
     ),
@@ -139,14 +139,14 @@ tpmHeatmapServer <- function(
       fixed <- vsd_names
 
       # --- Fix SN ---
-      # N → SN, but only when surrounded by FA…_ … _REP pattern
+      # N -> SN, but only when surrounded by FA..._ ... _REP pattern
       sn_pattern1 <- "^Maddock_FA([0-9]+)icN(_REP[0-9]+)$"
       sn_pattern2 <- "^Maddock_FA([0-9]+)N(_REP[0-9]+)$"
 
       fixed <- sub(sn_pattern1, "Maddock_FA\\1icSN\\2", fixed)
       fixed <- sub(sn_pattern2, "Maddock_FA\\1SN\\2", fixed)
 
-      # --- Fix LMN (NIL → LMN) ---
+      # --- Fix LMN (NIL -> LMN) ---
       lmn_pattern1 <- "^Maddock_FA([0-9]+)icNIL(_REP[0-9]+)$"
       lmn_pattern2 <- "^Maddock_FA([0-9]+)NIL(_REP[0-9]+)$"
 
@@ -459,7 +459,7 @@ tpmHeatmapServer <- function(
           mat <- row_zscore(log2(mat + 1))
         }
 
-        # when not clustering columns: order Study then CTRL→FRDA→UNKNOWN
+        # when not clustering columns: order Study then CTRL->FRDA->UNKNOWN
         # optional ordered columns if no clustering
         if (!isTRUE(input$cluster_cols)) {
 
@@ -547,7 +547,7 @@ tpmHeatmapServer <- function(
 
           sub_mat <- vsd_mat[keep_ids, sc_use, drop = FALSE]
 
-          # Row names → pretty key (gene_name (gene_id))
+          # Row names -> pretty key (gene_name (gene_id))
           map_sub <- annot[match(keep_ids, annot$gene_id), ]
           key <- ifelse(
             !is.na(map_sub$gene_name) & nzchar(map_sub$gene_name),
@@ -616,7 +616,7 @@ tpmHeatmapServer <- function(
             # Option A: All CTRL first (across datasets), then FRDA
             ann <- ann[order(ann$grp_rank, ann$ds_rank, ann$sample), ]
           } else {
-            # Option B: Dataset blocks first, then CTRL→FRDA inside each dataset
+            # Option B: Dataset blocks first, then CTRL->FRDA inside each dataset
             ann <- ann[order(ann$ds_rank, ann$grp_rank, ann$sample), ]
           }
 

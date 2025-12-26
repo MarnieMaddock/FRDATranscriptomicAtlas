@@ -92,7 +92,7 @@ ensure_atlas_data <- function(
   # ---- SHOW DOWNLOAD BANNER --------------------------------------------
   if (shiny::isRunning()) {
     shiny::showNotification(
-      "Downloading atlas data… this may take several minutes.",
+      "Downloading atlas data... this may take several minutes.",
       type     = "warning",
       duration = NULL,
       id       = "atlas-download"
@@ -133,7 +133,7 @@ ensure_atlas_data <- function(
         }
 
         message(sprintf(
-          "[Atlas] Finished %s → %s",
+          "[Atlas] Finished %s -> %s",
           row$key,
           row$local_dir
         ))

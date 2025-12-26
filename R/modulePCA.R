@@ -149,7 +149,7 @@ pcaServer <- function(id, pkg = utils::packageName()) {
       # Z-score only if more than one study is present
       zscore_required <- length(unique(parent_studies)) > 1
       ## --------------------------------------------------
-      ## SINGLE DATASET → standard VST PCA
+      ## SINGLE DATASET -> standard VST PCA
       ## --------------------------------------------------
       if (length(objs) == 1L) {
 
@@ -186,7 +186,7 @@ pcaServer <- function(id, pkg = utils::packageName()) {
 
 
       ## --------------------------------------------------
-      ## MULTIPLE DATASETS → intersect genes + Z-score
+      ## MULTIPLE DATASETS -> intersect genes + Z-score
       ## --------------------------------------------------
       genes_common <- Reduce(
         intersect,

@@ -1,5 +1,5 @@
 # ===== UI =====
-#' Consequences — Sidebar UI
+#' Consequences - Sidebar UI
 #' @noRd
 # Discover dataset labels from files like "<LABEL>_genes_with_consequences.csv"
 # and "<LABEL>_ISOFORMS_with_consequences.csv"
@@ -51,14 +51,14 @@ consequencesSidebarUI <- function(id) {
     tags$details(
       tags$summary("Key: consequence definitions (predictions)"),
       tags$p(
-        HTML("<em>Important:</em> These are <strong>computational predictions</strong> derived from sequence and annotation tools (e.g., CPAT, PfamScan, SignalP, IsoformSwitchAnalyzeR’s NMD rule-set).
+        HTML("<em>Important:</em> These are <strong>computational predictions</strong> derived from sequence and annotation tools (e.g., CPAT, PfamScan, SignalP, IsoformSwitchAnalyzeR's NMD rule-set).
           They should be <strong>experimentally validated.</strong>")
       ),
       tags$ul(
         tags$li(HTML("<b>IR (Intron Retention)</b>: Evidence that an intron is retained/skipped between conditions; can alter the reading frame, localization, or mRNA stability.")),
         tags$li(HTML("<b>codingPotential</b>: switch alters likelihood a transcript encodes a protein (ORF gained/lost). Suggests a switch between coding vs non-coding output.")),
         tags$li(HTML("<b>ORF_seq_similarity</b>: ORF sequence is altered enough to affect similarity to the canonical protein (potentially impacting function/antibody binding).")),
-        tags$li(HTML("<b>NMD Status</b>: Presence of a premature termination codon (PTC) or exon–exon junction context that predicts nonsense-mediated decay (reduced mRNA/protein).")),
+        tags$li(HTML("<b>NMD Status</b>: Presence of a premature termination codon (PTC) or exon-exon junction context that predicts nonsense-mediated decay (reduced mRNA/protein).")),
         tags$li(HTML("<b>Domains Identified</b>: Gain/loss of annotated protein domains (e.g., Pfam) due to exon usage changes; may impact interaction or catalytic sites.")),
         tags$li(HTML("<b>PTC</b> (Premature Termination Codon): early stop; may trigger NMD and reduce protein output.")),
         tags$li(HTML("<b>Signal Peptide Identified</b>: Gain/loss of an N-terminal signal peptide (e.g., SignalP) suggesting altered secretion/ER targeting and subcellular routing."))
@@ -76,9 +76,9 @@ consequencesSidebarUI <- function(id) {
       tags$summary("Key: statistical metrics"),
       tags$ul(
         tags$li(HTML("<b>dIF (delta Isoform Fraction):</b> Change in isoform usage between FRDA and Control. Positive = higher in FRDA, negative = higher in Control.")),
-        tags$li(HTML("<b>max_abs_dIF:</b> The largest absolute dIF among a gene’s isoforms — summarises overall switch magnitude.")),
-        tags$li(HTML("<b>q_use:</b> Adjusted p-value testing whether an isoform’s relative usage differs between groups.")),
-        tags$li(HTML("<b>min_q:</b> The smallest q_use for any isoform of a gene — strongest evidence for switching at the gene level."))
+        tags$li(HTML("<b>max_abs_dIF:</b> The largest absolute dIF among a gene's isoforms - summarises overall switch magnitude.")),
+        tags$li(HTML("<b>q_use:</b> Adjusted p-value testing whether an isoform's relative usage differs between groups.")),
+        tags$li(HTML("<b>min_q:</b> The smallest q_use for any isoform of a gene - strongest evidence for switching at the gene level."))
       )
     )
 
@@ -157,7 +157,7 @@ consequencesServer <- function(id, pkg = utils::packageName(), labels = NULL, pr
       req(input$label, input$level)
       lvl  <- if (identical(input$level, "genes")) "Gene" else "Isoform"
       disp <- if (!is.null(pretty_map) && !is.na(pretty_map[input$label])) pretty_map[input$label] else input$label
-      sprintf("%s-level consequence results — %s", lvl, disp)
+      sprintf("%s-level consequence results - %s", lvl, disp)
     })
 
     # --- data loader for the selected label + level ---

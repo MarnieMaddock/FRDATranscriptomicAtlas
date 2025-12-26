@@ -64,37 +64,40 @@ dtuResultsSidebarUI <- function(id) {
     ),
 
     tags$hr(style = "margin:1rem 0;"),
-
     h5("Key terms"),
     tags$ul(
       tags$li(
-        strong("Isoforms tested:"), " Number of transcript isoforms examined for DTU within this dataset."
+        strong("Isoforms tested:"),
+        " Number of transcript isoforms examined for DTU within this dataset."
       ),
       tags$li(
-        strong("Switching isoforms:"), " Isoforms showing a significant difference in relative usage ",
-        "(q ≤ 0.05 and |dIF| ≥ 0.1)."
+        strong("Switching isoforms:"),
+        " Isoforms showing a significant difference in relative usage ",
+        HTML("(q &le; 0.05 and |dIF| &ge; 0.1).")
       ),
       tags$li(
-        strong("Genes with switch:"), " Genes containing at least one significantly switching isoform."
+        strong("Genes with switch:"),
+        " Genes containing at least one significantly switching isoform."
       ),
       tags$li(
-        strong("IF (Isoform Fraction):"), " The proportion of a gene’s total expression accounted for by each isoform in a condition."
+        strong("IF (Isoform Fraction):"),
+        " The proportion of a gene's total expression accounted for by each isoform in a condition."
       ),
       tags$li(
-        strong("dIF:"), " The change in isoform fraction between conditions ",
-        "(e.g., IF_FRDA − IF_Control). A |dIF| ≥ 0.1 typically indicates a biologically relevant shift."
+        strong("dIF:"),
+        " The change in isoform fraction between conditions ",
+        HTML("(e.g., IF_FRDA - IF_Control). A |dIF| &ge; 0.1 typically indicates a biologically relevant shift.")
       ),
       tags$li(
-        strong("q-value:"), " Adjusted p-value controlling the false discovery rate (FDR) for each isoform’s switch event."
+        strong("q-value:"),
+        " Adjusted p-value controlling the false discovery rate (FDR) for each isoform's switch event."
       )
     ),
 
     h5("Tables:"),
-    tags$li(
-      strong("Top table = which genes are affected")
-    ),
-    tags$li(
-      strong("Bottom table = which transcripts changed and how")
+    tags$ul(
+      tags$li(strong("Top table = which genes are affected")),
+      tags$li(strong("Bottom table = which transcripts changed and how"))
     ),
 
     tags$hr(style = "margin:1rem 0;"),

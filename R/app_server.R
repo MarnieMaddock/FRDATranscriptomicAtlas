@@ -14,13 +14,13 @@ app_server <- function(input, output, session) {
 
   pkg_www <- system.file("www", package = pkg, mustWork = FALSE)
   if (nzchar(pkg_www) && dir.exists(pkg_www)) {
-    shiny::addResourcePath("pkgwww", pkg_www)  # /pkgwww → <package>/inst/www
+    shiny::addResourcePath("pkgwww", pkg_www)  # /pkgwww -> <package>/inst/www
   }
 
   # Also serve the project copy of inst/www at /projwww (for dev / source tree runs)
   proj_www <- file.path("inst", "www")
   if (dir.exists(proj_www)) {
-    shiny::addResourcePath("projwww", proj_www)  # /projwww → <project>/inst/www
+    shiny::addResourcePath("projwww", proj_www)  # /projwww -> <project>/inst/www
   }
 
   # ---- Build long-format DEGs (uses robust `pkg`) ----

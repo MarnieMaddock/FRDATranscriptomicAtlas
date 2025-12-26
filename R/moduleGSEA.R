@@ -40,7 +40,7 @@ GSEAMainUI <- function(id) {
     div(class = "text-center mt-2",
         downloadButton(ns("dl_table_csv"), "Download table (CSV)", class = "btn-sm"),
         div(class = "text-muted small",
-            "Tip: click a row in the table, then use “Show genes” or “Download genes (CSV)”."),
+            "Tip: click a row in the table, then use `Show genes` or `Download genes (CSV)`."),
 
         actionButton(ns("show_genes"), "Show genes for selected term", class = "btn-sm"),
         downloadButton(ns("dl_genes_csv"), "Download genes (CSV)", class = "btn-sm")
@@ -131,7 +131,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       df$core_preview <- vapply(symbols_list, function(v) {
         if (!length(v)) return("")
         paste0(paste(utils::head(v, 8), collapse = ", "),
-               if (length(v) > 8) sprintf(" … (+%d)", length(v) - 8) else "")
+               if (length(v) > 8) sprintf(" ... (+%d)", length(v) - 8) else "")
       }, character(1))
       df
     }
@@ -270,7 +270,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       # ----------------------------
       if (inherits(x, "gseaResult")) {
 
-        # enrichplot NOT installed → fallback message plot
+        # enrichplot NOT installed -> fallback message plot
         if (!requireNamespace("enrichplot", quietly = TRUE)) {
           return(
             ggplot2::ggplot() +
@@ -278,14 +278,15 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
                 "text",
                 x = 0.5, y = 0.5,
                 hjust = 0.5,
-                label = "Dotplot requires the Bioconductor package 'enrichplot',\nwhich is not available for R ≥ 4.5.\nShowing message instead.",
+                label = "Dotplot requires the Bioconductor package 'enrichplot',\nwhich is not available for R >= 4.5.\nShowing message instead.",
                 size = 5
               ) +
               ggplot2::theme_void()
           )
         }
 
-        # enrichplot available → use standard dotplot
+
+        # enrichplot available -> use standard dotplot
         return(
           enrichplot::dotplot(
             x,
@@ -319,7 +320,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
                            "GeneRatio" = "GeneRatio",
                            "NES"       = "NES")
 
-      # When metric column is missing → safe fallback
+      # When metric column is missing -> safe fallback
       if (!metric_col %in% names(d)) {
         return(
           ggplot2::ggplot() +
@@ -354,42 +355,13 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
         ggplot2::theme_bw(base_size = 12)
     }
 
-    # make_dotplot <- function(metric = c("GeneRatio","NES")) {
-    #   metric <- match.arg(metric)
-    #   x <- r_obj()
-    #   if (inherits(x, "gseaResult")) {
-    #     enrichplot::dotplot(x, x = metric, showCategory = input$ncat %||% 10) +
-    #       ggplot2::ggtitle(title_txt())
-    #   } else {
-    #     # data.frame fallback (if you kept only CSVs) — manual dotplot
-    #     df <- r_df()
-    #     n  <- max(1, as.integer(input$ncat %||% 10))
-    #     d  <- head(df, n)
-    #     if (!"GeneRatio" %in% names(d)) {
-    #       # compute GeneRatio from core_enrichment/setSize if present
-    #       if ("core_enrichment" %in% names(d) && "setSize" %in% names(d)) {
-    #         core_n <- vapply(strsplit(as.character(d$core_enrichment), "/", fixed = TRUE),
-    #                          function(v) sum(nzchar(v)), integer(1))
-    #         d$GeneRatio <- core_n / as.numeric(d$setSize)
-    #       }
-    #     }
-    #     aes_x <- if (metric == "NES") ggplot2::aes(x = NES) else ggplot2::aes(x = GeneRatio)
-    #     ggplot2::ggplot(d, aes_x + ggplot2::aes(y = stats::reorder(Description, !!rlang::sym(names(d)[match(metric, c("GeneRatio","NES"))])))) +
-    #       ggplot2::geom_point(ggplot2::aes(size = setSize, alpha = -log10(p.adjust))) +
-    #       { if (metric == "NES") ggplot2::geom_vline(xintercept = 0, linetype = 2) else NULL } +
-    #       ggplot2::labs(x = if (metric == "NES") "Normalized Enrichment Score (NES)" else "GeneRatio (core / set size)",
-    #                     y = NULL, title = title_txt(), alpha = "-log10(adj.P)") +
-    #       ggplot2::theme_minimal(base_size = 12)
-    #   }
-    # }
-
     # helper to compute how many rows will be drawn (guard against short tables)
     n_rows_to_plot <- reactive({
       req(ready())
       min(as.integer(input$ncat), nrow(r_df()))
     })
 
-    row_px   <- 50   # pixels per category row (tweak 28–34 as you like)
+    row_px   <- 50   # pixels per category row (tweak 28 - 34 as you like)
     marginpx <- 130  # fixed padding for title/axes/legend
     minpx    <- 380  # minimum so tiny plots still look decent
 
@@ -403,7 +375,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     left_margin_px <- reactive({
       req(ready())
       d <- head(r_df()[, "Description", drop = TRUE], n_rows_to_plot())
-      # ~6 px per character is a reasonable default for 12–13 pt fonts
+      # 6 px per character is a reasonable default for 12 - 13 pt fonts
       px <- 6 * max(nchar(d), na.rm = TRUE)
       px <- max(140, min(px, 320))  # clamp to sensible bounds
       px
@@ -461,7 +433,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
                               render = DT::JS(
                                 "function(data,type,row,meta){",
                                 " if(type==='display' && data && data.length>120){",
-                                "   return '<span title=\"'+data+'\">'+data.slice(0,120)+'…</span>';",
+                                "   return '<span title=\"'+data+'\">'+data.slice(0,120)+'...</span>';",
                                 " } return data; }"
                               ))
                        ))

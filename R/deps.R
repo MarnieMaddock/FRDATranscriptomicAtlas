@@ -1,5 +1,4 @@
-# R/deps.R — help rsconnect detect dependencies
-# R/deps.R — help rsconnect detect dependencies
+# R/deps.R - help rsconnect detect dependencies
 suppressPackageStartupMessages({
   library(shiny)
   library(shinyjs)

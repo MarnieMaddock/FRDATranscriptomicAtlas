@@ -17,13 +17,28 @@ degVennUI <- function(id) {
           selected = "both"
         ),
         radioButtons(
-          ns("p_filter_mode"), "P-value threshold",
-          choices = c("None" = NA, "≤ 0.10" = 0.10, "≤ 0.05" = 0.05,
-                      "≤ 0.01" = 0.01, "≤ 0.001" = 0.001),
-          selected = "0.05"
+          ns("p_filter_mode"),
+          "P-value threshold",
+          inline = FALSE,
+          choiceNames = list(
+            "None",
+            HTML("&le; 0.10"),
+            HTML("&le; 0.05"),
+            HTML("&le; 0.01"),
+            HTML("&le; 0.001")
+          ),
+          choiceValues = list(
+            NA,
+            0.10,
+            0.05,
+            0.01,
+            0.001
+          ),
+          selected = 0.05
         ),
         numericInput(
-          ns("lfc_min"), "Minimum |log₂FC|",
+          ns("lfc_min"),
+          HTML("Minimum |log<sub>2</sub>FC|"),
           value = 0, min = 0, max = 10, step = 0.1
         ),
         tags$small(
@@ -374,12 +389,14 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       labs <- names(s)
       labs <- stringr::str_wrap(labs, width = 24)
       names(s) <- labs
+      suppressWarnings(suppressMessages(
       ggVennDiagram::ggVennDiagram(s, label = "count", label_size = 8, set_size = 10) +
         ggplot2::scale_fill_gradient(low = "#ccdcda", high = "#005249") +
         ggplot2::theme_void(base_size = 30) +
         ggplot2::theme(legend.position = "right",
                        plot.margin = ggplot2::margin(60, 120, 60, 120)) +
         ggplot2::coord_cartesian(clip = "off")
+      ))
     })
 
     # --- plot render ---

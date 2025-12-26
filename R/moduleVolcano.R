@@ -1,5 +1,5 @@
 #moduleVolcano.R
-#' Volcano Plot — Sidebar UI
+#' Volcano Plot - Sidebar UI
 #' @importFrom rlang %||%
 #' @param id module id
 #' @param pretty_map named character vector dataset_key = "Pretty Label"
@@ -18,7 +18,7 @@ volcanoSidebarUI <- function(id, pretty_map) {
       choices = choices_keyed,
       selected = names(pretty_map)[1],
       multiple = FALSE,
-      options = list(placeholder = "Choose a dataset…")
+      options = list(placeholder = "Choose a dataset...")
     ),
     shiny::hr(),
     shiny::radioButtons(
@@ -61,7 +61,7 @@ volcanoSidebarUI <- function(id, pretty_map) {
     shiny::helpText(
       shiny::HTML(
         "<b>Notes</b><ul style='margin-top:4px'>
-          <li>Y-axis uses −log10(FDR) and is <b>capped at 50</b> to avoid extreme values blowing out the scale.</li>
+          <li>Y-axis uses -log10(FDR) and is <b>capped at 50</b> to avoid extreme values blowing out the scale.</li>
           <li>Use the Plotly toolbar to <b>Box Select</b> or <b>Lasso Select</b> points. This is in the top right corner of the plot. Selected genes appear in the table.</li>
         </ul>"
       )
@@ -69,7 +69,7 @@ volcanoSidebarUI <- function(id, pretty_map) {
   )
 }
 
-#' Volcano Plot — Main UI
+#' Volcano Plot - Main UI
 #' @param id module id
 #' @noRd
 volcanoMainUI <- function(id) {
@@ -101,7 +101,7 @@ volcanoMainUI <- function(id) {
   )
 }
 
-#' Volcano Plot — Server
+#' Volcano Plot - Server
 #' @param id module id
 #' @param level "genes" or "transcripts" (default "genes")
 #' @param pkg package name for system.file lookup (defaults to calling package)
@@ -233,9 +233,9 @@ volcanoServer <- function(
           "DEG file not found for dataset '", dataset, "'.\n",
           "Looked in:\n  ", deg_dir, "\n",
           "Expected one of:\n",
-          "  • DESEQ2_res_", dataset, "_0.05_all_", level, ".rds\n",
-          "  • DESEQ2_res_", dataset, "_0.xx_all_", level, ".rds\n",
-          "  • ", dataset, ".rds",
+          "  - DESEQ2_res_", dataset, "_0.05_all_", level, ".rds\n",
+          "  - DESEQ2_res_", dataset, "_0.xx_all_", level, ".rds\n",
+          "  - ", dataset, ".rds",
           call. = FALSE
         )
       }
@@ -320,16 +320,21 @@ volcanoServer <- function(
     # -------- summary text --------
     output$summary_text <- shiny::renderText({
       df <- deg_tbl(); req(nrow(df))
-      padj_th <- input$padj_thresh; lfc_th <- input$lfc_thresh
-      ns_n <- sum(df$status == "NS", na.rm = TRUE)
-      up_n <- sum(df$status == "Up", na.rm = TRUE)
+      padj_th <- input$padj_thresh
+      lfc_th  <- input$lfc_thresh
+
+      ns_n <- sum(df$status == "NS",   na.rm = TRUE)
+      up_n <- sum(df$status == "Up",   na.rm = TRUE)
       dn_n <- sum(df$status == "Down", na.rm = TRUE)
+
       paste0(
         "n = ", nrow(df), " total; Up = ", up_n, ", Down = ", dn_n,
-        ", NS = ", ns_n, "  |  thresholds: |log2FC| ≥ ", lfc_th,
-        ", ", df$.pcol[1], " ≤ ", signif(padj_th, 3)
+        ", NS = ", ns_n,
+        "  |  thresholds: |log2FC| >= ", lfc_th,
+        ", ", df$.pcol[1], " <= ", signif(padj_th, 3)
       )
     })
+
 
     # -------- gg builder (used for both plotly and downloads) --------
     make_gg <- function(df, show_ns = TRUE) {

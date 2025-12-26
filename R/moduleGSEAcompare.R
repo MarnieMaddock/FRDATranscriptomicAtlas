@@ -22,7 +22,7 @@ gseaCompareUI <- function(id) {
             HTML(
               "<strong>Matrix legend:</strong><br>
        <span style='color:#005249;'>+1</span> = pathway enriched (positive NES)<br>
-       <span style='color:#a83232;'>−1</span> = pathway depleted (negative NES)<br>
+       <span style='color:#a83232;'>-1</span> = pathway depleted (negative NES)<br>
        <span style='color:#666;'>0</span> = not significant or absent"
             )
           )
@@ -359,7 +359,7 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
 
 
 
-    # ---- Venn plot (≤6 sets) ----
+    # ---- Venn plot (<=6 sets) ----
     gsea_venn_plot_obj <- reactive({
       s <- gsea_sets()
       if (length(s) > 6) return(NULL)
