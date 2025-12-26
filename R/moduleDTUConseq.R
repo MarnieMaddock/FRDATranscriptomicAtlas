@@ -104,10 +104,7 @@ consequencesMainUI <- function(id) {
     )
   )
 }
-#' Consequences — Server (flat layout, same style as DTU module)
-#' @param data_dir folder containing <LABEL>_genes_with_consequences.csv and <LABEL>_ISOFORMS_with_consequences.csv
-#' @param labels optional vector of labels; if NULL they are auto-discovered from data_dir
-#' @param pretty_map optional named vector: names = raw labels, values = display names
+
 consequencesServer <- function(id, pkg = utils::packageName(), labels = NULL, pretty_map = NULL) {
   moduleServer(id, function(input, output, session) {
 

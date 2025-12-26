@@ -1,6 +1,3 @@
-#' Human-readable dataset names shown in UI
-#' @keywords internal
-#' #mapping of datasets to pretty names
 pretty_map <- c(
   "Chutake"           = "Chutake (Lymphoblastoid Cells)",
   "Erwin"             = "Erwin (Lymphoblastoid Cells)",

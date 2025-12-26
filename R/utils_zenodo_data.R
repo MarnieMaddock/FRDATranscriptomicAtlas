@@ -1,5 +1,6 @@
 #' Cross-platform robust download using libcurl
 #' @keywords internal
+#' @noRd
 download_with_retry <- function(url, destfile, retries = 3) {
 
   options(timeout = max(6000, getOption("timeout")))
@@ -39,6 +40,7 @@ download_with_retry <- function(url, destfile, retries = 3) {
 
 #' Ensure FRDA atlas data are available locally (with progress bar + global banner)
 #' @keywords internal
+#' @noRd
 ensure_atlas_data <- function(
     keys,
     package = "FRDATranscriptomicAtlas"

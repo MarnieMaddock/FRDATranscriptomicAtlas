@@ -314,7 +314,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
                             ggplot2::aes(x = condition, y = TPM),
                             position = ggplot2::position_jitter(width = 0.15, height = 0, seed = 1),
                             size = 3.5, color = "#005249", na.rm = TRUE, show.legend = FALSE) +
-        ggplot2::labs(title = title_txt, x = " ", y = "Transcripts Per Million") +
+        ggplot2::labs(title = title_txt,  x = NULL, y = "Transcripts Per Million") +
         theme_Marnie +
         ggplot2::facet_wrap(dplyr::vars(dataset), scales = "free_x", nrow = 1, labeller = lab_ds)
       if (isTRUE(logy)) p <- p + ggplot2::scale_y_continuous(trans = "log10")

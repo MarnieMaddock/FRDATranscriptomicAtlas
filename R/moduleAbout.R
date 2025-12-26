@@ -4,7 +4,7 @@
 #' @param github_url Project URL
 #' @param issues_url Issues URL
 #' @param contact_email Contact email
-#' @export
+#' @noRd
 #' @importFrom shiny NS tagList div h2 p h3 uiOutput span moduleServer renderUI tags HTML
 aboutUI <- function(id,
                     title = "About the FRDA Transcriptomic Atlas",

@@ -4,6 +4,7 @@
 #' @keywords internal
 #' @import shiny
 #' @importFrom ggplot2 ggplot aes geom_point
+#' @noRd
 app_server <- function(input, output, session) {
 
   # --- make `pkg` robust for both project + installed package modes ----

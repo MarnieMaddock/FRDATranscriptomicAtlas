@@ -399,8 +399,7 @@ pcaServer <- function(id, pkg = utils::packageName()) {
           y = sprintf("PC2 (%.2f%%)", pv[2]),
           color = color_label,
           shape = shape_label
-        ) +
-        ggplot2::theme_classic(base_size = 14)
+        )
 
       if (exists("theme_Marnie", mode = "function") || exists("theme_Marnie")) {
         p <- p + theme_Marnie

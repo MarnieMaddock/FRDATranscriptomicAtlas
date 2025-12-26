@@ -4,6 +4,7 @@
 #' @param pkg     package name (for system.file lookup)
 #' @return data.frame with columns: gene, log2FC, padj (if present), pvalue (if present)
 #' @keywords internal
+#' @noRd
 deseq_loader <- function(dataset, level = "genes", pkg = utils::packageName()) {
 
   stopifnot(level %in% c("genes", "transcripts"))

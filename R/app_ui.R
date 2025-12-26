@@ -1,11 +1,11 @@
 #' Application User Interface
 #'
 #' Defines the UI layout for the FRDA Transcriptomic Atlas app.
-#' @keywords internal
 #' @import shiny
 #' @import bslib
 #' @importFrom shinyjs useShinyjs
 #' @importFrom fontawesome fa
+#' @noRd
 
 # logos/css
 # Define helper functions for resource paths ----------------------

@@ -1,7 +1,7 @@
 #' Package theme
-#' @keywords internal
 #' @importFrom grid unit
 #' @importFrom ggplot2 margin
+#' @noRd
 theme_Marnie <- ggplot2::theme(
   axis.line.y        = ggplot2::element_line(colour = "black", linewidth = 0.9),
   axis.line.x        = ggplot2::element_line(colour = "black", linewidth = 0.9),

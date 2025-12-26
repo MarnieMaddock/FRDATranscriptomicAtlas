@@ -353,8 +353,25 @@ volcanoServer <- function(
                       else "Gene-level differential expression",
                       color = NULL)
 
-      if (exists("theme_Marnie", inherits = TRUE)) p <- p + get("theme_Marnie", inherits = TRUE) else p <- p + ggplot2::theme_bw()
-      p + ggplot2::theme(legend.position = "top", panel.grid.minor = ggplot2::element_blank())
+      p <- p +
+        ggplot2::labs(
+          title = title_txt,
+          x = sprintf("PC1 (%.2f%%)", pv[1]),
+          y = sprintf("PC2 (%.2f%%)", pv[2]),
+          color = color_label,
+          shape = shape_label
+        )
+
+      if (exists("theme_Marnie", inherits = TRUE)) {
+        p <- p + get("theme_Marnie", inherits = TRUE)
+      }
+
+      p <- p + ggplot2::theme(
+        legend.position   = "top",
+        panel.grid.minor  = ggplot2::element_blank()
+      )
+
+
 
       # ring-highlight requested genes
       if (any(dplot$highlight, na.rm = TRUE)) {

@@ -1,6 +1,6 @@
 Package: FRDATranscriptomicAtlas
 Title: FRDA Transcriptomic Atlas
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 Authors@R: c(person("Marnie", "Maddock", role = c("aut","cre"), email = "mmaddock@uow.edu.au"))
 Description: Explore FRDA RNA sequencing data through an interactive Shiny interface.
 License: MIT + file LICENSE
@@ -11,6 +11,7 @@ Imports:
     shiny,
     fontawesome,
     dplyr,
+    magrittr,
     purrr,
     ggplot2,
     bslib,

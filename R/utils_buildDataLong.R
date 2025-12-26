@@ -1,9 +1,4 @@
-#' Build long-format DEG table (dataset, gene, direction)
-#' @param pkg Your package name (defaults to utils::packageName())
-#' @param p_thr padj threshold to define DEGs (default 0.05)
-#' @param lfc_min minimum |log2FC| to define DEGs (default 0)
-#' @param level "genes" or "transcripts" (default "genes")
-#' @return data.frame with columns: dataset, gene, direction ∈ {Up,Down}
+# Build long-format DEG table (dataset, gene, direction)
 build_deg_long <- function(pkg = utils::packageName(),
                            p_thr = 0.05, lfc_min = 0, level = "genes") {
   stopifnot(level %in% c("genes", "transcripts"))
