@@ -155,6 +155,10 @@ dtuVennServer <- function(id, pkg = utils::packageName()){
       )
     }
 
+    # --- cached RDS reader ---
+    read_cached_rds <- memoise::memoise(readRDS)
+
+
 
     # ---- pretty dataset labels (optional – reuse/extend yours) ----
     pretty_map <- c(

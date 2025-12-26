@@ -97,7 +97,7 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
 
     # ---- ensure GSEA summary data are available (Zenodo-backed) ----
     ensure_atlas_data(
-      keys    = "gsea_summary",
+      keys    = "gsea_results",
       package = pkg
     )
 

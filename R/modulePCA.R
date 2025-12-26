@@ -37,9 +37,7 @@ PCAMainUI <- function(id) {
   )
 }
 
-pcaServer <- function(id,
-                      data_dir = system.file("extdata/deseq_objects", package = "FRDATranscriptomicAtlas"),
-                      fallback_dir = "inst/extdata/deseq_objects") {
+pcaServer <- function(id, pkg = utils::packageName()) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -63,12 +61,36 @@ pcaServer <- function(id,
     )
 
 
-    # Locate directory with *_pca_input.rds
+    # ---- ensure PCA (DESeq2 objects) are available ----
+    ensure_atlas_data(
+      keys    = "deseq_object",
+      package = pkg
+    )
+
+    cache_root <- tools::R_user_dir(pkg, which = "cache")
+
     dir_use <- reactive({
-      if (dir.exists(data_dir)) return(data_dir)
-      if (dir.exists(fallback_dir)) return(fallback_dir)
-      stop("No PCA directory found. Checked:\n  - ", data_dir, "\n  - ", fallback_dir)
+      d <- file.path(cache_root, "deseq_objects")
+
+      # descend into single subdir if ZIP contains one
+      subs <- list.dirs(d, recursive = FALSE, full.names = TRUE)
+      if (length(subs) == 1L && dir.exists(subs[[1L]])) {
+        d <- subs[[1L]]
+      }
+
+      validate(
+        need(
+          dir.exists(d),
+          paste(
+            "PCA data not available yet.\nExpected under:",
+            normalizePath(file.path(cache_root, "deseq_objects"), winslash = "/", mustWork = FALSE)
+          )
+        )
+      )
+
+      d
     })
+
 
     # List available PCA inputs
     pca_files <- reactive({

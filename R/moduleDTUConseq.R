@@ -112,17 +112,33 @@ consequencesServer <- function(id, pkg = utils::packageName(), labels = NULL, pr
   moduleServer(id, function(input, output, session) {
 
     # ---- ensure consequences data are available (Zenodo cache) ----
+    key <- "dtu_results"
+
     ensure_atlas_data(
-      keys    = "consequences_results",  # <-- your manifest key
+      keys    = key,
       package = pkg
     )
 
     cache_root <- tools::R_user_dir(pkg, which = "cache")
-    data_dir   <- file.path(cache_root, "consequences")  # <-- your cache subdir name
 
-    if (!dir.exists(data_dir)) {
-      stop("Consequences cache directory not found after download:\n  ", data_dir, call. = FALSE)
+    # start at manifest local_dir
+    data_dir <- file.path(cache_root, "dtu")
+
+    # if ZIP unpacked into a single subdirectory (DTU/), descend into it
+    subdirs <- list.dirs(data_dir, recursive = FALSE, full.names = TRUE)
+    if (length(subdirs) == 1L && dir.exists(subdirs[[1L]])) {
+      data_dir <- subdirs[[1L]]
     }
+
+    validate(
+      need(
+        dir.exists(data_dir),
+        paste(
+          "DTU consequences data not available yet.\nExpected under:",
+          normalizePath(file.path(cache_root, "dtu"), winslash = "/", mustWork = FALSE)
+        )
+      )
+    )
 
 
     # --- populate dataset choices (labels) ---

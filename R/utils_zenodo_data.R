@@ -1,28 +1,28 @@
 #' Cross-platform robust download using libcurl
 #' @keywords internal
-download_with_retry <- function(url, destfile, retries = 3, quiet = TRUE) {
+download_with_retry <- function(url, destfile, retries = 3) {
 
-  options(timeout = max(600, getOption("timeout")))
+  options(timeout = max(6000, getOption("timeout")))
 
-  # Prefer libcurl everywhere
   has_libcurl <- isTRUE(capabilities("libcurl"))
-
-
   method <- if (has_libcurl) "libcurl" else "auto"
 
   for (i in seq_len(retries)) {
+
+    message(sprintf("[Atlas] Attempt %d: %s", i, basename(url)))
+
     ok <- tryCatch({
       utils::download.file(
         url,
         destfile,
         mode   = "wb",
         method = method,
-        quiet  = quiet
+        quiet  = FALSE   # console progress
       )
       TRUE
-    }, error = function(e) FALSE, warning = function(w) FALSE)
+    }, error = function(e) FALSE)
 
-    if (isTRUE(ok) && file.exists(destfile) && file.size(destfile) > 0) {
+    if (ok && file.exists(destfile) && file.size(destfile) > 0) {
       return(invisible(TRUE))
     }
 
@@ -35,12 +35,15 @@ download_with_retry <- function(url, destfile, retries = 3, quiet = TRUE) {
   )
 }
 
+
+
 #' Ensure FRDA atlas data are available locally (with progress bar + global banner)
 #' @keywords internal
 ensure_atlas_data <- function(
     keys,
     package = "FRDATranscriptomicAtlas"
 ) {
+
   manifest_path <- system.file(
     "extdata", "atlas_data_manifest.csv",
     package = package
@@ -60,33 +63,56 @@ ensure_atlas_data <- function(
   cache_root <- tools::R_user_dir(package, which = "cache")
   dir.create(cache_root, recursive = TRUE, showWarnings = FALSE)
 
-  # Determine which datasets actually need downloading
+  # Determine which datasets need downloading
+  needs_download <- function(p, pattern = "\\.rds$") {
+    if (!dir.exists(p)) return(TRUE)
+    files <- list.files(p, pattern = pattern, recursive = TRUE)
+    length(files) == 0
+  }
   need_download <- vapply(
     rows$local_dir,
     function(d) {
       p <- file.path(cache_root, d)
-      !(dir.exists(p) && length(list.files(p)))
+      needs_download(p)
     },
     logical(1)
   )
 
+
   rows <- rows[need_download, , drop = FALSE]
 
-  # Nothing to do → no banner, no progress
   if (!nrow(rows)) {
     return(invisible(TRUE))
   }
 
   downloaded_any <- FALSE
 
+  # ---- SHOW DOWNLOAD BANNER --------------------------------------------
+  if (shiny::isRunning()) {
+    shiny::showNotification(
+      "Downloading atlas data… this may take several minutes.",
+      type     = "warning",
+      duration = NULL,
+      id       = "atlas-download"
+    )
+  }
+
   shiny::withProgress(
     message = "Preparing atlas data",
-    value = 0,
+    value   = 0,
     {
+
       n <- nrow(rows)
 
       for (i in seq_len(n)) {
+
         row <- rows[i, ]
+
+        message(sprintf(
+          "[Atlas] Downloading %s (%s)",
+          row$key,
+          row$description
+        ))
 
         shiny::incProgress(
           1 / n,
@@ -104,18 +130,28 @@ ensure_atlas_data <- function(
           stop("Expected data directory not created: ", target_dir)
         }
 
+        message(sprintf(
+          "[Atlas] Finished %s → %s",
+          row$key,
+          row$local_dir
+        ))
+
         downloaded_any <- TRUE
       }
     }
   )
 
-  # ---- GLOBAL DATA READY BANNER -----------------------------------------
-  if (downloaded_any) {
+  # ---- REMOVE DOWNLOAD BANNER ------------------------------------------
+  if (shiny::isRunning()) {
+    shiny::removeNotification("atlas-download")
+  }
+
+  # ---- READY NOTIFICATION ----------------------------------------------
+  if (downloaded_any && shiny::isRunning()) {
     shiny::showNotification(
       "Atlas data downloaded and ready.",
       type     = "message",
-      duration = NULL,     # persistent
-      id       = "atlas-data-ready"
+      duration = 5
     )
   }
 

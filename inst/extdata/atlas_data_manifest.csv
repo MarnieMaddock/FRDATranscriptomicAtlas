@@ -1,9 +1,9 @@
 key,description,url,local_dir
-tpm_gene,Gene-level TPM matrices,https://zenodo.org/record/18040947/files/tpm_gene.zip,tpm
-deg_genes,DEG gene-level results (DESeq2),https://zenodo.org/records/18040947/files/deg_genes.zip,deg/genes
-biomarker,Biomarker baseline DEG summary,https://zenodo.org/records/18040947/files/biomarker.zip,biomarker
-deg_transcripts,Transcript-level DESeq2 results,https://zenodo.org/records/18040947/files/deg_transcripts.zip,deg/txs
-tpm_transcript,Transcript-level TPM matrices,https://zenodo.org/records/18040556/files/tpm_transcript.zip,transcript_tpm
-vst,DESeq2 VST objects,https://zenodo.org/records/18040947/files/vst_objects.zip,deseq_objects
-gsea_results,GSEA GO results (BP/CC/MF),https://zenodo.org/records/XXXX/files/gsea_results.zip,GSEA_results
-gsea_summary,GSEA direction summary table,https://zenodo.org/records/XXXX/files/gsea_summary.zip,GSEA_results/summary
+tpm_gene,Gene-level TPM matrices,https://zenodo.org/record/18041167/files/tpm_gene.zip,tpm
+deg_genes,DEG gene-level results (DESeq2),https://zenodo.org/records/18041167/files/deg_genes.zip,deg/genes
+biomarker,Biomarker baseline DEG summary,https://zenodo.org/records/18041167/files/biomarker.zip,biomarker
+deg_transcripts,Transcript-level DESeq2 results,https://zenodo.org/records/18041167/files/deg_transcripts.zip,deg/txs
+tpm_tx,Transcript-level TPM matrices,https://zenodo.org/records/18041167/files/tpm_transcript.zip,transcript_tpm
+deseq_object,DESeq2 VST objects,https://zenodo.org/records/18041167/files/deseq_objects.zip,deseq_objects
+gsea_results,GSEA GO results (BP/CC/MF),https://zenodo.org/records/18041167/files/GSEA_results.zip,GSEA_results
+dtu_results,DTU results (IsoformSwitchAnalyzeR),https://zenodo.org/records/18041167/files/DTU_results.zip,dtu

@@ -102,6 +102,8 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       need(dir.exists(deg_dir_genes), "Gene-level DEG data not available."),
       need(dir.exists(deg_dir_transcripts), "Transcript-level DEG data not available.")
     )
+    # --- cached RDS reader ---
+    read_cached <- memoise::memoise(readRDS)
 
 
     # --- maps (tx2gene) ---

@@ -339,7 +339,7 @@ biomarkerServer <- function(id,
       # ------------------------------------------------------------
       # Heatmap
       # ------------------------------------------------------------
-      p_heat <- ggplot(df, aes(x = study_pretty, y = gene_lab)) +
+      p_heat <- ggplot(df, aes(x = study, y = gene_lab)) +
         geom_point(
           aes(fill = direction, size = size_scaled, colour = outline_class),
           shape = 21,
@@ -376,7 +376,11 @@ biomarkerServer <- function(id,
           legend.text  = element_text(color = "black"),
           plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
         ) +
-        scale_y_discrete(expand = expansion(add = c(0.7, 1)))
+        scale_y_discrete(expand = expansion(add = c(0.7, 1))) +
+        scale_x_discrete(
+          labels = pretty_label
+        )
+
       # ------------------------------------------------------------
       # Bar counts for each gene
       # ------------------------------------------------------------

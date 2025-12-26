@@ -92,7 +92,12 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
     )
 
 
-    tx2_path <- resolve_file(file.path("extdata", "maps"), "tx2gene.tsv")
+    tx2_path <- system.file(
+      "extdata", "maps", "tx2gene.tsv",
+      package = pkg,
+      mustWork = FALSE
+    )
+
     tx2 <- if (nzchar(tx2_path) && file.exists(tx2_path)) {
       readr::read_tsv(tx2_path, col_types = "ccc") |> dplyr::distinct()
     } else NULL
