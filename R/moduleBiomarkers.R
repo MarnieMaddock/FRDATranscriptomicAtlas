@@ -131,7 +131,7 @@ biomarkerServer <- function(id,
 
     filtered_baseline <- reactive({
       req(input$datasets)
-      baseline_long %>% filter(study %in% input$datasets)
+      baseline_long %>% dplyr::filter(study %in% input$datasets)
     })
 
     threshold_valid <- reactive({
@@ -177,19 +177,19 @@ biomarkerServer <- function(id,
 
 
       top_up <- df %>%
-        filter(!is.na(padj), padj <= alpha(), log2FoldChange > 0) %>%
-        distinct(gene_id, gene_name, study) %>%
+        dplyr::filter(!is.na(padj), padj <= alpha(), log2FoldChange > 0) %>%
+        dplyr::distinct(gene_id, gene_name, study) %>%
         count(gene_id, gene_name, name = "n_studies") %>%
-        filter(n_studies > min_n)
+        dplyr::filter(n_studies > min_n)
 
       top_down <- df %>%
-        filter(!is.na(padj), padj <= alpha(), log2FoldChange < 0) %>%
-        distinct(gene_id, gene_name, study) %>%
+        dplyr::filter(!is.na(padj), padj <= alpha(), log2FoldChange < 0) %>%
+        dplyr::distinct(gene_id, gene_name, study) %>%
         count(gene_id, gene_name, name = "n_studies") %>%
-        filter(n_studies > min_n)
+        dplyr::filter(n_studies > min_n)
 
-      bind_rows(top_up, top_down) %>%
-        distinct(gene_id, gene_name)
+      dplyr::bind_rows(top_up, top_down) %>%
+        dplyr::distinct(gene_id, gene_name)
     })
 
     # ============================================================
@@ -202,11 +202,11 @@ biomarkerServer <- function(id,
       if (length(feats) == 0) return(NULL)
 
       filtered_baseline() %>%
-        filter(
+        dplyr::filter(
           toupper(gene_name) %in% toupper(feats) |
             toupper(gene_id)   %in% toupper(feats)
         ) %>%
-        distinct(gene_id, gene_name)
+        dplyr::distinct(gene_id, gene_name)
     })
 
     # ============================================================
@@ -409,7 +409,7 @@ biomarkerServer <- function(id,
 
       p_bar <- ggplot(
         counts_long,
-        aes(y = gene_lab, x = n, fill = direction)
+        ggplot2::aes(y = gene_lab, x = n, fill = direction)
       ) +
         geom_col(width = 0.85) +
         scale_fill_manual(values = dir_cols) +

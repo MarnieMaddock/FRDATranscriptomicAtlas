@@ -401,8 +401,8 @@ pcaServer <- function(id, pkg = utils::packageName()) {
           shape = shape_label
         )
 
-      if (exists("theme_Marnie", mode = "function") || exists("theme_Marnie")) {
-        p <- p + theme_Marnie
+      if (exists("theme_Marnie", mode = "function", inherits = TRUE)) {
+        p <- p + theme_Marnie()
       }
 
       p

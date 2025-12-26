@@ -353,17 +353,9 @@ volcanoServer <- function(
                       else "Gene-level differential expression",
                       color = NULL)
 
-      p <- p +
-        ggplot2::labs(
-          title = title_txt,
-          x = sprintf("PC1 (%.2f%%)", pv[1]),
-          y = sprintf("PC2 (%.2f%%)", pv[2]),
-          color = color_label,
-          shape = shape_label
-        )
-
       if (exists("theme_Marnie", inherits = TRUE)) {
-        p <- p + get("theme_Marnie", inherits = TRUE)
+        p <- p + theme_Marnie()
+
       }
 
       p <- p + ggplot2::theme(
