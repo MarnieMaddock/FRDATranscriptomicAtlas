@@ -343,19 +343,19 @@ biomarkerServer <- function(id,
       # Heatmap
       # ------------------------------------------------------------
       p_heat <- ggplot(df, aes(x = study, y = gene_lab)) +
-        geom_point(
-          aes(fill = direction, size = size_scaled, colour = outline_class),
+        ggplot2::geom_point(
+          ggplot2::aes(fill = direction, size = size_scaled, colour = outline_class),
           shape = 21,
           stroke = 0.7
         ) +
-        scale_fill_manual(
+        ggplot2::scale_fill_manual(
           values = dir_cols,
           name   = "Differential expression",
-          guide  = guide_legend(
+          guide  = ggplot2::guide_legend(
             override.aes = list(shape = 21, size = 6, stroke = 0.3)
           )
         ) +
-        scale_colour_manual(
+        ggplot2::scale_colour_manual(
           values = outline_cols,
           name   = expression("Direction of log"[2]*"FC change"),
           labels = c(
@@ -363,20 +363,20 @@ biomarkerServer <- function(id,
             "Down (FDR < 0.05)"            = expression("Down (FDR " < " 0.05)"),
             "Not significant (FDR >= 0.05)" = expression("Not significant (FDR " >= " 0.05)")
           ),
-          guide  = guide_legend(
+          guide  = ggplot2::guide_legend(
             override.aes = list(fill = "white", shape = 21, size = 6, stroke = 1)
           )
         ) +
-        scale_size_continuous(
+        ggplot2::scale_size_continuous(
           name = expression("Effect size ("* "|" *"log"[2]*"FC|)"),
           range = c(2, 10),
-          guide = guide_legend(
+          guide = ggplot2::guide_legend(
             override.aes = list(shape = 21, fill = "grey60")
           )
         ) +
-        labs(x = NULL, y = NULL) +
-        theme_minimal(base_size = 18) +
-        theme(
+        ggplot2::labs(x = NULL, y = NULL) +
+        ggplot2::theme_minimal(base_size = 18) +
+        ggplot2::theme(
           panel.grid = element_blank(),
           axis.text.x = element_text(angle = 45, hjust = 1, color = "black"),
           axis.text.y = element_text(face = "italic", color = "black"),
@@ -384,8 +384,8 @@ biomarkerServer <- function(id,
           legend.text  = element_text(color = "black"),
           plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
         ) +
-        scale_y_discrete(expand = expansion(add = c(0.7, 1))) +
-        scale_x_discrete(
+        ggplot2:: scale_y_discrete(expand = expansion(add = c(0.7, 1))) +
+        ggplot2::scale_x_discrete(
           labels = pretty_label
         )
 
@@ -418,24 +418,24 @@ biomarkerServer <- function(id,
         counts_long,
         ggplot2::aes(y = gene_lab, x = n, fill = direction)
       ) +
-        geom_col(width = 0.85) +
-        scale_fill_manual(values = dir_cols) +
-        guides(fill = "none") +
-        scale_x_continuous(
+        ggplot2::geom_col(width = 0.85) +
+        ggplot2::scale_fill_manual(values = dir_cols) +
+        ggplot2::guides(fill = "none") +
+        ggplot2::scale_x_continuous(
           limits = c(0, n_datasets),
           expand = expansion(mult = c(0, 0.02))
         ) +
-        labs(x = "Number of datasets", y = NULL) +
-        theme_minimal(base_size = 18) +
-        theme(
+        ggplot2::labs(x = "Number of datasets", y = NULL) +
+        ggplot2::theme_minimal(base_size = 18) +
+        ggplot2::theme(
           panel.grid.major.y = element_blank(),
           axis.text.y = element_blank(),
           axis.text.x = element_text(color = "black"),
           axis.title.x = element_text(color = "black"),
           plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
         ) +
-        scale_y_discrete(expand = expansion(add = c(0.7, 1))) +
-        geom_text(
+        ggplot2::scale_y_discrete(expand = expansion(add = c(0.7, 1))) +
+        ggplot2::geom_text(
           data = dplyr::filter(counts_long, n > 0),
           aes(label = n),
           position = position_stack(vjust = 0.5),

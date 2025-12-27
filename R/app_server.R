@@ -87,7 +87,7 @@ app_server <- function(input, output, session) {
 
   # --- ensure pretty_map exists (fallback is harmless) ---
   if (!exists("pretty_map", inherits = TRUE)) {
-    pretty_map <- setNames(character(0), character(0))
+    pretty_map <- stats::setNames(character(0), character(0))
   }
 
   # --- Call modules (pass the same `pkg`) -------------------------------

@@ -21,6 +21,21 @@ utils::globalVariables(c(
   "grp_rank", "ds_rank", "status_rank",
   "tissue_ord", "ctype_ord", "gene_lab",
 
+  # --- datasets table columns (non-syntactic names) ---
+  "gse",
+  "Study (Year)",
+  "ENA (PRJNA)",
+  "Sampling & design",
+  "Sample size",
+
+  # --- forest plots ---
+  "gene",
+
+  # --- genePlots ---
+  "fa_num",
+  "ic_first",
+  "condition",
+
   # --- tables / metadata ---
   "Description", "Publication", "Sample", "Sum",
   "ENA", "GEO", "PRJNA", "prjna",

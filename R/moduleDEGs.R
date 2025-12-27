@@ -238,7 +238,7 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
       x <- x |>
         dplyr::mutate(
           dplyr::across(
-            .cols = where(is.numeric) & !c(pvalue, padj),
+            .cols = dplyr::where(is.numeric) & !c(pvalue, padj),
             ~ round(.x, 4)
           )
         )
