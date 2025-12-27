@@ -125,7 +125,7 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
       # rename effect/se columns with study suffix
       have <- c("log2FoldChange","lfcSE","padj")
       have <- have[have %in% names(df)]
-      ren  <- setNames(paste0(have, "_", study), have)
+      ren  <- stats::setNames(paste0(have, "_", study), have)
       dplyr::rename(df, !!!ren)
     }
 

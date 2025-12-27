@@ -99,7 +99,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
 
     # optional: guard for pretty_map if it isn't globally defined
     if (!exists("pretty_map", inherits = TRUE)) {
-      pretty_map <- setNames(character(0), character(0))
+      pretty_map <- stats::setNames(character(0), character(0))
     }
 
     # ---- deps ----
@@ -161,7 +161,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       ds_dirs <- list.dirs(root, recursive = FALSE, full.names = TRUE)
       idx <- lapply(ds_dirs, function(d) {
         # prefer .rds; fallback to .csv (if you kept CSVs)
-        map <- setNames(vector("list", 3), c("BP","CC","MF"))
+        map <- stats::setNames(vector("list", 3), c("BP","CC","MF"))
         for (ont in c("BP","CC","MF")) {
           p_rds <- file.path(d, sprintf("gsea_GO_%s.rds", ont))
           if (file.exists(p_rds)) {
@@ -302,7 +302,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       # ----------------------------
       df <- r_df()
       n  <- max(1, as.integer(input$ncat %||% 10))
-      d  <- head(df, n)
+      d  <- utils::head(df, n)
 
       # Compute GeneRatio if missing
       if (!"GeneRatio" %in% names(d)) {
@@ -341,7 +341,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       ggplot2::ggplot(
         d,
         ggplot2::aes(
-          x = reorder(Description, !!rlang::sym(metric_col)),
+          x = stats::reorder(Description, !!rlang::sym(metric_col)),
           y = !!rlang::sym(metric_col)
         )
       ) +
@@ -374,7 +374,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     # dynamic left margin based on longest label (keeps full, unwrapped text)
     left_margin_px <- reactive({
       req(ready())
-      d <- head(r_df()[, "Description", drop = TRUE], n_rows_to_plot())
+      d <- utils::head(r_df()[, "Description", drop = TRUE], n_rows_to_plot())
       # 6 px per character is a reasonable default for 12 - 13 pt fonts
       px <- 6 * max(nchar(d), na.rm = TRUE)
       px <- max(140, min(px, 320))  # clamp to sensible bounds
@@ -513,7 +513,8 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     )
     output$dl_plot_gr_svg <- downloadHandler(
       filename = function() sprintf("dotplot_GeneRatio_%s_%s.svg", input$dataset, input$ont),
-      content  = function(file) { svglite::svglite(file, 7, 5); print(make_dotplot("GeneRatio")); dev.off() }
+      content  = function(file) { svglite::svglite(file, 7, 5); print(make_dotplot("GeneRatio"))
+      grDevices::dev.off() }
     )
     output$dl_plot_nes_png <- downloadHandler(
       filename = function() sprintf("dotplot_NES_%s_%s.png", input$dataset, input$ont),
@@ -521,7 +522,8 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     )
     output$dl_plot_nes_svg <- downloadHandler(
       filename = function() sprintf("dotplot_NES_%s_%s.svg", input$dataset, input$ont),
-      content  = function(file) { svglite::svglite(file, 7, 5); print(make_dotplot("NES")); dev.off() }
+      content  = function(file) { svglite::svglite(file, 7, 5); print(make_dotplot("NES"))
+        grDevices::dev.off() }
     )
     output$dl_table_csv <- downloadHandler(
       filename = function() sprintf("gsea_table_%s_%s.csv", input$dataset, input$ont),

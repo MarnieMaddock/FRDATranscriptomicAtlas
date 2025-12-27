@@ -26,5 +26,5 @@ suppressPackageStartupMessages({
   library(grid)
   library(DT)
   library(htmltools)
-  library(upsetjs)
+  library(magrittr)
 })

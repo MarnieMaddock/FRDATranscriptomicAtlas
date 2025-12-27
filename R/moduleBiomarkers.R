@@ -124,7 +124,7 @@ biomarkerServer <- function(id,
       avail <- sort(unique(baseline_long$study))
       updateCheckboxGroupInput(
         session, "datasets",
-        choices  = setNames(avail, pretty_label(avail)),
+        choices  = stats::setNames(avail, pretty_label(avail)),
         selected = avail
       )
     })
@@ -247,7 +247,7 @@ biomarkerServer <- function(id,
                            abs(log2FoldChange), 0)
         )
 
-      cap <- quantile(df$abs_lfc, 0.99, na.rm = TRUE)
+      cap <- stats::quantile(df$abs_lfc, 0.99, na.rm = TRUE)
       df$size_scaled <- pmin(df$abs_lfc, cap)
       df
     })
@@ -480,7 +480,7 @@ biomarkerServer <- function(id,
     output$download_data <- downloadHandler(
       filename = function() "biomarker_genes.csv",
       content = function(file) {
-        write.csv(selected_genes(), file, row.names = FALSE)
+        utils::write.csv(selected_genes(), file, row.names = FALSE)
       }
     )
 
@@ -494,14 +494,14 @@ biomarkerServer <- function(id,
         w_in <- px_to_in(plot_width())
         h_in <- px_to_in(plot_height())
 
-        svg(
+        grDevices::svg(
           file,
           width  = w_in,
           height = h_in
         )
 
         print(combined_plot_obj())
-        dev.off()
+        grDevices::dev.off()
       }
     )
 

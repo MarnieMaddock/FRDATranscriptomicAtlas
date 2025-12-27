@@ -295,7 +295,7 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       dat_points() |>
         dplyr::group_by(dataset, condition) |>
         dplyr::summarise(n = dplyr::n(), mean = mean(TPM, na.rm = TRUE),
-                         sd = sd(TPM, na.rm = TRUE), .groups = "drop")
+                         sd = stats::sd(TPM, na.rm = TRUE), .groups = "drop")
     })
 
     build_plot <- function(points, summary, logy = FALSE, title_txt = "") {

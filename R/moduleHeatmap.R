@@ -363,7 +363,7 @@ tpmHeatmapServer <- function(
     observe({
       updateCheckboxGroupInput(
         session, "datasets",
-        choices  = setNames(names(pretty_map), pretty_map),
+        choices  = stats::setNames(names(pretty_map), pretty_map),
         selected = character(0)
       )
     })
@@ -466,7 +466,7 @@ tpmHeatmapServer <- function(
           ann <- annot_from_meta(colnames(mat), meta_norm)
 
           # Dataset rank: preserve user-selected order
-          ds_order <- setNames(seq_along(input$datasets), input$datasets)
+          ds_order <- stats::setNames(seq_along(input$datasets), input$datasets)
           ann$ds_rank <- ds_order[ann$Study] %||% (max(ds_order, na.rm = TRUE) + 1)
 
           # Group rank
@@ -603,7 +603,7 @@ tpmHeatmapServer <- function(
 
           # Determine dataset for each sample (Study is often correct,
           # but fallback to prefix-based detection if mismatched)
-          ds_order <- setNames(seq_along(input$datasets), input$datasets)
+          ds_order <- stats::setNames(seq_along(input$datasets), input$datasets)
 
           ann$Dataset <- ann$Study
           ann$Dataset[is.na(ann$Dataset)] <- sub("_.*$", "", ann$sample)
@@ -665,12 +665,12 @@ tpmHeatmapServer <- function(
       }
 
       ds_levels <- unique(ann_df$Dataset)
-      ds_pal <- setNames(dataset_colors[seq_along(ds_levels) %% length(dataset_colors)],
+      ds_pal <- stats::setNames(dataset_colors[seq_along(ds_levels) %% length(dataset_colors)],
                          ds_levels)
 
       present <- unique(as.character(ann_df$Group))
       lvls <- intersect(c("CTRL", "FRDA"), present)
-      group_cols <- setNames(c("#a9a9a9ff", "#333333ff")[match(lvls, c("CTRL","FRDA"))], lvls)
+      group_cols <- stats::setNames(c("#a9a9a9ff", "#333333ff")[match(lvls, c("CTRL","FRDA"))], lvls)
 
       ha_top <- ComplexHeatmap::HeatmapAnnotation(
         Dataset = ann_df$Dataset,

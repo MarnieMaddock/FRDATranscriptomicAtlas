@@ -55,7 +55,7 @@ ensure_atlas_data <- function(
     stop("atlas_data_manifest.csv not found in installed package.")
   }
 
-  manifest <- read.csv(manifest_path, stringsAsFactors = FALSE)
+  manifest <- utils::read.csv(manifest_path, stringsAsFactors = FALSE)
 
   rows <- manifest[manifest$key %in% keys, , drop = FALSE]
   if (!nrow(rows)) {

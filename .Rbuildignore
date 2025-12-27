@@ -8,3 +8,5 @@
 ^docs$
 ^handbook$
 ^\.quarto$
+^images$
+^zenodo_upload$
