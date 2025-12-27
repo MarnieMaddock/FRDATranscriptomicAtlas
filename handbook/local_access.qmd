@@ -17,15 +17,13 @@ title: "Local Access"
 
 ::: gray-box
 ```         
-install.packages("pak")
+install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))
 ```
 :::
 
 Once the installation has completed, a \> will appear in the console. It will say something similar to 'the downloaded binary packages are in ...\`
 
-::: {.callout-note title=""}
-It may ask you to download Rtools, but this is not necessary to use the FRDA Transcriptomic Atlas. Disregard this message.
-:::
+
 
 <details><summary>Click to Expand</summary>
 ![](images/picture1.png){width="800"}

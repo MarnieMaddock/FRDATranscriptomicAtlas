@@ -226,8 +226,8 @@ biomarkerServer <- function(id,
       req(genes)
 
       df <- filtered_baseline() %>%
-        semi_join(genes, by = "gene_id") %>%
-        mutate(
+        dplyr::semi_join(genes, by = "gene_id") %>%
+        dplyr::mutate(
           direction = case_when(
             is.na(padj) ~ "Filtered (no adjusted p-value)",
             padj < alpha() & log2FoldChange > 0 ~ "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
@@ -266,7 +266,7 @@ biomarkerServer <- function(id,
       } else {
 
         ord <- df %>%
-          summarise(
+          dplyr::summarise(
             up = sum(
               direction == "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
               na.rm = TRUE
@@ -277,12 +277,12 @@ biomarkerServer <- function(id,
             ),
             .by = gene_lab
           ) %>%
-          mutate(score = down - up) %>%
-          arrange(desc(score), gene_lab) %>%
-          pull(gene_lab)
+          dplyr::mutate(score = down - up) %>%
+          dplyr::arrange(desc(score), gene_lab) %>%
+          dplyr::pull(gene_lab)
       }
 
-      df %>% mutate(gene_lab = factor(gene_lab, levels = ord))
+      df %>% dplyr::mutate(gene_lab = factor(gene_lab, levels = ord))
     })
 
 
@@ -404,11 +404,11 @@ biomarkerServer <- function(id,
           direction = direction_levels,
           fill = list(n = 0)
         ) %>%
-        mutate(
+        dplyr::mutate(
           direction = factor(direction, levels = direction_levels),
           gene_lab  = factor(gene_lab, levels = levels(df$gene_lab))
         ) %>%
-        arrange(gene_lab, direction)
+        dplyr::arrange(gene_lab, direction)
 
       n_datasets <- length(input$datasets)
 
