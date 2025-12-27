@@ -2,6 +2,7 @@
 
 export(run_app)
 import(bslib)
+import(ggplot2)
 import(shiny)
 importFrom(dplyr,arrange)
 importFrom(dplyr,count)

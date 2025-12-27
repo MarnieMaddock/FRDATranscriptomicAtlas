@@ -1,3 +1,5 @@
+#' @import ggplot2
+NULL
 
 biomarkerUI <- function(id) {
   ns <- NS(id)
