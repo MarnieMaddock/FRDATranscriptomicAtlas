@@ -179,13 +179,13 @@ biomarkerServer <- function(id,
       top_up <- df %>%
         dplyr::filter(!is.na(padj), padj <= alpha(), log2FoldChange > 0) %>%
         dplyr::distinct(gene_id, gene_name, study) %>%
-        count(gene_id, gene_name, name = "n_studies") %>%
+        dplyr::count(gene_id, gene_name, name = "n_studies") %>%
         dplyr::filter(n_studies > min_n)
 
       top_down <- df %>%
         dplyr::filter(!is.na(padj), padj <= alpha(), log2FoldChange < 0) %>%
         dplyr::distinct(gene_id, gene_name, study) %>%
-        count(gene_id, gene_name, name = "n_studies") %>%
+        dplyr::count(gene_id, gene_name, name = "n_studies") %>%
         dplyr::filter(n_studies > min_n)
 
       dplyr::bind_rows(top_up, top_down) %>%
@@ -228,7 +228,7 @@ biomarkerServer <- function(id,
       df <- filtered_baseline() %>%
         dplyr::semi_join(genes, by = "gene_id") %>%
         dplyr::mutate(
-          direction = case_when(
+          direction = dplyr::case_when(
             is.na(padj) ~ "Filtered (no adjusted p-value)",
             padj < alpha() & log2FoldChange > 0 ~ "Upregulated in FRDA (FDR < 0.05, log2FC > 0)",
             padj < alpha() & log2FoldChange < 0 ~ "Downregulated in FRDA (FDR < 0.05, log2FC < 0)",
@@ -278,7 +278,7 @@ biomarkerServer <- function(id,
             .by = gene_lab
           ) %>%
           dplyr::mutate(score = down - up) %>%
-          dplyr::arrange(desc(score), gene_lab) %>%
+          dplyr::arrange(dplyr::desc(score), gene_lab) %>%
           dplyr::pull(gene_lab)
       }
 
