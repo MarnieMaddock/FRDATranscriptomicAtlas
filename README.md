@@ -1,8 +1,7 @@
 # Recommended installation. This may take up to 30 minutes to install
 
 ```
-install.packages("pak")
-pak::pkg_install("MarnieMaddock/FRDATranscriptomicAtlas")
+install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))
 ```
 
 # To run app
