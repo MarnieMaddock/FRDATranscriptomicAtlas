@@ -30,10 +30,9 @@ library(FRDATranscriptomicAtlas)
 run_app()
 ```
 
+[![r-universe version](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
+[![r-universe status](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 
-[![r-universe version](https://r-lib.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://r-lib.r-universe.dev/FRDATranscriptomicAtlas)
-
-[![r-universe status](https://r-lib.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://r-lib.r-universe.dev/FRDATranscriptomicAtlas)
 
 
 
