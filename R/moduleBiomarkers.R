@@ -74,7 +74,6 @@ biomarkerServer <- function(id,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     `%||%` <- function(x, y) if (is.null(x)) y else x
-    library(patchwork)
 
     ensure_atlas_data(
       keys    = "biomarker",
@@ -447,11 +446,13 @@ biomarkerServer <- function(id,
       # ------------------------------------------------------------
       # Combined figure
       # ------------------------------------------------------------
-      p_heat + p_bar +
-        patchwork::plot_layout(
-          widths = c(2, 0.5),
-          guides = "collect"
-        )
+      patchwork::wrap_plots(
+        p_heat,
+        p_bar,
+        widths = c(2, 0.5),
+        guides = "collect"
+      )
+
     })
 
 
