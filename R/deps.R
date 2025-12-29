@@ -27,4 +27,5 @@ suppressPackageStartupMessages({
   library(DT)
   library(htmltools)
   library(magrittr)
+  library(patchwork)
 })

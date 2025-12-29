@@ -74,6 +74,7 @@ biomarkerServer <- function(id,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     `%||%` <- function(x, y) if (is.null(x)) y else x
+    library(patchwork)
 
     ensure_atlas_data(
       keys    = "biomarker",
