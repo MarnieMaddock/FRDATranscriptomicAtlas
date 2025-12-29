@@ -14,16 +14,16 @@ The Atlas integrates multiple publicly available RNA-seq studies and provides ha
 
 ## Recommended installation (local)
 
+The FRDA Transcriptomic Atlas runs through R. If you are new to R, please use the detailed installation instructions [here](https://marniemaddock.github.io/FRDATranscriptomicAtlas/).
+
 > ⚠️ **Initial installation may take up to ~30 minutes**  
-> This is expected and occurs because the package installs large cached datasets and dependencies required for interactive analyses.
+> This is expected and occurs because the package installs large cached datasets and dependencies required for interactive analyses. These datasets are cached locally for offline reuse, so this long download is only performed once. Subsequent launches are fast and do not require re-downloading data and will load instantly.
 
 ```r
 install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))
 ```
 
-These datasets are cached locally for offline reuse, so this long download is only performed once. Subsequent launches are fast and do not require re-downloading data.
-
-# To run app
+## To run app
 
 ```
 library(FRDATranscriptomicAtlas)
@@ -32,8 +32,6 @@ run_app()
 
 [![r-universe version](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 [![r-universe status](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
-
-
 
 
 ## Feedback and Support
