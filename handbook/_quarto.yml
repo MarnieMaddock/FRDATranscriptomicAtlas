@@ -12,16 +12,15 @@ website:
       - text: "Overview"
         file: overview.qmd
 
-      - text: "Getting Started"
-        menu:
-          - text: "Local Access"
-            file: local_access.qmd
+      - text: "Download"
+        file: local_access.qmd
 
       - text: "Features"
         file: how_to_use.qmd
 
       - text: "Version History"
         file: version_history.qmd
+
       - text: "Feature Requests"
         file: features_issues.qmd
 

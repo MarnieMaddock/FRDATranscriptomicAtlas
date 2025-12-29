@@ -20,6 +20,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -93,17 +127,10 @@ ul.task-list li input[type="checkbox"] {
     <a class="nav-link" href="./overview.html"> 
 <span class="menu-text">Overview</span></a>
   </li>  
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-getting-started" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Getting Started</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-getting-started">    
-        <li>
-    <a class="dropdown-item" href="./local_access.html">
- <span class="dropdown-text">Local Access</span></a>
+  <li class="nav-item">
+    <a class="nav-link active" href="./local_access.html" aria-current="page"> 
+<span class="menu-text">Download</span></a>
   </li>  
-    </ul>
-  </li>
   <li class="nav-item">
     <a class="nav-link" href="./how_to_use.html"> 
 <span class="menu-text">Features</span></a>
@@ -171,75 +198,23 @@ ul.task-list li input[type="checkbox"] {
 <summary>
 Click to Expand
 </summary>
-<p><img src="images/RStudio.png" class="img-fluid" width="800"></p>
+<img src="images/RStudio.png" class="img-fluid" width="800">
+</details>
 <ol start="3" type="1">
-<li>Within the Console, type these pieces of code. After each line of code, highlight the line, or ensure the cursor is on the line of code. Press control/command enter to run it. Press control/command enter after each line of code to run it:</li>
+<li>Within the Console, copy and paste these pieces of code, then press <strong>Enter</strong>. The console is the panel on the left and starts with &gt;</li>
 </ol>
-<div class="gray-box">
-<pre><code>install.packages("pak")</code></pre>
-</div>
-<p>Once the installation has completed, a &gt; will appear in the console. It will say something similar to ’the downloaded binary packages are in …`</p>
-<div class="callout callout-style-default callout-note callout-titled" title="">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>It may ask you to download Rtools, but this is not necessary to use the FRDA Transcriptomic Atlas. Disregard this message.</p>
-</div>
-</div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">'FRDATranscriptomicAtlas'</span>, <span class="at">repos =</span> <span class="fu">c</span>(<span class="st">'https://marniemaddock.r-universe.dev'</span>, <span class="st">'https://cloud.r-project.org'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Once the installation has completed, a &gt; will appear in the console. It will say something similar to ’the downloaded binary packages are in …`. You may recieve a warning saying that Rtools is required to build packages. This is not an issue and can be ignored.</p>
 <details>
 <summary>
 Click to Expand
 </summary>
-<img src="images/picture1.png" class="img-fluid" width="800">
-</details>
-<div class="gray-box">
-<pre><code>library(pak) </code></pre>
-</div>
-<div class="gray-box">
-<pre><code>pak::pkg_install("MarnieMaddock/FRDATranscriptomicAtlas")</code></pre>
-</div>
-<p>This will download the FRDA Transcriptomic Atlas app from GitHub. It may ask you to update or download some packages. Press 1 and enter to update/download these. If this message does not appear, the required packages are up to date. The app may take up to 20 minutes to download, depending on your internet speed. Once the app is downloaded, it does not need to be downloaded again unless there are updates.</p>
-<details>
-<summary>
-Click to Expand
-</summary>
-<p><img src="images/picture2.png" class="img-fluid" width="700"></p>
-<img src="images/picture3.png" class="img-fluid" width="700">
-</details>
-<div class="callout callout-style-default callout-note callout-titled" title="">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>Occasionally, a pop-up message may appear asking to install from the sources the package which needs compilation. If it does, please press <strong>“Yes”</strong> to continue. This dialog box doesn’t always appear, and it’s not an issue if it doesn’t.</p>
-</div>
-</div>
-<p>Once the installation has completed, a &gt; will appear in the console. It will say something similar to ‘* DONE (FRDATranscriptomicAtlas)*’</p>
-<details>
-<summary>
-Click to Expand
-</summary>
-<img src="images/picture4.png" class="img-fluid" width="700">
+<img src="images/AtlasDownload.png" class="img-fluid" width="800">
 </details>
 <p>FRDA Transcriptomic Atlas has been downloaded, but it has not been loaded into the R session. To do this, type this line of code in the Console and press control/command enter to run it:</p>
-<div class="gray-box">
-<pre><code>library(FRDATranscriptomicAtlas)</code></pre>
-</div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(FRDATranscriptomicAtlas)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This itself will not open the application. To open the application, run:</p>
-<div class="gray-box">
-<pre><code>run_app()</code></pre>
-</div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">run_app</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This should open the FRDA Transcriptomic Atlas app in a new window. If not, the http address given in your console following “Listening on” can be copied into a web browser to open FRDA Transcriptomic Atlas.</p>
 <details>
 <summary>
@@ -247,27 +222,23 @@ Click to Expand
 </summary>
 <img src="images/picture5.png" class="img-fluid" width="700">
 </details>
-</details></section>
+</section>
 <section id="once-installed" class="level2">
 <h2 class="anchored" data-anchor-id="once-installed">Once Installed:</h2>
-<p>Once the pak and FRDA Transcriptomic Atlas packages have been installed on the computer, they do not need to be redownloaded unless there are updates. To run FRDA Transcriptomic Atlas in a new session use:</p>
-<div class="gray-box">
-<pre><code>library(FRDATranscriptomicAtlas)
-run_app()</code></pre>
-</div>
+<p>Once the FRDA Transcriptomic Atlas app has been installed on the computer, they do not need to be redownloaded unless there are updates i.e.&nbsp;you do <strong>not</strong> need to run <code>install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))</code> again.</p>
+<p>To run FRDA Transcriptomic Atlas in a new R session use (i.e.&nbsp;if you close R an dopen it again):</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(FRDATranscriptomicAtlas)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">run_app</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The app will open in a new window. In the top corner you can click</p>
 </section>
 <section id="for-existing-r-users" class="level2">
 <h2 class="anchored" data-anchor-id="for-existing-r-users">For Existing R Users:</h2>
 <ol type="1">
 <li>Open RStudio and Run:</li>
 </ol>
-<div class="gray-box">
-<pre><code>install.packages("pak")
-library(pak)
-pak::pkg_install("MarnieMaddock/FRDATranscriptomicAtlas")
-library(FRDATranscriptomicAtlas)
-run_app()</code></pre>
-</div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">'FRDATranscriptomicAtlas'</span>, <span class="at">repos =</span> <span class="fu">c</span>(<span class="st">'https://marniemaddock.r-universe.dev'</span>, <span class="st">'https://cloud.r-project.org'</span>))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(FRDATranscriptomicAtlas)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">run_app</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ol start="2" type="1">
 <li>FRDA Transcriptomic Atlas will open in a new window.</li>
 </ol>

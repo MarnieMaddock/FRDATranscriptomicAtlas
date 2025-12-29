@@ -12,68 +12,33 @@ title: "Local Access"
 
 <details><summary>Click to Expand</summary>
 ![](images/RStudio.png){width="800"}
+</details>
 
-3.  Within the Console, type these pieces of code. After each line of code, highlight the line, or ensure the cursor is on the line of code. Press control/command enter to run it. Press control/command enter after each line of code to run it:
+3.  Within the Console, copy and paste these pieces of code, then press **Enter**. The console is the panel on the left and starts with >
 
-::: gray-box
-```         
+```r         
 install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))
 ```
-:::
 
-Once the installation has completed, a \> will appear in the console. It will say something similar to 'the downloaded binary packages are in ...\`
-
+Once the installation has completed, a \> will appear in the console. It will say something similar to 'the downloaded binary packages are in ...\`. You may recieve a warning saying that Rtools is required to build packages. This is not an issue and can be ignored.
 
 
 <details><summary>Click to Expand</summary>
-![](images/picture1.png){width="800"}
-</details>
-
-::: gray-box
-```         
-library(pak) 
-```
-:::
-
-::: gray-box
-```         
-pak::pkg_install("MarnieMaddock/FRDATranscriptomicAtlas")
-```
-:::
-
-This will download the FRDA Transcriptomic Atlas app from GitHub. It may ask you to update or download some packages. Press 1 and enter to update/download these. If this message does not appear, the required packages are up to date. The app may take up to 20 minutes to download, depending on your internet speed. Once the app is downloaded, it does not need to be downloaded again unless there are updates.
-
-<details><summary>Click to Expand</summary>
-![](images/picture2.png){width="700"}
-
-![](images/picture3.png){width="700"}
-</details>
-
-::: {.callout-note title=""}
-Occasionally, a pop-up message may appear asking to install from the sources the package which needs compilation. If it does, please press **"Yes"** to continue. This dialog box doesn't always appear, and it's not an issue if it doesn't.
-:::
-
-Once the installation has completed, a \> will appear in the console. It will say something similar to '\* DONE (FRDATranscriptomicAtlas)\*'
-
-<details><summary>Click to Expand</summary>
-![](images/picture4.png){width="700"}
+![](images/AtlasDownload.png){width="800"}
 </details>
 
 FRDA Transcriptomic Atlas has been downloaded, but it has not been loaded into the R session. To do this, type this line of code in the Console and press control/command enter to run it:
 
-::: gray-box
-```
+
+```r
 library(FRDATranscriptomicAtlas)
 ```
-:::
 
 This itself will not open the application. To open the application, run:
 
-::: gray-box
-```
+```r
 run_app()
 ```
-:::
 
 This should open the FRDA Transcriptomic Atlas app in a new window. If not, the http address given in your console following “Listening on” can be copied into a web browser to open FRDA Transcriptomic Atlas.
 
@@ -83,28 +48,28 @@ This should open the FRDA Transcriptomic Atlas app in a new window. If not, the 
 
 ## Once Installed:
 
-Once the pak and FRDA Transcriptomic Atlas packages have been installed on the computer, they do not need to be redownloaded unless there are updates. To run FRDA Transcriptomic Atlas in a new session use:
+Once the FRDA Transcriptomic Atlas app has been installed on the computer, they do not need to be redownloaded unless there are updates i.e. you do **not** need to run `install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))` again. 
 
-::: gray-box
-```
+To run FRDA Transcriptomic Atlas in a new R session use (i.e. if you close R an dopen it again):
+
+```r
 library(FRDATranscriptomicAtlas)
 run_app()
 ```
-:::
+
+The app will open in a new window. In the top corner you can click
 
 ## For Existing R Users:
 
 1.	Open RStudio and Run:
 
-::: gray-box
-```
-install.packages("pak")
-library(pak)
-pak::pkg_install("MarnieMaddock/FRDATranscriptomicAtlas")
+
+```r
+install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))
 library(FRDATranscriptomicAtlas)
 run_app()
 ```
-:::
+
  
 2.	FRDA Transcriptomic Atlas will open in a new window.
 

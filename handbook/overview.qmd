@@ -17,7 +17,7 @@ The FRDA Transcriptomic Atlas is designed to be accessible to users with no prog
 
 Although the application is installed using R, no knowledge of R is required. R is free and quick to download. Once installed, the Atlas runs locally in a web browser and can be used without an internet connection.
 
-To run the application FRDA Transcriptomic Atlas, the user needs to download [R](https://cran.r-project.org/) and [RStudio](https://posit.co/downloads/). A step-by-step guide on how to install the FRDA Transcriptomic Atlas application locally can be found in the [Getting Started – Local Access](local_access.qmd) tab. This guide is aimed at users with no programming expertise.
+To run the application FRDA Transcriptomic Atlas, the user needs to download [R](https://cran.r-project.org/) and [RStudio](https://posit.co/downloads/). A step-by-step guide on how to install the FRDA Transcriptomic Atlas application locally can be found in the [Download](local_access.qmd) tab. This guide is aimed at users with no programming expertise.
 
-
+[Download »](local_access.qmd){.btn .btn-md style="background:#2a776d;border-color:#2a776d;color:#fff;"}
 
