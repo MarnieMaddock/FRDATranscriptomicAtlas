@@ -43,8 +43,13 @@ run_app()
 This should open the FRDA Transcriptomic Atlas app in a new window. If not, the http address given in your console following “Listening on” can be copied into a web browser to open FRDA Transcriptomic Atlas.
 
 <details><summary>Click to Expand</summary>
-![](images/picture5.png){width="700"}
+![](images/installed.png){width="300"}
 </details>
+
+The atlas will then proceed to download the necessary data files. This may take several minutes depending on your internet speed. A progress bar will be displayed. This will only occur the first time you run the app. Once completed, the message `` will appear.
+
+<details><summary>Click to Expand</summary>
+![](images/DataDownload.png){width="700"}
 
 ## Once Installed:
 
@@ -73,4 +78,4 @@ run_app()
  
 2.	FRDA Transcriptomic Atlas will open in a new window.
 
-[How to Use FRDA Transcriptomic Atlas »](how_to_use.qmd){.btn .btn-md style="background:#2a776d;border-color:#2a776d;color:#fff;"}
+[FRDA Transcriptomic Atlas Features »](how_to_use.qmd){.btn .btn-md style="background:#2a776d;border-color:#2a776d;color:#fff;"}
