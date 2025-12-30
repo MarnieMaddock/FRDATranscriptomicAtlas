@@ -23,9 +23,6 @@ app_server <- function(input, output, session) {
     shiny::addResourcePath("projwww", proj_www)  # /projwww -> <project>/inst/www
   }
 
-  # ---- Build long-format DEGs (uses robust `pkg`) ----
-  #deg_long_df <- build_deg_long(pkg = pkg, p_thr = 0.05, lfc_min = 0, level = "genes")
-
   # --- Optional helpers you already have ---
   discover_dtu_labels_flat <- function(data_dir) {
     fs <- if (nzchar(data_dir) && dir.exists(data_dir))
