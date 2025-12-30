@@ -50,14 +50,14 @@ This should open the FRDA Transcriptomic Atlas app in a new window. If not, the 
 
 Once the FRDA Transcriptomic Atlas app has been installed on the computer, they do not need to be redownloaded unless there are updates i.e. you do **not** need to run `install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))` again. 
 
-To run FRDA Transcriptomic Atlas in a new R session use (i.e. if you close R an dopen it again):
+To run FRDA Transcriptomic Atlas in a new R session use (i.e. if you close R and open it again):
 
 ```r
 library(FRDATranscriptomicAtlas)
 run_app()
 ```
 
-The app will open in a new window. In the top corner you can click
+The app will open in a new window. In the top corner you can click open in browser button. This will open the app in your default web browser. You can control the zoom settings of the app in this window.
 
 ## For Existing R Users:
 

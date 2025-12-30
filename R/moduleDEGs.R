@@ -190,12 +190,12 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
       # Fix occasional mislabeled IDs
       if (identical(lvl, "transcripts") &&
           ("ensembl_gene_id" %in% names(x)) && !("transcript_id" %in% names(x)) &&
-          any(grepl("^ENST", head(x$ensembl_gene_id, 20)))) {
+          any(grepl("^ENST", utils::head(x$ensembl_gene_id, 20)))) {
         x <- dplyr::rename(x, transcript_id = ensembl_gene_id)
       }
       if (identical(lvl, "genes") &&
           ("transcript_id" %in% names(x)) && !("ensembl_gene_id" %in% names(x)) &&
-          any(grepl("^ENSG", head(x$transcript_id, 20)))) {
+          any(grepl("^ENSG", utils::head(x$transcript_id, 20)))) {
         x <- dplyr::rename(x, ensembl_gene_id = transcript_id)
       }
 

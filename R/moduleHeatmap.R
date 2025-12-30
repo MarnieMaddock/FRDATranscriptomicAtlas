@@ -228,12 +228,6 @@ tpmHeatmapServer <- function(
       toks[nzchar(toks)]
     }
 
-    # metadata loading / normalization
-    load_sample_meta <- function(path = extdata_path("metadata", "samples.csv")) {
-      stopifnot(file.exists(path))
-      readr::read_csv(path, show_col_types = FALSE)
-    }
-
     # ==== Group token mappers ====
     map_to_group_meta <- function(x) {
       x <- toupper(trimws(x))
@@ -376,10 +370,6 @@ tpmHeatmapServer <- function(
       )
     })
 
-    # normalize metadata (if provided or auto-loaded)
-    if (is.null(sample_meta)) {
-      sample_meta <- tryCatch(load_sample_meta(), error = function(e) NULL)
-    }
     meta_norm <- if (!is.null(sample_meta)) normalise_meta(sample_meta) else NULL
 
     # ---- Transform UI: TPM options for 1 dataset, VST for >1 ----
