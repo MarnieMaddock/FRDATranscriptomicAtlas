@@ -34,27 +34,6 @@ get_css_path <- function() {
   }
 }
 
-get_DTU_dir <- function() {
-  if (dir.exists("inst/extdata/DTU")) {
-    return("inst/extdata/DTU")  # shinyapps.io / local project
-  } else {
-    return(system.file("extdata", "DTU", package = "FRDATranscriptomicAtlas"))
-  }
-}
-
-get_switch_src <- function() {
-  # Prefer project file during development
-  if (file.exists("inst/www/switchplot_example.svg")) {
-    return("projwww/switchplot_example.svg")   # <-- URL, not a disk path
-  }
-  # Fallback to installed package asset (served at /pkgwww)
-  if (nzchar(system.file("www", "switchplot_example.svg",
-                         package = "FRDATranscriptomicAtlas"))) {
-    return("pkgwww/switchplot_example.svg")    # <-- URL, not a disk path
-  }
-  NULL  # nothing found
-}
-
 
 app_ui <- function() {
 
@@ -110,18 +89,6 @@ app_ui <- function() {
         conditionalPanel(
           condition = "input.tabselected == 6 && input.gene_plots == 6.2",
           forestPlotsUI("forest")
-        ),
-        conditionalPanel(
-          condition = "input.tabselected == 7 && input.DTU_tables == 7.1",
-          dtuResultsSidebarUI("dtu")
-        ),
-        conditionalPanel(
-          condition = "input.tabselected == 7 && input.DTU_tables == 7.2",
-          dtuVennUI("dtuVenn")
-        ),
-        conditionalPanel(
-          condition = "input.tabselected == 7 && input.DTU_tables == 7.3",
-          consequencesSidebarUI("dtu_func_cons")
         ),
         conditionalPanel(
           condition = "input.tabselected == 9",
@@ -204,33 +171,6 @@ app_ui <- function() {
                      )
                    )
 
-          ),
-          tabPanel("DTU", value = 7,
-                   tabsetPanel(
-                     id = "DTU_tables",
-                     type = "tabs",
-                     tabPanel("Explore by Dataset",
-                              value = 7.1,
-                              dtuResultsMainUI("dtu")
-                     ),
-                     tabPanel("Compare Datasets",
-                              value = 7.2,
-                              dtuVennMainUI("dtuVenn")
-                     ),
-                     tabPanel("Functional Consequences",
-                              value = 7.3,
-                              consequencesMainUI("dtu_func_cons")
-                              )
-                   )
-          ),
-          tabPanel(
-            "SwitchPlots", value = 8,
-            fluidRow(
-              column(
-                width = 12,
-                switchplotsHelpUI("switchplots_help")   # your full-width module,
-              )
-            )
           ),
           tabPanel(
             "Biomarker Discovery", value = 9,

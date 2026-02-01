@@ -23,99 +23,12 @@ app_server <- function(input, output, session) {
     shiny::addResourcePath("projwww", proj_www)  # /projwww -> <project>/inst/www
   }
 
-  # --- Optional helpers you already have ---
-  discover_dtu_labels_flat <- function(data_dir) {
-    fs <- if (nzchar(data_dir) && dir.exists(data_dir))
-      list.files(data_dir, pattern = "_switch_summary\\.csv$", full.names = FALSE)
-    else character(0)
-    if (!length(fs)) return(character(0))
-    unique(sub("_switch_summary\\.csv$", "", fs))
-  }
-
-  dtu_choice_vector <- function(labels, pretty_map) {
-    disp <- unname(pretty_map[labels]); disp[is.na(disp)] <- labels[is.na(pretty_map[labels])]
-    stats::setNames(labels, disp)
-  }
-
-  dtu_paths_for_label_flat <- function(data_dir, label) {
-    list(
-      summary = file.path(data_dir, paste0(label, "_switch_summary.csv")),
-      genes   = file.path(data_dir, paste0(label, "_gene_switches.csv")),
-      iso     = file.path(data_dir, paste0(label, "_significant_isoforms.csv"))
-    )
-  }
-
-
-  get_DTU_dir <- function() {
-    p <- file.path("inst", "extdata", "DTU")
-    if (dir.exists(p)) return(p)
-    system.file("extdata", "DTU", package = pkg)
-  }
-
-  # ---- Consequences helpers (flat layout; same style as your DTU code) ----
-
-  discover_conseq_labels_flat <- function(data_dir) {
-    fs <- if (nzchar(data_dir) && dir.exists(data_dir))
-      list.files(
-        data_dir,
-        pattern = "_(genes|ISOFORMS)_with_consequences\\.csv$",
-        full.names = FALSE
-      )
-    else character(0)
-    if (!length(fs)) return(character(0))
-    labs <- sub("_(genes|ISOFORMS)_with_consequences\\.csv$", "", fs)
-    sort(unique(labs))
-  }
-
-  # reuse your existing dtu_choice_vector, or fall back safely if pretty_map is NULL
-  conseq_choice_vector <- function(labels, pretty_map = NULL) {
-    if (is.null(pretty_map)) return(stats::setNames(labels, labels))
-    disp <- unname(pretty_map[labels])
-    disp[is.na(disp)] <- labels[is.na(disp)]
-    stats::setNames(labels, disp)
-  }
-
-  conseq_paths_for_label_flat <- function(data_dir, label) {
-    list(
-      genes = file.path(data_dir, paste0(label, "_genes_with_consequences.csv")),
-      iso   = file.path(data_dir, paste0(label, "_ISOFORMS_with_consequences.csv"))
-    )
-  }
-
   # --- ensure pretty_map exists (fallback is harmless) ---
   if (!exists("pretty_map", inherits = TRUE)) {
     pretty_map <- stats::setNames(character(0), character(0))
   }
 
   # --- Call modules (pass the same `pkg`) -------------------------------
-  # aboutServer("about")
-  # pcaServer("pca")
-  # genePlotsServer("gene_plots", pkg = pkg)
-  # degTablesServer("deg_tables", pkg = pkg)
-  # degVennServer("deg_venn", pkg = pkg)
-  # volcanoServer("volc", level = "genes", pkg = pkg)
-  # forestPlotsServer("forest", pkg = pkg)
-  # dtuResultsServer(
-  #   id         = "dtu",
-  #   data_dir   = get_DTU_dir(),
-  #   labels     = NULL,
-  #   pretty_map = pretty_map
-  # )
-  # dtuVennServer("dtuVenn", pkg = pkg, data_dir = get_DTU_dir())
-  #
-  # tpmHeatmapServer("tpm_hm", pkg = pkg)
-  # consequencesServer(
-  #   id         = "dtu_func_cons",
-  #   data_dir   = get_DTU_dir(),
-  #   labels     = NULL,              # we auto-discover with discover_conseq_labels_flat()
-  #   pretty_map = pretty_map         # optional: same pretty labels you use elsewhere
-  # )
-  # datasetsServer("datasets")
-  # GSEAServer("gsea",  pkg = pkg)
-  # gseaCompareServer("gsea_compare",  pkg = pkg)
-  # biomarkerServer("biomarkers")
-
-  # --- Modules that are SAFE right now ---
   aboutServer("about")
   datasetsServer("datasets")
   tpmHeatmapServer("tpm_hm", pkg = pkg)
@@ -127,24 +40,6 @@ app_server <- function(input, output, session) {
   biomarkerServer("biomarkers")
   degTablesServer("deg_tables", pkg = pkg)
   degVennServer("deg_venn", pkg = pkg)
-  dtuResultsServer(
-    id         = "dtu",
-    pkg        = pkg,
-    labels     = NULL,
-    pretty_map = pretty_map
-  )
-  dtuVennServer(
-    id  = "dtuVenn",
-    pkg = pkg
-  )
-  consequencesServer(
-    id         = "dtu_func_cons",
-    pkg        = pkg,
-    labels     = NULL,
-    pretty_map = pretty_map
-  )
-
-
   pcaServer("pca")
 
 
