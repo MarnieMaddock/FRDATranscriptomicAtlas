@@ -5,8 +5,6 @@
 The Atlas integrates multiple publicly available RNA-seq studies and provides harmonised visualisation and analysis of:
 
 - Differential gene expression (DEG)
-- Differential transcript usage (DTU)
-- Isoform switching and predicted functional consequences
 - Gene set enrichment analysis (GSEA)
 - Cross-dataset overlap, concordance, and biomarker discovery
 
