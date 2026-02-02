@@ -113,6 +113,10 @@ app_ui <- function() {
                      tabPanel("Datasets",
                               value = 0.2,
                               datasetsUI("datasets"),
+                     ),
+                     tabPanel("Sequencing Metrics",
+                              value = 0.3,
+                              isoformConfidenceUI("isoform_confidence")
                      )
                    )
           ),

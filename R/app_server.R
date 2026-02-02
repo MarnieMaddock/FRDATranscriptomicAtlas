@@ -41,6 +41,8 @@ app_server <- function(input, output, session) {
   degTablesServer("deg_tables", pkg = pkg)
   degVennServer("deg_venn", pkg = pkg)
   pcaServer("pca")
+  isoformConfidenceServer("isoform_confidence")
+
 
 
   # --- sidebar behavior for SwitchPlots full-width tab ------------------
