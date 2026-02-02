@@ -29,7 +29,7 @@ app_server <- function(input, output, session) {
   }
 
   # --- Call modules (pass the same `pkg`) -------------------------------
-  aboutServer("about")
+  aboutServer("about", package_name = pkg)
   datasetsServer("datasets")
   tpmHeatmapServer("tpm_hm", pkg = pkg)
   volcanoServer("volc", level = "genes", pkg = pkg)
