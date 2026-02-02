@@ -1,7 +1,7 @@
 #' Cross-platform robust download using libcurl
 #' @keywords internal
 #' @noRd
-download_with_retry <- function(url, destfile, sha256 = NA_character_, retries = 5) {
+download_with_retry <- function(url, destfile, md5 = NA_character_, retries = 5) {
 
   options(timeout = max(6000, getOption("timeout")))
 
@@ -76,7 +76,7 @@ ensure_atlas_data <- function(
   if (!nrow(rows)) {
     stop("No matching data keys in manifest: ", paste(keys, collapse = ", "))
   }
-
+  rows0 <- rows  # <--- keep original requested rows
   cache_root <- tools::R_user_dir(package, which = "cache")
   dir.create(cache_root, recursive = TRUE, showWarnings = FALSE)
 
@@ -137,7 +137,7 @@ ensure_atlas_data <- function(
         download_with_retry(
           url      = row$url,
           destfile = zip_path,
-          sha256   = if ("sha256" %in% names(row)) row$sha256 else NA_character_
+          md5   = if ("md5" %in% names(row)) row$md5 else NA_character_
         )
 
 
@@ -169,7 +169,16 @@ ensure_atlas_data <- function(
   }
 
   # ---- READY NOTIFICATION ----------------------------------------------
-  if (downloaded_any && shiny::isRunning()) {
+  all_complete <- all(vapply(
+    seq_len(nrow(rows0)),
+    function(i) {
+      td <- file.path(cache_root, rows0$local_dir[i])
+      file.exists(file.path(td, paste0(".", rows0$key[i], ".complete")))
+    },
+    logical(1)
+  ))
+
+  if (all_complete && shiny::isRunning()) {
     shiny::showNotification(
       "Atlas data downloaded and ready.",
       type     = "message",
@@ -199,30 +208,30 @@ check_atlas_updates <- function(package = "FRDATranscriptomicAtlas") {
   # Require key column
   if (!("key" %in% names(local)) || !("key" %in% names(remote))) return(NULL)
 
-  # Use version+sha256 if present; otherwise fall back to key-only new dataset detection
-  keep_cols <- intersect(c("key", "version", "sha256", "description"), names(remote))
+  # Use version+md5 if present; otherwise fall back to key-only new dataset detection
+  keep_cols <- intersect(c("key", "version", "md5", "description"), names(remote))
   remote2 <- remote[, keep_cols, drop = FALSE]
 
-  keep_cols_local <- intersect(c("key", "version", "sha256"), names(local))
+  keep_cols_local <- intersect(c("key", "version", "md5"), names(local))
   local2 <- local[, keep_cols_local, drop = FALSE]
 
   m <- merge(local2, remote2, by = "key", all = TRUE, suffixes = c("_local", "_remote"))
 
-  is_new_key <- is.na(m$version_local) & is.na(m$sha256_local)  # key missing locally
+  is_new_key <- is.na(m$version_local) & is.na(m$md5_local)  # key missing locally
 
   version_changed <- ("version_local" %in% names(m) && "version_remote" %in% names(m)) &&
     !is.na(m$version_remote) && !is.na(m$version_local) && (m$version_remote != m$version_local)
 
-  sha_changed <- ("sha256_local" %in% names(m) && "sha256_remote" %in% names(m)) &&
-    !is.na(m$sha256_remote) && !is.na(m$sha256_local) && (tolower(m$sha256_remote) != tolower(m$sha256_local))
+  sha_changed <- ("md5_local" %in% names(m) && "md5_remote" %in% names(m)) &&
+    !is.na(m$md5_remote) && !is.na(m$md5_local) && (tolower(m$md5_remote) != tolower(m$md5_local))
 
   # vectorise properly
   version_changed_vec <- if ("version_local" %in% names(m) && "version_remote" %in% names(m)) {
     !is.na(m$version_remote) & !is.na(m$version_local) & (m$version_remote != m$version_local)
   } else rep(FALSE, nrow(m))
 
-  sha_changed_vec <- if ("sha256_local" %in% names(m) && "sha256_remote" %in% names(m)) {
-    !is.na(m$sha256_remote) & !is.na(m$sha256_local) & (tolower(m$sha256_remote) != tolower(m$sha256_local))
+  sha_changed_vec <- if ("md5_local" %in% names(m) && "md5_remote" %in% names(m)) {
+    !is.na(m$md5_remote) & !is.na(m$md5_local) & (tolower(m$md5_remote) != tolower(m$md5_local))
   } else rep(FALSE, nrow(m))
 
   updates <- m[is_new_key | version_changed_vec | sha_changed_vec, , drop = FALSE]
