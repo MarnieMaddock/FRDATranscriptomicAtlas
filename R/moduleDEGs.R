@@ -16,6 +16,19 @@ degTablesSidebarUI <- function(id) {
       selected = "genes"
     ),
 
+    conditionalPanel(
+      condition = sprintf("input['%s'] === 'transcripts'", ns("feature_level")),
+      div(
+        class = "alert alert-warning",
+        style = "margin-bottom:10px; font-size:0.9em;",
+        strong("Important: "),
+        "Isoform-level results are sensitive to sequencing depth, read length, and library layout. ",
+        "Users are strongly encouraged to consult the dataset-level ",
+        strong("isoform confidence scores in the About --> Sequencing Metrics tab"),
+        " before interpreting transcript-level differential expression."
+      )
+    ),
+
     selectizeInput(
       ns("dataset"),
       "Dataset",
