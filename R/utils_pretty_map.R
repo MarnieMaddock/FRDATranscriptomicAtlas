@@ -1,6 +1,6 @@
 pretty_map <- c(
   "Chutake"           = "Chutake (Lymphoblastoid Cells)",
-  "Erwin"             = "Erwin (Lymphoblastoid Cells)",
+  "Erwin_batchcorrection"             = "Erwin (Lymphoblastoid Cells)",
   "Indelicato"        = "Indelicato (Skeletal Muscle)",
   "Lai_iPSC"          = "Lai (iPSCs)",
   "Lai_CNS"           = "Lai (CNS neurons)",
@@ -10,7 +10,7 @@ pretty_map <- c(
   "Lees_FA3"          = "Lees (Cardiomyocytes) - FA3",
   "Li_FRDA_CTRL"      = "Li (Cardiomyocytes^)",
   "Li_FRDA_IC"        = "Li (Cardiomyocytes#)",
-  "Maddock_LMN_FA2"   = "Maddock (Lower Motor Neurons) - FA2",
+  "Maddock_LMN_FA2_batchcorrection"   = "Maddock (Lower Motor Neurons) - FA2",
   "Maddock_SN_FA1"    = "Maddock (Sensory Neurons) - FA1",
   "Maddock_SN_FA2"    = "Maddock (Sensory Neurons) - FA2",
   "Maddock_NCC_FA1"   = "Maddock (Neural Crest Cells) - FA1",
