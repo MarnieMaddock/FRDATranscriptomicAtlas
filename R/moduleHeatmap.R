@@ -160,6 +160,9 @@ tpmHeatmapServer <- function(
       return(fixed)
     }
 
+    #Silence messages from ComplexHeatmap
+    ComplexHeatmap::ht_opt$message <- FALSE
+
 
     base_of <- function(dataset_id) sub("(_.*)$", "", dataset_id)
 
@@ -727,11 +730,27 @@ tpmHeatmapServer <- function(
 
     output$plot_notes <- renderUI({
       if (length(input$datasets) <= 1) {
-        htmltools::HTML("<small>Using TPM (log2(TPM+1) or row Z-score). Interpretation is within-dataset only.</small>")
+
+        # single dataset: TPM transforms
+        if ((input$transform_mode %||% "log2p1") == "zscore") {
+          htmltools::HTML(
+            "<small><b>Note:</b> Z-scores are calculated <b>row-wise</b> (per gene/transcript), i.e. values are mean-centred and scaled to unit variance across samples within the selected dataset.</small>"
+          )
+        } else {
+          htmltools::HTML(
+            "<small>Using log2(TPM+1). Interpretation is within-dataset only.</small>"
+          )
+        }
+
       } else {
-        htmltools::HTML("<small>Using DESeq2 VST values with per-dataset row Z-score (appropriate for cross-dataset comparison).</small>")
+
+        # multi dataset: VST + per-dataset z-score
+        htmltools::HTML(
+          "<small><b>Note:</b> Values are DESeq2 VST. Z-scores are calculated <b>row-wise</b> (per gene) <b>within each dataset</b> (mean-centred and scaled to unit variance), enabling cross-dataset comparison of relative patterns.</small>"
+        )
       }
     })
+
 
     # ---------------- downloads ----------------
     output$dl_svg <- downloadHandler(
