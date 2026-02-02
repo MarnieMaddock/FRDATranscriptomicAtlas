@@ -135,6 +135,7 @@ aboutServer <- function(id, package_name = "FRDATranscriptomicAtlas") {
     # Cache results so we don't keep re-checking
     updates <- shiny::reactiveVal(NULL)
     check_err <- shiny::reactiveVal(NULL)
+    checked_manually <- shiny::reactiveVal(FALSE)
 
     # Run ONCE when About tab module initializes
     shiny::observeEvent(TRUE, {
@@ -148,14 +149,21 @@ aboutServer <- function(id, package_name = "FRDATranscriptomicAtlas") {
     # Optional: manual re-check button
     shiny::observeEvent(input$check_updates, {
       check_err(NULL)
+      checked_manually(TRUE)
       out <- tryCatch(
         check_atlas_updates(package = package_name),
-        error = function(e) { check_err(conditionMessage(e)); NULL }
+        error = function(e) {
+          check_err(conditionMessage(e))
+          NULL
+          }
       )
       updates(out)
     })
 
+
     output$data_updates <- shiny::renderUI({
+
+      # Error case
       if (!is.null(check_err())) {
         return(shiny::tags$div(
           class = "text-warning",
@@ -164,16 +172,28 @@ aboutServer <- function(id, package_name = "FRDATranscriptomicAtlas") {
       }
 
       up <- updates()
-      if (is.null(up) || !nrow(up)) {
-        return(shiny::tags$div(class = "text-muted", "Atlas data: up to date."))
+
+      # Manual check, no updates
+      if (checked_manually() && (is.null(up) || !nrow(up))) {
+        return(shiny::tags$div(
+          class = "text-success",
+          "Atlas data is up to date."
+        ))
       }
 
-      shiny::tags$div(
-        class = "text-warning",
-        shiny::tags$strong("Atlas data updates available: "),
-        paste(up$key, collapse = ", ")
-      )
+      # Updates available
+      if (!is.null(up) && nrow(up)) {
+        return(shiny::tags$div(
+          class = "text-warning",
+          shiny::tags$strong("Atlas data updates available: "),
+          paste(up$key, collapse = ", ")
+        ))
+      }
+
+      # Default / initial state
+      shiny::tags$div(class = "text-muted", "Atlas data: up to date.")
     })
+
 
   })
 }
