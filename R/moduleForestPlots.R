@@ -262,12 +262,12 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
     # ---------- pretty study labels (unchanged) ---------------------------
     study_labels <- c(
       Chutake="Chutake YK (2014) - LCL",
-      Erwin="Erwin GS (2017) - LCL", Indelicato="Indelicato E (2023) - SM",
+      Erwin_batchcorrection ="Erwin GS (2017) - LCL", Indelicato="Indelicato E (2023) - SM",
       Lai_CNS="Lai J (2018) - CNS", Lai_PNS="Lai J (2018) - PNS", Lai_iPSC="Lai J (2018) - iPSC",
 
       Lees_FA1="Lees JG (2025*) - CM FA1", Lees_FA2="Lees JG (2025*) - CM FA2", Lees_FA3="Lees JG (2025*) - CM FA3",
       Li_FRDA_CTRL="Li J (2019) - CM^", Li_FRDA_IC="Li J (2019) - CM#",
-      Maddock_LMN_FA2="Maddock ML (*) - LMN FA2", Maddock_NCC_FA1="Maddock ML (*) - NCC FA1",
+      Maddock_LMN_FA2_batchcorrection="Maddock ML (*) - LMN FA2", Maddock_NCC_FA1="Maddock ML (*) - NCC FA1",
       Maddock_NCC_FA2="Maddock ML (*) - NCC FA2", Maddock_SN_FA1="Maddock ML (*) - SN FA1",
       Maddock_SN_FA2="Maddock ML (*) - SN FA2", Mishra_223="Mishra P (2024) - N 223",
       Mishra_850="Mishra P (2024) - N 850", Mishra_FF1="Mishra P (2024) - N FF1", Mishra_FF2="Mishra P (2024) - N FF2",
