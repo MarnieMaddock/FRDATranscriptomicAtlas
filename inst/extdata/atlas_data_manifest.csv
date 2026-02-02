@@ -1,10 +1,10 @@
-key,description,url,local_dir,sha256,version
-tpm_gene,Gene-level TPM matrices,https://zenodo.org/record/18453419/files/tpm_gene.zip,tpm,8C4F1671FD9D9FD6790DABA2376D50CEC124BE8EFD0AEC36E589D6EFFC78B137,0.0.0.9000
-deg_genes,DEG gene-level results (DESeq2),https://zenodo.org/records/18453419/files/deg_genes.zip,deg/genes,FE968D622AA43A1BBD804ACFFDBCD18DD6B7FC99338F6529C39380053B68A378,0.0.0.9000
-biomarker,Biomarker baseline DEG summary,https://zenodo.org/records/18453419/files/biomarker.zip,biomarker,884D73EB81D6666C5F47F53099D0553E280D54F9AE844620AD54C51AB75CBFBA,0.0.0.9000
-deg_transcripts,Transcript-level DESeq2 results,https://zenodo.org/records/18453419/files/deg_transcripts.zip,deg/txs,29EBB35043FBBA2BB9D3155C865864012004CDBA5D72D0DA01E7D544E64DCB25,0.0.0.9000
-tpm_tx,Transcript-level TPM matrices,https://zenodo.org/records/18453419/files/transcript_tpm.zip,transcript_tpm,5EB46B873873E9E92FE15B4E0A6A841B5E27FF7093CFA04F65C22EA417F4E5B6,0.0.0.9000
-gsea_results,GSEA GO results (BP/CC/MF),https://zenodo.org/records/18453419/files/GSEA_results.zip,GSEA_results,3B2EA04D12BA00624457431BE5247C1E1ABC560EAC3D2F99E20B18C5A905D29D,0.0.0.9000
-deseq_dds,DESeq2 DDS objects,https://zenodo.org/records/18453419/files/dds.zip,deseq_objects,A991701BCC728991B8B9F8CC90004CF095C38D3FDE4D18821E0F5480F155734D,0.0.0.9000
-deseq_vsd,DESeq2 VST objects,https://zenodo.org/records/18453419/files/vsd.zip,deseq_objects,A5BBD34254455D571E21A5D7EAFF804A2ED096F6B60E58D482490FCBAD654DFD,0.0.0.9000
-deseq_pca_input,PCA input objects,https://zenodo.org/records/18453419/files/pca_input.zip,deseq_objects,849C21E5A3EB5C1B37A56E3BFB4B3CC9EF622DF0495E17C78DFE355BA73FB354,0.0.0.9000
+key,description,url,local_dir,md5,version
+tpm_gene,Gene-level TPM matrices,https://zenodo.org/record/18453419/files/tpm_gene.zip,tpm,3e018eaa80a3c2247697c693dec98e78,0.0.0.9000
+deg_genes,DEG gene-level results (DESeq2),https://zenodo.org/records/18453419/files/deg_genes.zip,deg/genes,6b9dc95c6e49eaeade164a210d15190b,0.0.0.9000
+biomarker,Biomarker baseline DEG summary,https://zenodo.org/records/18453419/files/biomarker.zip,biomarker,973251df55be478d9fade341a3db99f5,0.0.0.9000
+deg_transcripts,Transcript-level DESeq2 results,https://zenodo.org/records/18453419/files/deg_transcripts.zip,deg/txs,b66a34cbd4de661c3dd183e60d9b7199,0.0.0.9000
+tpm_tx,Transcript-level TPM matrices,https://zenodo.org/records/18453419/files/transcript_tpm.zip,transcript_tpm,6cb1834418bdebc74a8b7ffc181ac037,0.0.0.9000
+gsea_results,GSEA GO results (BP/CC/MF),https://zenodo.org/records/18453419/files/GSEA_results.zip,GSEA_results,ff0ce5007628d220f59c2f1e5ed90d80,0.0.0.9000
+deseq_dds,DESeq2 DDS objects,https://zenodo.org/records/18453419/files/dds.zip,deseq_objects,5f369d866fcc4f6e9a324605a32826d7,0.0.0.9000
+deseq_vsd,DESeq2 VST objects,https://zenodo.org/records/18453419/files/vsd.zip,deseq_objects,9a2bb613248679ef85802d42aaba750e,0.0.0.9000
+deseq_pca_input,PCA input objects,https://zenodo.org/records/18453419/files/pca_input.zip,deseq_objects,b96b7ecfe0f9e67497684e6382fb233f,0.0.0.9000

@@ -12,11 +12,12 @@ download_with_retry <- function(url, destfile, sha256 = NA_character_, retries =
     stop("Package 'openssl' is required for checksum verification.", call. = FALSE)
   }
 
-  sha_ok <- function(path, expected) {
+  md5_ok <- function(path, expected) {
     if (!is.character(expected) || !nzchar(expected) || is.na(expected)) return(TRUE)
-    got <- as.character(openssl::sha256(file(path)))
-    identical(tolower(got), tolower(expected))
+    got <- tools::md5sum(path)
+    identical(tolower(unname(got)), tolower(expected))
   }
+
 
   for (i in seq_len(retries)) {
 
@@ -40,8 +41,8 @@ download_with_retry <- function(url, destfile, sha256 = NA_character_, retries =
     }
 
     # checksum check (critical)
-    if (!sha_ok(destfile, sha256)) {
-      message("[Atlas] SHA256 mismatch (download likely incomplete). Retrying...")
+    if (!md5_ok(destfile, md5)) {
+      message("[Atlas] MD5 mismatch (download likely incomplete). Retrying...")
       unlink(destfile)
       Sys.sleep(2)
       next
