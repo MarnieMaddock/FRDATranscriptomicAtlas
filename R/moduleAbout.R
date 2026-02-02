@@ -20,7 +20,7 @@ aboutUI <- function(id,
       p(
         "The Friedreich's Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny application ",
         "that provides open access to harmonised transcriptomic analyses across publicly available FRDA RNA-seq datasets. ",
-        "This resource was developed to enable researchers, clinicians, and students to explore and compare differential expression, isoform usage etc across a broad range of human FRDA models. The Atlas serves as a central reference for transcriptome-wide alterations in FRDA,
+        "This resource was developed to enable researchers, clinicians, and students to explore and compare genes, differential expression, isoforms etc across a broad range of human FRDA models. The Atlas serves as a central reference for transcriptome-wide alterations in FRDA,
         supporting hypothesis generation, candidate gene prioritisation, and data reuse for downstream integrative analyses. ",
         "All analyses were performed using a consistent bioinformatic framework to ensure comparability across studies. Details of the datasets, quality control, and analytical pipelines are available in the associated publication <GIVE LINK HERE>.
         Users are encouraged to consult the paper for methodological details and to cite it in any work derived from or informed by this resource."
@@ -44,14 +44,6 @@ aboutUI <- function(id,
         tags$li(
           strong("Expression Heatmaps"), " - Compare transcript abundance patterns across conditions and datasets."
         ),
-
-        tags$li(
-          strong("Differential Transcript Usage (DTU)"), " - Isoform usage differences and switching events, including counts of isoforms tested and those meeting significance cutoffs."
-        ),
-        tags$li(
-          strong("Isoform Switch Tables"), " - Summaries of switching isoforms and predicted functional consequences derived from ",
-          em("IsoformSwitchAnalyzeR"), "."
-        ),
         tags$li(
           strong("Gene TPM Plots (Gene Plots)"), " - Visualise expression of selected genes (TPM) by condition, replicate, and dataset for direct comparison."
         ),
@@ -62,6 +54,13 @@ aboutUI <- function(id,
           strong("Download and Export"), " - Tables and plots can be exported for reporting and reuse."
         )
       ),
+
+      h3("How to Use"),
+      p("All instructions on how to download the app and use its features can be found here: ",
+        tags$a(
+          href = "https://marniemaddock.github.io/FRDATranscriptomicAtlas/",
+          "Instructions"
+        )),
 
       h3("Authorship and Acknowledgements"),
       p(HTML(
@@ -87,15 +86,19 @@ aboutUI <- function(id,
       h3("Future Updates and Contributions"),
       p(
         "This resource may be updated as new FRDA RNA-seq datasets become available. ",
-        "Researchers who wish to contribute data or suggest additions are encouraged to contact the authors <EMAIL TO:>. ",
-        "For issues or feature requests, please submit a bug report on GitHub <LINK HERE>."
+        "Researchers who wish to contribute data or suggest additions are encouraged to contact the authors ",
+        tags$a(
+          href = "mailto:mlm715@uowmail.edu.au,mmaddock@uow.edu.au,mdottori@uow.edu.au?subject=FRDA%20RNA-seq%20Atlas%20Contribution",
+          "via email"
+        ),
+        ". "
       ),
 
       h3("Contact and Bug Reports"),
       tags$ul(
         tags$li(HTML(paste0("<b>Contact:</b> ", contact_email))),
         tags$li(HTML(paste0("<b>Project GitHub:</b> <a href='", github_url, "' target='_blank'>", github_url, "</a>"))),
-        tags$li(HTML(paste0("<b>Report an issue:</b> <a href='", issues_url, "' target='_blank'>", issues_url, "</a>")))
+        tags$li(HTML(paste0("<b>Report an issue or request features:</b> <a href='", issues_url, "' target='_blank'>", issues_url, "</a>")))
       ),
       br(),
       #add footer.svg
