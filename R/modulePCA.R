@@ -63,14 +63,14 @@ pcaServer <- function(id, pkg = utils::packageName()) {
 
     # ---- ensure PCA (DESeq2 objects) are available ----
     ensure_atlas_data(
-      keys    = "deseq_object",
+      keys    = "pca_input",
       package = pkg
     )
 
     cache_root <- tools::R_user_dir(pkg, which = "cache")
 
     dir_use <- reactive({
-      d <- file.path(cache_root, "deseq_objects")
+      d <- file.path(cache_root, "pca_input")
 
       # descend into single subdir if ZIP contains one
       subs <- list.dirs(d, recursive = FALSE, full.names = TRUE)
@@ -83,7 +83,7 @@ pcaServer <- function(id, pkg = utils::packageName()) {
           dir.exists(d),
           paste(
             "PCA data not available yet.\nExpected under:",
-            normalizePath(file.path(cache_root, "deseq_objects"), winslash = "/", mustWork = FALSE)
+            normalizePath(file.path(cache_root, "pca_input"), winslash = "/", mustWork = FALSE)
           )
         )
       )

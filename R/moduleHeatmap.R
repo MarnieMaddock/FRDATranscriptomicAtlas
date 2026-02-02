@@ -202,7 +202,7 @@ tpmHeatmapServer <- function(
     # ---- VST loader from existing *_vsd.rds ----
     load_vsd <- function(dataset_id) {
 
-      ddir <- cache_path("deseq_objects", package = pkg)
+      ddir <- cache_path("vsd", package = pkg)
 
       if (!dir.exists(ddir)) {
         stop("VST cache directory not found: ", ddir)
