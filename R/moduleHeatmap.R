@@ -160,9 +160,6 @@ tpmHeatmapServer <- function(
       return(fixed)
     }
 
-    #Silence messages from ComplexHeatmap
-    ComplexHeatmap::ht_opt$message <- FALSE
-
 
     base_of <- function(dataset_id) sub("(_.*)$", "", dataset_id)
 
