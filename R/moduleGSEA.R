@@ -50,7 +50,6 @@ GSEAMainUI <- function(id) {
 }
 
 
-# R/modules/goGSEA_module.R  (replace just the server)
 # R/modules/goGSEA_module.R
 # -------------------------
 # Server for GSEA (CSV/RDS-on-disk, on-demand)
@@ -187,8 +186,8 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     dataset_key3 <- function(x) {
       b <- basename(x)
       b <- sub("\\.rds$", "", b)
-      b <- sub("_batchcorrection", "", b, ignore.case = TRUE)
-      b <- sub("(_0\\.[0-9].*)$", "", b)  # strip trailing "_0.05_all_genes..." if present
+      # b <- sub("_batchcorrection", "", b, ignore.case = TRUE)  # <-- REMOVE THIS
+      b <- sub("(_0\\.[0-9].*)$", "", b)
       parts <- strsplit(b, "_", fixed = TRUE)[[1]]
       if (length(parts) >= 3) paste(parts[1:3], collapse = "_")
       else if (length(parts) >= 2) paste(parts[1:2], collapse = "_")
@@ -197,7 +196,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
 
     labels <- vapply(datasets_vec, function(d) {
       key <- dataset_key3(d)
-      pretty_map[[key]] %||% gsub("_", " ", key)   # fallback: "Lees FA1"
+      unname(pretty_map[key]) %||% gsub("_", " ", key)
     }, character(1))
 
     choices_named <- stats::setNames(datasets_vec, labels)

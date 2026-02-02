@@ -142,11 +142,6 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
       # Remove trailing pattern "_0.05_all_genes.rds"
       id <- sub("_0\\.[0-9]+_all_genes\\.rds$", "", x)
 
-      # Remove unwanted batchcorrection suffix if present
-      id <- sub("_batchcorrection$", "", id)
-
-      # In case someone used plural or uppercase variants (optional but robust)
-      id <- sub("_batchCorrection$", "", id, ignore.case = TRUE)
 
       # Ensure valid ID
       if (!nzchar(id)) return(NA_character_)
