@@ -23,12 +23,16 @@ biomarkerUI <- function(id) {
       inline = TRUE
     ),
 
-    textAreaInput(
-      ns("feature_query"),
-      label = "Specify Genes",
-      placeholder = "FXN, PIP5K1B, RPS29 ...",
-      rows = 4
+    conditionalPanel(
+      condition = sprintf("input['%s'] === 'query'", ns("gene_mode")),
+      textAreaInput(
+        ns("feature_query"),
+        label = "Specify genes",
+        placeholder = "FXN, PIP5K1B, RPS29 ...",
+        rows = 4
+      )
     ),
+
     hr(),
     sliderInput(
       ns("min_study_count"),
@@ -508,6 +512,10 @@ biomarkerServer <- function(id,
         grDevices::dev.off()
       }
     )
+
+    observeEvent(input$gene_mode == "discover", {
+      updateTextAreaInput(session, "feature_query", value = "")
+    })
 
 
 
