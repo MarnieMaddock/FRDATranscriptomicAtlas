@@ -216,6 +216,7 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
     meta_df <- reactive({
       df <- merged_all()
       q  <- gene_query()
+
       idx <- resolve_gene(q, df)
       validate(need(length(idx) >= 1, paste0(
         "Gene not found: '", q, "'. ",
@@ -225,11 +226,14 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
 
       lfc_cols <- grep("^log2FoldChange_", names(df), value = TRUE)
       se_cols  <- grep("^lfcSE_",          names(df), value = TRUE)
-      studies  <- intersect(sub("^log2FoldChange_", "", lfc_cols),
-                            sub("^lfcSE_",          "", se_cols))
+
+      studies <- intersect(
+        sub("^log2FoldChange_", "", lfc_cols),
+        sub("^lfcSE_",          "", se_cols)
+      )
       validate(need(length(studies) > 1, "Need at least two studies with LFC and SE."))
 
-      tibble::tibble(
+      out <- tibble::tibble(
         study = studies,
         yi    = as.numeric(df[row_idx, paste0("log2FoldChange_", studies), drop = TRUE]),
         sei   = as.numeric(df[row_idx, paste0("lfcSE_",          studies), drop = TRUE]),
@@ -240,9 +244,19 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
           if (any(have)) v[have] <- as.numeric(df[row_idx, pc[have], drop = TRUE])
           v
         }
-      ) |>
-        dplyr::filter(is.finite(yi), is.finite(sei)) |>
+      ) %>%
+        dplyr::filter(is.finite(yi), is.finite(sei), sei > 0) %>%
+        dplyr::mutate(
+          sei = pmax(sei, 1e-6),
+          direction = dplyr::if_else(yi > 0, "Up", dplyr::if_else(yi < 0, "Down", "Zero")),
+          ci_lo = yi - 1.96 * sei,
+          ci_hi = yi + 1.96 * sei
+        ) %>%
+        dplyr::distinct(study, .keep_all = TRUE) %>%
         dplyr::arrange(tolower(study))
+
+      validate(need(nrow(out) > 1, "Need at least two studies after filtering (finite LFC/SE, SE>0)."))
+      out
     })
 
     # ---------- pretty study labels (unchanged) ---------------------------
@@ -273,7 +287,7 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
       m <- models()
       re <- m$re
       df <- re$k - re$p
-      I2 <- max(0, (re$QE - df) / re$QE) * 100
+      I2 <- re$I2
       paste0(
         "Random-effects (REML)\n",
         sprintf("Summary LFC = %.3f  [%.3f, %.3f]\n", re$b[1], re$ci.lb, re$ci.ub),
@@ -283,10 +297,10 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
     })
 
     draw_forest <- function(md, re, svg_path = NULL) {
-      ci_lo <- md$yi - 2.5 * md$sei
-      ci_hi <- md$yi + 2.5 * md$sei
-      xmin  <- min(ci_lo, re$ci.lb, na.rm = TRUE)
-      xmax  <- max(ci_hi, re$ci.ub, na.rm = TRUE)
+      #ci_lo <- md$yi - 2.5 * md$sei
+      #ci_hi <- md$yi + 2.5 * md$sei
+      xmin <- min(md$ci_lo, re$ci.lb, na.rm = TRUE)
+      xmax <- max(md$ci_hi, re$ci.ub, na.rm = TRUE)
       pad   <- max(0.2, 0.4 * (xmax - xmin))
       alim  <- c(xmin - pad, xmax + pad)
       xlim  <- c(alim[1], alim[2] + 0.10*(alim[2]-alim[1]))
@@ -306,9 +320,7 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
       metafor::forest(
         re, slab = slabs, xlab = "log2 fold change",
         alim = alim, xlim = xlim, at = at_ticks, refline = 0, cex = 1.5,
-        mlab = sprintf("Summary (I^2 = %.1f%%)", {
-          df <- re$k - re$p; max(0, (re$QE - df) / re$QE) * 100
-        })
+        mlab = sprintf("Summary (I^2 = %.1f%%)", re$I2)
       )
     }
 
