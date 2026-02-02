@@ -1,12 +1,25 @@
 #' Cross-platform robust download using libcurl
 #' @keywords internal
 #' @noRd
-download_with_retry <- function(url, destfile, retries = 3) {
+#' Cross-platform robust download using libcurl + sha256 integrity check
+#' @keywords internal
+#' @noRd
+download_with_retry <- function(url, destfile, sha256 = NA_character_, retries = 3) {
 
   options(timeout = max(6000, getOption("timeout")))
 
   has_libcurl <- isTRUE(capabilities("libcurl"))
   method <- if (has_libcurl) "libcurl" else "auto"
+
+  if (!requireNamespace("openssl", quietly = TRUE)) {
+    stop("Package 'openssl' is required for checksum verification.", call. = FALSE)
+  }
+
+  sha_ok <- function(path, expected) {
+    if (!is.character(expected) || !nzchar(expected) || is.na(expected)) return(TRUE)
+    got <- as.character(openssl::sha256(file(path)))
+    identical(tolower(got), tolower(expected))
+  }
 
   for (i in seq_len(retries)) {
 
@@ -18,22 +31,29 @@ download_with_retry <- function(url, destfile, retries = 3) {
         destfile,
         mode   = "wb",
         method = method,
-        quiet  = FALSE   # console progress
+        quiet  = FALSE
       )
       TRUE
     }, error = function(e) FALSE)
 
-    if (ok && file.exists(destfile) && file.size(destfile) > 0) {
-      return(invisible(TRUE))
+    # basic file existence check
+    if (!ok || !file.exists(destfile) || file.size(destfile) == 0) {
+      Sys.sleep(2)
+      next
     }
 
-    Sys.sleep(2)
+    # checksum check (critical)
+    if (!sha_ok(destfile, sha256)) {
+      message("[Atlas] SHA256 mismatch (download likely incomplete). Retrying...")
+      unlink(destfile)
+      Sys.sleep(2)
+      next
+    }
+
+    return(invisible(TRUE))
   }
 
-  stop(
-    "Failed to download file after ", retries, " attempts:\n", url,
-    call. = FALSE
-  )
+  stop("Failed to download file after ", retries, " attempts:\n", url, call. = FALSE)
 }
 
 
@@ -66,20 +86,15 @@ ensure_atlas_data <- function(
   dir.create(cache_root, recursive = TRUE, showWarnings = FALSE)
 
   # Determine which datasets need downloading
-  needs_download <- function(p, pattern = "\\.rds$") {
-    if (!dir.exists(p)) return(TRUE)
-    files <- list.files(p, pattern = pattern, recursive = TRUE)
-    length(files) == 0
+  needs_download <- function(target_dir) {
+    if (!dir.exists(target_dir)) return(TRUE)
+    !file.exists(file.path(target_dir, ".complete"))
   }
   need_download <- vapply(
     rows$local_dir,
-    function(d) {
-      p <- file.path(cache_root, d)
-      needs_download(p)
-    },
+    function(d) needs_download(file.path(cache_root, d)),
     logical(1)
   )
-
 
   rows <- rows[need_download, , drop = FALSE]
 
@@ -122,7 +137,13 @@ ensure_atlas_data <- function(
         )
 
         zip_path <- file.path(cache_root, basename(row$url))
-        download_with_retry(row$url, zip_path)
+        # download + checksum validate
+        download_with_retry(
+          url      = row$url,
+          destfile = zip_path,
+          sha256   = if ("sha256" %in% names(row)) row$sha256 else NA_character_
+        )
+
 
         utils::unzip(zip_path, exdir = cache_root)
         unlink(zip_path)
@@ -131,6 +152,9 @@ ensure_atlas_data <- function(
         if (!dir.exists(target_dir)) {
           stop("Expected data directory not created: ", target_dir)
         }
+
+        # mark as complete ONLY after successful unzip + directory exists
+        file.create(file.path(target_dir, ".complete"))
 
         message(sprintf(
           "[Atlas] Finished %s -> %s",
