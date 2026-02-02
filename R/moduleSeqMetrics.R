@@ -16,15 +16,15 @@ isoformConfidenceUI <- function(id) {
       p(
         "Mean sequencing depth was scored as ",
         tags$strong("0"), " (<10 million reads), ",
-        tags$strong("1"), " (10–30 million reads), or ",
+        tags$strong("1"), " (10-30 million reads), or ",
         tags$strong("2"), " (>30 million reads); ",
         "mean read length was scored as ",
         tags$strong("0"), " (<75 bp), ",
-        tags$strong("1"), " (75–99 bp), or ",
-        tags$strong("2"), " (≥100 bp); ",
+        tags$strong("1"), " (75-99 bp), or ",
+        tags$strong("2"), " (>=100 bp); ",
         "and paired-end libraries were assigned ",
         tags$strong("+1"), " point relative to single-end libraries. ",
-        "Component scores were summed, with higher scores indicating greater expected isoform resolution. Composite scores of 0–2 were classified as low confidence, scores of 3–4 as medium confidence, and scores of 5 as high confidence."
+        "Component scores were summed, with higher scores indicating greater expected isoform resolution. Composite scores of 0-2 were classified as low confidence, scores of 3-4 as medium confidence, and scores of 5 as high confidence."
       )
     ),
 
