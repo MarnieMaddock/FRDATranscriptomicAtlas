@@ -1,10 +1,7 @@
 #' Cross-platform robust download using libcurl
 #' @keywords internal
 #' @noRd
-#' Cross-platform robust download using libcurl + sha256 integrity check
-#' @keywords internal
-#' @noRd
-download_with_retry <- function(url, destfile, sha256 = NA_character_, retries = 3) {
+download_with_retry <- function(url, destfile, sha256 = NA_character_, retries = 5) {
 
   options(timeout = max(6000, getOption("timeout")))
 
@@ -57,10 +54,7 @@ download_with_retry <- function(url, destfile, sha256 = NA_character_, retries =
 }
 
 
-
-#' Ensure FRDA atlas data are available locally (with progress bar + global banner)
-#' @keywords internal
-#' @noRd
+#Ensure FRDA atlas data are available locally (with progress bar + global banner)
 ensure_atlas_data <- function(
     keys,
     package = "FRDATranscriptomicAtlas"
@@ -86,13 +80,14 @@ ensure_atlas_data <- function(
   dir.create(cache_root, recursive = TRUE, showWarnings = FALSE)
 
   # Determine which datasets need downloading
-  needs_download <- function(target_dir) {
+  needs_download <- function(target_dir, key) {
     if (!dir.exists(target_dir)) return(TRUE)
-    !file.exists(file.path(target_dir, ".complete"))
+    !file.exists(file.path(target_dir, paste0(".", key, ".complete")))
   }
+
   need_download <- vapply(
-    rows$local_dir,
-    function(d) needs_download(file.path(cache_root, d)),
+    seq_len(nrow(rows)),
+    function(i) needs_download(file.path(cache_root, rows$local_dir[i]), rows$key[i]),
     logical(1)
   )
 
@@ -154,7 +149,7 @@ ensure_atlas_data <- function(
         }
 
         # mark as complete ONLY after successful unzip + directory exists
-        file.create(file.path(target_dir, ".complete"))
+        file.create(file.path(target_dir, paste0(".", row$key, ".complete")))
 
         message(sprintf(
           "[Atlas] Finished %s -> %s",
@@ -185,7 +180,7 @@ ensure_atlas_data <- function(
 }
 
 
-heck_atlas_updates <- function(package = "FRDATranscriptomicAtlas") {
+check_atlas_updates <- function(package = "FRDATranscriptomicAtlas") {
 
   local_path <- system.file("extdata", "atlas_data_manifest.csv", package = package)
   if (!nzchar(local_path)) return(NULL)
