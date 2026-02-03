@@ -40,6 +40,17 @@ The FRDA Transcriptomic Atlas is designed for users with no programming experien
 [![r-universe version](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 [![r-universe status](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 
+## Citation and Acknowledgements
+
+We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis. If you use this Atlas or any underlying data/analyses in your work, please cite the associated publication:
+
+Maddock, M. et al. (2026). XXXXXXXXXXXXXXXXXX. [Journal details forthcoming].
+
+Users must cite the publication in any derivative analyses, figures, or reports generated from this resource. Users must also cite the original studies from which the data were derived. Please refer to the 'Datasets' section within the app for details on each dataset and its original publication.
+
+## Future Updates and Contributions
+
+This resource may be updated as new FRDA RNA-seq datasets become available. Researchers who wish to contribute data or suggest additions are encouraged to [contact the authors via email](mailto:mlm715@uowmail.edu.au,mmaddock@uow.edu.au,mdottori@uow.edu.au?subject=FRDA%20Transcriptomic%20Atlas%20Contribution).
 
 ## Feedback and Support
 If you encounter any issues or have suggestions, feel free to:
