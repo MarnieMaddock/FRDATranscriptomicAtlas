@@ -81,7 +81,7 @@ tpmHeatmapServer <- function(
       keys = c(
         "tpm_gene",
         "tpm_transcript",
-        "vst"
+        "vsd"
       ),
       package = pkg
     )

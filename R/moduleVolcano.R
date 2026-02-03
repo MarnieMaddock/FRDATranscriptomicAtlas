@@ -208,7 +208,7 @@ volcanoServer <- function(
 
       # ---- cached DEG directory ----
       cache_root <- tools::R_user_dir(pkg, which = "cache")
-      deg_dir    <- file.path(cache_root, "deg", level_dir)
+      deg_dir    <- file.path(cache_root, level_dir)
 
       if (!dir.exists(deg_dir)) {
         stop(

@@ -59,6 +59,21 @@ pcaServer <- function(id, pkg = utils::packageName()) {
       "case_diff_controls"     = "Disease Status",
       "cell_type"              = "Cell Type"
     )
+    # tolerant pretty-name resolver
+    pretty_lookup <- function(study_key, pretty_map) {
+      # 1) exact key
+      hit <- unname(pretty_map[study_key])
+
+      # 2) try batchcorrection alias
+      if (is.na(hit) || !nzchar(hit)) {
+        hit <- unname(pretty_map[paste0(study_key, "_batchcorrection")])
+      }
+
+      # 3) fallback
+      if (is.na(hit) || !nzchar(hit)) hit <- study_key
+
+      hit
+    }
 
 
     # ---- ensure PCA (DESeq2 objects) are available ----
@@ -110,14 +125,18 @@ pcaServer <- function(id, pkg = utils::packageName()) {
       study_key <- sub("(_FRDA.*$)", "", pf$label)
 
       # Default mapping via pretty_map
-      pretty_label <- pretty_map[study_key]
+      pretty_label <- vapply(
+        study_key,
+        pretty_lookup,
+        character(1),
+        pretty_map = pretty_map
+      )
 
       # ---- SPECIAL CASE: Li PCA ----
       is_li <- study_key == "Li"
       pretty_label[is_li] <- "Li (Cardiomyocytes)"
 
-      # Fallback if not in pretty_map
-      pretty_label[is.na(pretty_label)] <- study_key[is.na(pretty_label)]
+
 
       # Named vector: values = file paths, names = pretty labels
       choices_named <- stats::setNames(pf$path, pretty_label)
@@ -160,8 +179,8 @@ pcaServer <- function(id, pkg = utils::packageName()) {
 
         study_key <- sub("(_FRDA.*$)", "", labels[1])
 
-        pretty_label <- pretty_map[study_key]
-        pretty_label <- pretty_label %||% study_key
+        pretty_label <- pretty_lookup(study_key, pretty_map)
+
 
         # SPECIAL CASE: Li PCA
         if (identical(study_key, "Li")) {
@@ -235,8 +254,8 @@ pcaServer <- function(id, pkg = utils::packageName()) {
         # ---- dataset pretty name (PCA-specific) ----
         study_key <- sub("(_FRDA.*$)", "", labels[i])
 
-        pretty_label <- pretty_map[study_key]
-        pretty_label <- pretty_label %||% study_key
+        pretty_label <- pretty_lookup(study_key, pretty_map)
+
 
         # SPECIAL CASE: Li PCA
         if (identical(study_key, "Li")) {
