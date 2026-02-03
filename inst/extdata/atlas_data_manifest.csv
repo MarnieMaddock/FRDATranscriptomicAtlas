@@ -1,8 +1,8 @@
 key,description,url,local_dir,md5,version
 tpm_gene,Gene-level TPM matrices,https://zenodo.org/record/18463484/files/tpm_gene.zip,tpm,3e018eaa80a3c2247697c693dec98e78,0.0.0.9002
-deg_genes,DEG gene-level results (DESeq2),https://zenodo.org/records/18463484/files/deg_genes.zip,genes,6b9dc95c6e49eaeade164a210d15190b,0.0.0.9002
+deg_genes,DEG gene-level results (DESeq2),https://zenodo.org/records/18463484/files/deg_genes.zip,genes,7a51b225424a4413ba897776230f74ad,0.0.0.9002
 biomarker,Biomarker baseline DEG summary,https://zenodo.org/records/18463484/files/biomarker.zip,biomarker,973251df55be478d9fade341a3db99f5,0.0.0.9002
-deg_transcripts,Transcript-level DESeq2 results,https://zenodo.org/records/18463484/files/deg_transcripts.zip,txs,efaabda75e759e5851a74963b23bb829,0.0.0.9002
+deg_transcripts,Transcript-level DESeq2 results,https://zenodo.org/records/18463484/files/deg_transcripts.zip,txs,049cb95a84ca50d2c51ec2bd2e953ca6,0.0.0.9002
 tpm_tx,Transcript-level TPM matrices,https://zenodo.org/records/18463484/files/transcript_tpm.zip,transcript_tpm,6cb1834418bdebc74a8b7ffc181ac037,0.0.0.9002
 gsea_results,GSEA GO results (BP/CC/MF),https://zenodo.org/records/18463484/files/GSEA_results.zip,GSEA_results,ff0ce5007628d220f59c2f1e5ed90d80,0.0.0.9002
 vsd,DESeq2 VST objects,https://zenodo.org/records/18463484/files/vsd.zip,vsd,9a2bb613248679ef85802d42aaba750e,0.0.0.9002
