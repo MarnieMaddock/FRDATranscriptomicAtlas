@@ -8,9 +8,6 @@ download_with_retry <- function(url, destfile, md5 = NA_character_, retries = 5)
   has_libcurl <- isTRUE(capabilities("libcurl"))
   method <- if (has_libcurl) "libcurl" else "auto"
 
-  if (!requireNamespace("openssl", quietly = TRUE)) {
-    stop("Package 'openssl' is required for checksum verification.", call. = FALSE)
-  }
 
   md5_ok <- function(path, expected) {
     if (!is.character(expected) || !nzchar(expected) || is.na(expected)) return(TRUE)
