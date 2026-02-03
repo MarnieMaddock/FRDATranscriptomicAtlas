@@ -784,5 +784,9 @@ tpmHeatmapServer <- function(
       }
     )
 
+    #add for magick
+    magick::image_info(magick::image_blank(1, 1))
+
+
   })
 }
