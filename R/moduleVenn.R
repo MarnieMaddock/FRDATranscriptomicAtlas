@@ -110,8 +110,8 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     # --- paths + cached reader ---
     cache_root <- tools::R_user_dir(pkg, which = "cache")
 
-    deg_dir_genes <- file.path(cache_root, "deg", "genes")
-    deg_dir_transcripts <- file.path(cache_root, "deg", "txs")
+    deg_dir_genes <- file.path(cache_root, "genes")
+    deg_dir_transcripts <- file.path(cache_root, "txs")
 
     validate(
       need(dir.exists(deg_dir_genes), "Gene-level DEG data not available."),
