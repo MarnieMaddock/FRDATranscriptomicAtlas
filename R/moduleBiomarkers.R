@@ -103,8 +103,7 @@ biomarkerServer <- function(id,
       )
     )
 
-    baseline_long <- readRDS(baseline_path) |>
-      dplyr::mutate(study = gsub("_batchcorrection$", "", study))
+    baseline_long <- readRDS(baseline_path)
 
 
     alpha <- reactive(as.numeric(input$alpha %||% 0.05))
