@@ -68,7 +68,7 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
     deg_gene_dir <- function(package) {
       file.path(
         tools::R_user_dir(package, "cache"),
-        "deg/genes"
+        "genes"
       )
     }
 
