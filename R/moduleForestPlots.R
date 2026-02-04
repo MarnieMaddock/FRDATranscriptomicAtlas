@@ -187,11 +187,20 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
         out
       }
 
+
+
+
       all_dfs <- list()
       for (nm in names(read_ok)) {
         st <- study_key(nm)
-        all_dfs[[st]] <- tryCatch(prep_df(read_ok[[nm]], st),
-                                  error = function(e) NULL)
+        all_dfs[[st]] <- tryCatch(
+          prep_df(read_ok[[nm]], st),
+          error = function(e) {
+            message("prep_df FAILED for ", st, ": ", conditionMessage(e))
+            NULL
+          }
+        )
+
       }
       all_dfs <- Filter(Negate(is.null), all_dfs)
       validate(need(length(all_dfs) > 0, "No usable DEG tables after prep."))
