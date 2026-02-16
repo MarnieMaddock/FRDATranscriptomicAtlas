@@ -24,6 +24,7 @@ The FRDA Transcriptomic Atlas runs through R. If you are new to R, please use th
 
 ```r
 install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))
+FRDATranscriptomicAtlas::install_deps()
 ```
 
 ### To run app
