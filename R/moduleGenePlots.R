@@ -184,11 +184,24 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
     observeEvent(tpms_wide_list(), {
       wl <- tpms_wide_list()
       genes <- sort(unique(unlist(lapply(wl, function(x) x$gene_name))))
-      updateSelectizeInput(session, "gp_gene",
-                           choices = genes,
-                           selected = if ("FXN" %in% genes) "FXN" else genes[1],
-                           server = TRUE)
-    })
+
+      current <- isolate(input$gp_gene)
+
+      # keep user choice if it still exists in the new choices
+      if (!is.null(current) && nzchar(current) && current %in% genes) {
+        selected <- current
+      } else {
+        selected <- if ("FXN" %in% genes) "FXN" else genes[1]
+      }
+
+      updateSelectizeInput(
+        session, "gp_gene",
+        choices = genes,
+        selected = selected,
+        server = TRUE
+      )
+    }, ignoreInit = FALSE)
+
 
     tpms_long_all <- reactive({
       wl <- tpms_wide_list()
