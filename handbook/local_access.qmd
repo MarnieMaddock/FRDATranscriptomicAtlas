@@ -27,6 +27,14 @@ Once the installation has completed, a \> will appear in the console. It will sa
 ![](images/AtlasDownload.png){width="800"}
 </details>
 
+Now run:
+
+```r
+FRDATranscriptomicAtlas::install_deps()
+```
+
+This will download additional packages required to render heatmaps in the app. Once that has been completed, a > will appear in the console again.
+
 FRDA Transcriptomic Atlas has been downloaded, but it has not been loaded into the R session. To do this, type this line of code in the Console and press control/command enter to run it:
 
 
@@ -71,6 +79,7 @@ The app will open in a new window. In the top corner you can click open in brows
 
 ```r
 install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))
+FRDATranscriptomicAtlas::install_deps()
 library(FRDATranscriptomicAtlas)
 run_app()
 ```
