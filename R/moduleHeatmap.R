@@ -2,6 +2,7 @@
 tpmHeatmapSidebarUI <- function(id) {
   ns <- NS(id)
   tagList(
+    uiOutput(ns("heatmap_notice")),
     h4("Heatmap options"),
     radioButtons(
       ns("feature_level"), "Level",
@@ -61,6 +62,14 @@ tpmHeatmapMainUI <- function(id) {
     br(), br(), br()
   )
 }
+
+
+missing_heatmap_deps <- function() {
+  pkgs <- c("ComplexHeatmap", "SummarizedExperiment", "DESeq2")
+  pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+}
+
+
 # --- TPM/VST Heatmap: Server (metadata-aware, single vs multi dataset) ---
 tpmHeatmapServer <- function(
     id,
@@ -86,6 +95,20 @@ tpmHeatmapServer <- function(
       package = pkg
     )
 
+    deps_missing <- reactive(missing_heatmap_deps())
+
+    output$heatmap_notice <- renderUI({
+      miss <- deps_missing()
+      if (!length(miss)) return(NULL)
+
+      div(
+        class = "alert alert-warning",
+        tags$strong("Heatmap dependencies not installed."),
+        tags$p("To enable heatmaps, exit the app, run this in the R console, then restart the app:"),
+        tags$pre("FRDATranscriptomicAtlas::install_deps()"),
+        tags$p("Missing packages: ", paste(miss, collapse = ", "))
+      )
+    })
 
     # ---------------- helpers ----------------
     # -------- Pretty map (internal default) --------
