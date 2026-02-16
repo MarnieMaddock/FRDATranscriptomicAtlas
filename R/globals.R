@@ -49,5 +49,5 @@ utils::globalVariables(c(
   "p_str", "desc", "up", "down",
 
   # --- app-level objects ---
-  "PRETTY_MAP_LOCAL", "check_atlas_updates"
+  "PRETTY_MAP_LOCAL", "check_atlas_updates", "cran_install_if_missing"
 ))
