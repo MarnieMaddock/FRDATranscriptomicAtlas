@@ -416,8 +416,13 @@ tpmHeatmapServer <- function(
     # --- utility: infer dataset from sample name ---
     dataset_from_sample <- function(samples, selected_ids) {
       vapply(samples, function(s) {
-        hit <- selected_ids[startsWith(s, paste0(selected_ids, "_"))]
-        if (length(hit)) hit[1] else sub("_.*$", "", s)
+        pref <- paste0(selected_ids, "_")
+        idx <- which(startsWith(s, pref))
+        if (length(idx)) {
+          selected_ids[idx[1]]
+        } else {
+          sub("_.*$", "", s)
+        }
       }, character(1))
     }
 
@@ -608,34 +613,41 @@ tpmHeatmapServer <- function(
       mat <- zscore_by_dataset(mat, ds_ids)
 
       # optional ordered columns if no clustering
-      # optional ordered columns if no clustering
       if (!isTRUE(input$cluster_cols)) {
+
+        order_mode <- input$column_order %||% "dataset"
+
+        # Build annotation with metadata if available, else fallback
         if (!is.null(meta_norm)) {
-
           ann <- annot_from_meta(colnames(mat), meta_norm)
-
-          # Determine dataset for each sample (Study is often correct,
-          # but fallback to prefix-based detection if mismatched)
-          ds_order <- stats::setNames(seq_along(input$datasets), input$datasets)
-
           ann$Dataset <- ann$Study
-          ann$Dataset[is.na(ann$Dataset)] <- sub("_.*$", "", ann$sample)
-
-          ann$ds_rank <- ds_order[ann$Dataset]
-          ann$grp_rank <- ifelse(ann$Group == "CTRL", 0L, 1L)
-
-          # ---- ORDERING LOGIC ----
-          if (input$column_order == "group") {
-            # Option A: All CTRL first (across datasets), then FRDA
-            ann <- ann[order(ann$grp_rank, ann$ds_rank, ann$sample), ]
-          } else {
-            # Option B: Dataset blocks first, then CTRL->FRDA inside each dataset
-            ann <- ann[order(ann$ds_rank, ann$grp_rank, ann$sample), ]
-          }
-
-          mat <- mat[, ann$sample, drop = FALSE]
+          ann$Dataset[is.na(ann$Dataset)] <- dataset_from_sample(ann$sample, input$datasets)
+          grp_chr <- as.character(ann$Group)
+        } else {
+          ann <- data.frame(sample = colnames(mat), stringsAsFactors = FALSE)
+          ann$Dataset <- dataset_from_sample(ann$sample, input$datasets)
+          grp_chr <- vapply(ann$sample, group_from_name, character(1))
+          ann$Group <- factor(grp_chr, levels = c("CTRL", "FRDA"))
         }
+
+        # ranks
+        ds_order <- stats::setNames(seq_along(input$datasets), input$datasets)
+        ann$ds_rank  <- ds_order[ann$Dataset]
+        ann$ds_rank[is.na(ann$ds_rank)] <- max(ds_order, na.rm = TRUE) + 1L
+
+        ann$grp_rank <- dplyr::recode(as.character(ann$Group),
+                                      "CTRL" = 0L, "FRDA" = 1L, .default = 2L)
+
+        # order
+        if (order_mode == "group") {
+          ann <- ann[order(ann$grp_rank, ann$ds_rank, ann$sample), ]
+        } else {
+          ann <- ann[order(ann$ds_rank, ann$grp_rank, ann$sample), ]
+        }
+
+        mat <- mat[, ann$sample, drop = FALSE]
       }
+
 
 
       mat
