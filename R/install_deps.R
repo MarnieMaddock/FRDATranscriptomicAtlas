@@ -8,14 +8,20 @@
 #' @param ask Logical; passed to BiocManager::install(). Default FALSE.
 #' @return Invisibly returns TRUE when complete.
 #' @export
-install_deps <- function(update = FALSE, ask = FALSE) {
+install_deps <- function(update = FALSE, ask = FALSE, extras = FALSE) {
 
   # CRAN helper
-  cran_install_if_missing <- function(pkgs) {
+  cran_install_if_missing <- function(pkgs, quiet_fail = FALSE) {
     pkgs <- unique(pkgs)
     missing <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
     if (length(missing)) {
-      utils::install.packages(missing)
+      ok <- tryCatch(
+        { utils::install.packages(missing, quiet = TRUE); TRUE },
+        error = function(e) FALSE
+      )
+      if (!ok && !quiet_fail) {
+        stop("Failed to install CRAN packages: ", paste(missing, collapse = ", "))
+      }
     }
     invisible(TRUE)
   }
@@ -30,6 +36,17 @@ install_deps <- function(update = FALSE, ask = FALSE) {
   if (length(missing_bioc)) {
     BiocManager::install(missing_bioc, ask = ask, update = update)
   }
+
+    # best-effort: magick often fails due to system ImageMagick requirements
+    cran_install_if_missing("magick", quiet_fail = TRUE)
+
+    if (!requireNamespace("magick", quietly = TRUE)) {
+      message(
+        "Optional dependency 'magick' could not be installed.\n",
+        "This is usually due to missing system requirements (ImageMagick).\n",
+        "FRDATranscriptomicAtlas will still run; only magick-dependent features (if any) are unavailable."
+      )
+    }
 
   invisible(TRUE)
 }

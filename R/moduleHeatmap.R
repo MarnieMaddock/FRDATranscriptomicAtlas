@@ -819,8 +819,14 @@ tpmHeatmapServer <- function(
       }
     )
 
-    #add for magick
-    magick::image_info(magick::image_blank(1, 1))
+    magick_ok <- requireNamespace("magick", quietly = TRUE)
+    if (magick_ok) {
+      magick::image_info(magick::image_blank(1, 1))
+    } else {
+      # optional: message/notification, but do NOT error
+      message("Optional package 'magick' not installed; rasterization features disabled. Run FRDATranscriptomicAtlas::install_deps() to install.")
+    }
+
 
 
   })

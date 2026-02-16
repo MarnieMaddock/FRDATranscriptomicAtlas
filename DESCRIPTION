@@ -33,10 +33,10 @@ Imports:
     ragg,
     data.table,
     htmltools,
-    patchwork,
-    magick
+    patchwork
 Suggests:
     BiocManager,
+    magick,
     enrichplot,
     ComplexHeatmap,
     SummarizedExperiment,

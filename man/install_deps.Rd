@@ -4,7 +4,7 @@
 \alias{install_deps}
 \title{Install optional dependencies for FRDATranscriptomicAtlas}
 \usage{
-install_deps(update = FALSE, ask = FALSE)
+install_deps(update = FALSE, ask = FALSE, extras = FALSE)
 }
 \arguments{
 \item{update}{Logical; whether to allow updating already-installed packages.
