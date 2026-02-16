@@ -15,7 +15,7 @@ install_deps <- function(update = FALSE, ask = FALSE) {
     pkgs <- unique(pkgs)
     missing <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
     if (length(missing)) {
-      install.packages(missing)
+      utils::install.packages(missing)
     }
     invisible(TRUE)
   }
