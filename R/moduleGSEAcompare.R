@@ -361,12 +361,14 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
       labs <- names(s)
       labs <- stringr::str_wrap(labs, width = 24)
       names(s) <- labs
+      suppressWarnings(suppressMessages(
       ggVennDiagram::ggVennDiagram(s, label = "count", label_size = 8, set_size = 10) +
         ggplot2::scale_fill_gradient(low = "#ccdcda", high = "#005249") +
         ggplot2::theme_void(base_size = 30) +
         ggplot2::theme(legend.position = "right",
                        plot.margin = ggplot2::margin(60, 120, 60, 120)) +
         ggplot2::coord_cartesian(clip = "off")
+      ))
     })
 
     output$gsea_venn_plot <- shiny::renderPlot({
