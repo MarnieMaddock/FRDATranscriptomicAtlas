@@ -184,7 +184,22 @@ ensure_atlas_data <- function(
         utils::unzip(zip_path, exdir = target_dir)
         unlink(zip_path)
 
-        # If the zip contains a single top-level folder, flatten it (avoids tpm/tpm nesting)
+        # --- Robust flattening: handle target_dir/<same_name>/... nesting ---
+        inner_same <- file.path(target_dir, basename(target_dir))
+        if (dir.exists(inner_same)) {
+          inner_items <- list.files(inner_same, full.names = TRUE, all.files = FALSE, no.. = TRUE)
+          # (all.files = FALSE avoids .DS_Store / hidden stuff)
+
+          ok <- file.rename(inner_items, file.path(target_dir, basename(inner_items)))
+          if (any(!ok)) {
+            warning("Some files could not be moved out of nested directory: ", inner_same)
+          }
+
+
+          unlink(inner_same, recursive = TRUE, force = TRUE)
+        }
+
+        # Fallback: if there is a single subdir and no top-level data files, flatten it
         subdirs <- list.dirs(target_dir, recursive = FALSE, full.names = TRUE)
         top_files <- list.files(target_dir, recursive = FALSE, all.files = FALSE)
 

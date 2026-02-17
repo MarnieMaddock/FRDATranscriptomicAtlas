@@ -212,11 +212,33 @@ tpmHeatmapServer <- function(
       subdir <- if (level == "genes") "tpm" else "transcript_tpm"
       fname  <- if (level == "genes")
         paste0(dataset_id, "_gene_tpm.rds") else paste0(dataset_id, "_transcript_tpm.rds")
+
       path <- cache_path(subdir, fname, package = pkg)
 
       if (!file.exists(path)) {
-        stop("Missing TPM file in cache: ", path)
+
+        # Fallback: recursive search inside subdir
+        search_root <- cache_path(subdir, package = pkg)
+
+        hits <- list.files(
+          search_root,
+          pattern = paste0("^", fname, "$"),
+          recursive = TRUE,
+          full.names = TRUE
+        )
+
+        if (length(hits) == 1) {
+          path <- hits
+        } else if (length(hits) > 1) {
+          warning("Multiple TPM files found; using first match:\n", hits[1])
+          path <- hits[1]
+        } else {
+          stop("Missing TPM file in cache: ", fname,
+               "\nSearched in: ", search_root,
+               call. = FALSE)
+        }
       }
+
 
       if (!file.exists(path)) stop("Missing TPM file: ", path)
       readRDS(path)
@@ -234,7 +256,14 @@ tpmHeatmapServer <- function(
 
       # Load ALL matching VSDs, not just one
       pat <- paste0("^", dataset_id, ".*_vsd\\.rds$")
-      files <- list.files(ddir, pattern = pat, full.names = TRUE)
+
+      files <- list.files(
+        ddir,
+        pattern = pat,
+        recursive = TRUE,
+        full.names = TRUE
+      )
+
 
       if (!length(files))
         stop("No VST object (*.vsd.rds) found for dataset group: ", dataset_id)

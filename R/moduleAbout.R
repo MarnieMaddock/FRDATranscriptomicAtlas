@@ -163,35 +163,49 @@ aboutServer <- function(id, package_name = "FRDATranscriptomicAtlas") {
 
     output$data_updates <- shiny::renderUI({
 
-      # Error case
+      # 1) Error
       if (!is.null(check_err())) {
         return(shiny::tags$div(
           class = "text-warning",
-          paste0("Could not check for data updates: ", check_err())
+          paste0("Could not check for atlas data updates: ", check_err())
         ))
       }
 
       up <- updates()
 
-      # Manual check, no updates
-      if (checked_manually() && (is.null(up) || !nrow(up))) {
+      # 2) Loading / not checked yet (initial state)
+      if (is.null(up) && !checked_manually()) {
         return(shiny::tags$div(
-          class = "text-success",
-          "Atlas data is up to date."
+          class = "text-muted",
+          "Checking for atlas data updates..."
         ))
       }
 
-      # Updates available
-      if (!is.null(up) && nrow(up)) {
-        return(shiny::tags$div(
-          class = "text-warning",
-          shiny::tags$strong("Atlas data updates available: "),
-          paste(up$key, collapse = ", ")
-        ))
+      # 3) Updates available
+      if (!is.null(up) && nrow(up) > 0) {
+        # Show key + description when available
+        has_desc <- "description" %in% names(up) && any(nzchar(up$description))
+        if (has_desc) {
+          items <- paste0(up$key, " — ", up$description)
+          return(shiny::tags$div(
+            class = "text-warning",
+            shiny::tags$strong("Atlas data updates available:"),
+            shiny::tags$ul(lapply(items, shiny::tags$li))
+          ))
+        } else {
+          return(shiny::tags$div(
+            class = "text-warning",
+            shiny::tags$strong("Atlas data updates available: "),
+            paste(up$key, collapse = ", ")
+          ))
+        }
       }
 
-      # Default / initial state
-      shiny::tags$div(class = "text-muted", "Atlas data: up to date.")
+      # 4) No updates (either auto-check completed or manual check completed)
+      shiny::tags$div(
+        class = "text-success",
+        "Atlas data is up to date."
+      )
     })
 
 
