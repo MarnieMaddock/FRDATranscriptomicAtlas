@@ -50,12 +50,14 @@ GSEAMainUI <- function(id) {
 }
 
 
+
 # R/modules/goGSEA_module.R
 # -------------------------
 # Server for GSEA (CSV/RDS-on-disk, on-demand)
 GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
 
     # --- maps (tx2gene) ---
     tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
@@ -106,6 +108,7 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     requireNamespace("ggplot2", quietly = TRUE)
     requireNamespace("svglite", quietly = TRUE)
     requireNamespace("enrichplot", quietly = TRUE)
+
 
     `%||%` <- function(x,y) if (is.null(x) || (is.character(x) && !nzchar(x))) y else x
 

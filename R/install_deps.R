@@ -30,7 +30,7 @@ install_deps <- function(update = FALSE, ask = FALSE, extras = FALSE) {
   cran_install_if_missing("BiocManager")
 
   # Bioconductor deps you need for the app features
-  bioc_pkgs <- c("SummarizedExperiment", "ComplexHeatmap", "DESeq2")
+  bioc_pkgs <- c("SummarizedExperiment", "ComplexHeatmap", "DESeq2", "DOSE", "enrichplot")
 
   missing_bioc <- bioc_pkgs[!vapply(bioc_pkgs, requireNamespace, logical(1), quietly = TRUE)]
   if (length(missing_bioc)) {
