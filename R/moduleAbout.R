@@ -18,7 +18,7 @@ aboutUI <- function(id,
       h2(title, class = "mb-3"),
       uiOutput(ns("pkg_version")),
       uiOutput(ns("data_updates")),
-      actionButton(ns("check_updates"), "Check for data updates"),
+      actionButton(ns("check_updates"), "Check for new datasets"),
 
       p(
         "The Friedreich's Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny application ",

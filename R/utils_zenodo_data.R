@@ -8,13 +8,11 @@ download_with_retry <- function(url, destfile, md5 = NA_character_, retries = 5)
   has_libcurl <- isTRUE(capabilities("libcurl"))
   method <- if (has_libcurl) "libcurl" else "auto"
 
-
   md5_ok <- function(path, expected) {
     if (!is.character(expected) || !nzchar(expected) || is.na(expected)) return(TRUE)
     got <- tools::md5sum(path)
     identical(tolower(unname(got)), tolower(expected))
   }
-
 
   for (i in seq_len(retries)) {
 
@@ -52,7 +50,9 @@ download_with_retry <- function(url, destfile, md5 = NA_character_, retries = 5)
 }
 
 
-#Ensure FRDA atlas data are available locally (with progress bar + global banner)
+#' Ensure FRDA atlas data are available locally (with progress bar + global banner)
+#' @keywords internal
+#' @noRd
 ensure_atlas_data <- function(
     keys,
     package = "FRDATranscriptomicAtlas"
@@ -69,23 +69,59 @@ ensure_atlas_data <- function(
 
   manifest <- utils::read.csv(manifest_path, stringsAsFactors = FALSE)
 
+  # Require expected columns (prevents mysterious failures)
+  req_cols <- c("key", "description", "url", "local_dir", "md5", "version")
+  miss_cols <- setdiff(req_cols, names(manifest))
+  if (length(miss_cols)) {
+    stop("Manifest missing columns: ", paste(miss_cols, collapse = ", "), call. = FALSE)
+  }
+
   rows <- manifest[manifest$key %in% keys, , drop = FALSE]
   if (!nrow(rows)) {
-    stop("No matching data keys in manifest: ", paste(keys, collapse = ", "))
+    stop("No matching data keys in manifest: ", paste(keys, collapse = ", "), call. = FALSE)
   }
-  rows0 <- rows  # <--- keep original requested rows
+  rows0 <- rows  # keep original requested rows
+
   cache_root <- tools::R_user_dir(package, which = "cache")
   dir.create(cache_root, recursive = TRUE, showWarnings = FALSE)
 
-  # Determine which datasets need downloading
-  needs_download <- function(target_dir, key) {
+  # Determine which datasets need downloading (version/md5-aware marker)
+  needs_download <- function(target_dir, key, md5, version) {
+
+    marker <- file.path(target_dir, paste0(".", key, ".complete"))
+
+    # No directory → must download
     if (!dir.exists(target_dir)) return(TRUE)
-    !file.exists(file.path(target_dir, paste0(".", key, ".complete")))
+
+    # No marker → must download
+    if (!file.exists(marker)) return(TRUE)
+
+    # Read marker
+    txt <- tryCatch(readLines(marker, warn = FALSE), error = function(e) character())
+
+    stored_version <- sub("^version=", "", txt[grepl("^version=", txt)])
+    stored_md5     <- sub("^md5=", "", txt[grepl("^md5=", txt)])
+
+    # Malformed marker => refresh
+    if (!length(stored_version) || !length(stored_md5)) return(TRUE)
+
+    # If version differs → update
+    if (!is.na(version) && nzchar(version) && stored_version != version) return(TRUE)
+
+    # If md5 differs → update
+    if (!is.na(md5) && nzchar(md5) && tolower(stored_md5) != tolower(md5)) return(TRUE)
+
+    FALSE
   }
 
   need_download <- vapply(
     seq_len(nrow(rows)),
-    function(i) needs_download(file.path(cache_root, rows$local_dir[i]), rows$key[i]),
+    function(i) needs_download(
+      file.path(cache_root, rows$local_dir[i]),
+      rows$key[i],
+      rows$md5[i],
+      rows$version[i]
+    ),
     logical(1)
   )
 
@@ -94,8 +130,6 @@ ensure_atlas_data <- function(
   if (!nrow(rows)) {
     return(invisible(TRUE))
   }
-
-  downloaded_any <- FALSE
 
   # ---- SHOW DOWNLOAD BANNER --------------------------------------------
   if (shiny::isRunning()) {
@@ -130,24 +164,25 @@ ensure_atlas_data <- function(
         )
 
         zip_path <- file.path(cache_root, basename(row$url))
+
         # download + checksum validate
         download_with_retry(
           url      = row$url,
           destfile = zip_path,
-          md5   = if ("md5" %in% names(row)) row$md5 else NA_character_
+          md5      = row$md5
         )
 
-
         target_dir <- file.path(cache_root, row$local_dir)
+
+        # --- Option 1: full replacement on update/install ---
+        if (dir.exists(target_dir)) {
+          unlink(target_dir, recursive = TRUE, force = TRUE)
+        }
         dir.create(target_dir, recursive = TRUE, showWarnings = FALSE)
 
+        # unzip into target_dir (robust across zip layouts + OS)
         utils::unzip(zip_path, exdir = target_dir)
         unlink(zip_path)
-
-        # Validate that something was extracted
-        if (!length(list.files(target_dir, recursive = TRUE, all.files = FALSE))) {
-          stop("Unzip completed but no files were extracted into: ", target_dir, call. = FALSE)
-        }
 
         # If the zip contains a single top-level folder, flatten it (avoids tpm/tpm nesting)
         subdirs <- list.dirs(target_dir, recursive = FALSE, full.names = TRUE)
@@ -160,17 +195,26 @@ ensure_atlas_data <- function(
           unlink(nested, recursive = TRUE, force = TRUE)
         }
 
+        # Validate that something was extracted
+        if (!length(list.files(target_dir, recursive = TRUE, all.files = FALSE))) {
+          stop("Unzip completed but no files were extracted into: ", target_dir, call. = FALSE)
+        }
 
-        # mark as complete ONLY after successful unzip + directory exists
-        file.create(file.path(target_dir, paste0(".", row$key, ".complete")))
+        # mark as complete ONLY after successful unzip
+        marker <- file.path(target_dir, paste0(".", row$key, ".complete"))
+        writeLines(
+          c(
+            paste0("version=", row$version),
+            paste0("md5=", row$md5)
+          ),
+          marker
+        )
 
         message(sprintf(
           "[Atlas] Finished %s -> %s",
           row$key,
           row$local_dir
         ))
-
-        downloaded_any <- TRUE
       }
     }
   )
@@ -180,13 +224,15 @@ ensure_atlas_data <- function(
     shiny::removeNotification("atlas-download")
   }
 
-  # ---- READY NOTIFICATION ----------------------------------------------
-  all_complete <- all(vapply(
+  # ---- READY NOTIFICATION (currentness-aware) --------------------------
+  all_complete <- all(!vapply(
     seq_len(nrow(rows0)),
-    function(i) {
-      td <- file.path(cache_root, rows0$local_dir[i])
-      file.exists(file.path(td, paste0(".", rows0$key[i], ".complete")))
-    },
+    function(i) needs_download(
+      file.path(cache_root, rows0$local_dir[i]),
+      rows0$key[i],
+      rows0$md5[i],
+      rows0$version[i]
+    ),
     logical(1)
   ))
 
@@ -201,6 +247,10 @@ ensure_atlas_data <- function(
   invisible(TRUE)
 }
 
+
+#' Check whether atlas data manifest indicates updates (GitHub vs installed)
+#' @keywords internal
+#' @noRd
 check_atlas_updates <- function(package = "FRDATranscriptomicAtlas") {
 
   local_path <- system.file("extdata", "atlas_data_manifest.csv", package = package)
@@ -231,7 +281,6 @@ check_atlas_updates <- function(package = "FRDATranscriptomicAtlas") {
   # "new key" = not present locally at all (no version & no md5 locally)
   is_new_key <- is.na(m$version_local) & is.na(m$md5_local)
 
-  # vectorised change detection
   version_changed_vec <- if (all(c("version_local", "version_remote") %in% names(m))) {
     !is.na(m$version_remote) & !is.na(m$version_local) & (m$version_remote != m$version_local)
   } else rep(FALSE, nrow(m))
