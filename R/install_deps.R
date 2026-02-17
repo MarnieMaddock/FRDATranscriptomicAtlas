@@ -8,7 +8,7 @@
 #' @param ask Logical; passed to BiocManager::install(). Default FALSE.
 #' @return Invisibly returns TRUE when complete.
 #' @export
-install_deps <- function(update = FALSE, ask = FALSE, extras = FALSE) {
+install_deps <- function(update = FALSE, ask = FALSE) {
 
   # CRAN helper
   cran_install_if_missing <- function(pkgs, quiet_fail = FALSE) {

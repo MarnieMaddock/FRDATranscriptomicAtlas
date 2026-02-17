@@ -186,7 +186,7 @@ aboutServer <- function(id, package_name = "FRDATranscriptomicAtlas") {
         # Show key + description when available
         has_desc <- "description" %in% names(up) && any(nzchar(up$description))
         if (has_desc) {
-          items <- paste0(up$key, " — ", up$description)
+          items <- paste0(up$key, " - ", up$description)
           return(shiny::tags$div(
             class = "text-warning",
             shiny::tags$strong("Atlas data updates available:"),
