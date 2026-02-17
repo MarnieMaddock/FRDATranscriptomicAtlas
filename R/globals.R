@@ -48,6 +48,10 @@ utils::globalVariables(c(
   "feature", "level", "path", "n", "n_studies", "score",
   "p_str", "desc", "up", "down",
 
+  # gene Query
+  "found", "dataset_id",
+
+
   # --- app-level objects ---
   "PRETTY_MAP_LOCAL", "check_atlas_updates", "cran_install_if_missing"
 ))

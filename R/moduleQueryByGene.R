@@ -198,7 +198,7 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
 
 
 
-    # ---- pick the “most permissive” file for each dataset/level ----
+    # ---- pick the most permissive file for each dataset/level ----
     # If p in filename corresponds to a pre-filter, we want the largest p (least strict).
     file_for_dataset <- function(dataset_id, lvl) {
       m <- manifest()
@@ -271,7 +271,7 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
             query_symbol <- tx_map$symbol[match(query_id, tx_map$transcript_id)]
           }
         } else {
-          # treat as symbol (returns many transcripts; we can’t guess one)
+          # treat as symbol (returns many transcripts; we cant guess one)
           query_symbol <- q_raw
         }
       }
@@ -421,7 +421,7 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
         ) |>
         dplyr::mutate(
           `Present in dataset`    = found,
-          `FDR ≤ threshold`       = pass_p,
+          `FDR <= threshold`       = pass_p,
           `Meets log2FC filter`   = pass_dir,
           `Meets all filters`     = meets_threshold
         ) |>
