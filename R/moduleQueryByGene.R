@@ -110,6 +110,17 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
     `%||%` <- function(a, b) if (is.null(a)) b else a
     norm_id <- function(x) sub("\\.\\d+$", "", as.character(x))
 
+    # ---- notify-once helper (prevents repeated popups) ----
+    last_notice_key <- shiny::reactiveVal(NULL)
+
+    notify_once <- function(key, msg, type = "error", duration = 5) {
+      if (!identical(last_notice_key(), key)) {
+        last_notice_key(key)
+        shiny::showNotification(msg, type = type, duration = duration)
+      }
+    }
+
+
     # ---- ensure cached data ----
     ensure_atlas_data(
       keys    = c("deg_genes", "deg_transcripts"),
@@ -378,6 +389,26 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
 
       out <- dplyr::bind_rows(rows)
 
+      # If nothing was found in any dataset, notify and return an empty table
+      if (!nrow(out) || !any(out$found %in% TRUE)) {
+        notice_key <- paste0(
+          "notfound|", lvl, "|", q_raw, "|", paste(sort(input$datasets), collapse = ",")
+        )
+        notify_once(
+          notice_key,
+          sprintf("Warning - Query '%s' was not found in the selected datasets.", q_raw),
+          type = "error",
+          duration = 5
+        )
+
+        # Return a clean empty tibble with consistent columns (optional but recommended)
+        return(tibble::tibble(
+          dataset = character(),
+          query   = character(),
+          `Present in dataset` = logical()
+        ))
+      }
+
       # ---- highlight rules (optional) ----
       thr     <- suppressWarnings(as.numeric(input$p_filter_mode))
       lfc_min <- input$lfc_min %||% 0
@@ -437,12 +468,13 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
       out <- dplyr::relocate(out, dplyr::all_of(keep_first), .before = dplyr::everything())
 
       # round numeric columns (except pvalue/padj)
+      num_cols <- names(out)[vapply(out, is.numeric, logical(1))]
+      exclude  <- intersect(num_cols, c("pvalue", "padj"))
+      round_these <- setdiff(num_cols, exclude)
+
       out <- out |>
         dplyr::mutate(
-          dplyr::across(
-            .cols = dplyr::where(is.numeric) & !c(pvalue, padj),
-            ~ round(.x, 4)
-          )
+          dplyr::across(dplyr::all_of(round_these), ~ round(.x, 4))
         )
 
       out

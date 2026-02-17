@@ -110,6 +110,21 @@ tpmHeatmapServer <- function(
       )
     })
 
+    .use_ragg_bitmap <- function() {
+      if (!requireNamespace("ragg", quietly = TRUE)) return(invisible(FALSE))
+
+      # This controls what grDevices::png()/jpeg()/tiff()/bmp use internally.
+      # It also affects a lot of packages that ask for a "png" device.
+      options(bitmapType = "agg")
+
+      # Optionally: if you ever call png(type=...) explicitly elsewhere,
+      # remove that and let bitmapType control it.
+      invisible(TRUE)
+    }
+
+    .use_ragg_bitmap()
+
+
     # ---------------- helpers ----------------
     # -------- Pretty map (internal default) --------
     pretty_map  <- c(
@@ -705,80 +720,110 @@ tpmHeatmapServer <- function(
     .last_ht <- reactiveVal(NULL)
 
     # ---------------- render plot ----------------
-    output$heatmap_plot <- renderPlot({
-      mat  <- unified_matrix()
-      .auto_downshift(mat)
-      dims <- plot_dims()
-
-      ann_df <- {
-        ds_id <- dataset_from_sample(colnames(mat), input$datasets)
-        grp   <- vapply(colnames(mat), group_from_name, character(1))
-        data.frame(Dataset = ds_id,
-                   Group = factor(grp, levels = c("CTRL","FRDA")),
-                   row.names = colnames(mat), check.names = FALSE)
+    .pick_plot_device <- function() {
+      if (requireNamespace("ragg", quietly = TRUE)) {
+        return(ragg::agg_png)
       }
+      # Fallback: base png device (may still be OK on many systems, but on mac
+      # it can end up using cairo/X11 depending on build/config)
+      grDevices::png
+    }
 
-      ds_levels <- unique(ann_df$Dataset)
-      ds_pal <- stats::setNames(dataset_colors[seq_along(ds_levels) %% length(dataset_colors)],
-                         ds_levels)
+    .pick_raster_device_name <- function() {
+      if (requireNamespace("ragg", quietly = TRUE)) {
+        return("agg_png")  # ComplexHeatmap supports this if ragg is installed
+      }
+      "png"
+    }
 
-      present <- unique(as.character(ann_df$Group))
-      lvls <- intersect(c("CTRL", "FRDA"), present)
-      group_cols <- stats::setNames(c("#a9a9a9ff", "#333333ff")[match(lvls, c("CTRL","FRDA"))], lvls)
+    output$heatmap_plot <- renderPlot(
+      {
+        mat  <- unified_matrix()
+        .auto_downshift(mat)
+        dims <- plot_dims()
 
-      ha_top <- ComplexHeatmap::HeatmapAnnotation(
-        Dataset = ann_df$Dataset,
-        Group   = ann_df$Group,
-        col = list(Dataset = ds_pal, Group = group_cols),
-        annotation_legend_param = list(
-          Dataset = list(title = "Dataset"),
-          Group   = list(title = "Group")
+        ann_df <- {
+          ds_id <- dataset_from_sample(colnames(mat), input$datasets)
+          grp   <- vapply(colnames(mat), group_from_name, character(1))
+          data.frame(
+            Dataset = ds_id,
+            Group   = factor(grp, levels = c("CTRL","FRDA")),
+            row.names = colnames(mat),
+            check.names = FALSE
+          )
+        }
+
+        ds_levels <- unique(ann_df$Dataset)
+        ds_pal <- stats::setNames(
+          dataset_colors[seq_along(ds_levels) %% length(dataset_colors)],
+          ds_levels
         )
-      )
 
-      rng <- range(mat, na.rm = TRUE)
-      if (length(input$datasets) == 1) {
-        col_fun <- circlize::colorRamp2(c(rng[1], rng[2]), c("white", "#030058"))
-        legend_title <- if ((input$transform_mode %||% "log2p1") == "log2p1")
-          "log2(TPM+1)" else "Row Z-score"
-      } else {
-        col_fun <- circlize::colorRamp2(c(-3, 0, 3), c("#2166AC", "white", "#B2182B"))
-        legend_title <- "Z-score (VST)"
-      }
+        present <- unique(as.character(ann_df$Group))
+        lvls <- intersect(c("CTRL", "FRDA"), present)
+        group_cols <- stats::setNames(
+          c("#a9a9a9ff", "#333333ff")[match(lvls, c("CTRL","FRDA"))],
+          lvls
+        )
 
-      cl_rows <- isTRUE(input$cluster_rows)
-      cl_cols <- isTRUE(input$cluster_cols)
+        ha_top <- ComplexHeatmap::HeatmapAnnotation(
+          Dataset = ann_df$Dataset,
+          Group   = ann_df$Group,
+          col = list(Dataset = ds_pal, Group = group_cols),
+          annotation_legend_param = list(
+            Dataset = list(title = "Dataset"),
+            Group   = list(title = "Group")
+          )
+        )
 
-      ht <- ComplexHeatmap::Heatmap(
-        mat,
-        name = legend_title,
-        col  = col_fun,
-        top_annotation = ha_top,
-        show_row_dend     = cl_rows,
-        show_column_dend  = cl_cols,
-        cluster_rows      = cl_rows,
-        cluster_columns   = cl_cols,
-        row_names_side    = "left",
-        column_names_side = "top",
-        show_row_names    = dims$show_row_names,
-        show_column_names = dims$show_col_names,
-        row_names_gp      = grid::gpar(fontsize = dims$row_cex),
-        column_names_gp   = grid::gpar(fontsize = dims$col_cex),
-        na_col            = "grey80",
-        border            = TRUE,
-        use_raster        = TRUE
-      )
+        rng <- range(mat, na.rm = TRUE)
+        if (length(input$datasets) == 1) {
+          col_fun <- circlize::colorRamp2(c(rng[1], rng[2]), c("white", "#030058"))
+          legend_title <- if ((input$transform_mode %||% "log2p1") == "log2p1") "log2(TPM+1)" else "Row Z-score"
+        } else {
+          col_fun <- circlize::colorRamp2(c(-3, 0, 3), c("#2166AC", "white", "#B2182B"))
+          legend_title <- "Z-score (VST)"
+        }
 
-      ComplexHeatmap::draw(
-        ht,
-        heatmap_legend_side    = "right",
-        annotation_legend_side = "right",
-        padding = grid::unit(c(6, 20, 20, 6), "mm")
-      )
+        cl_rows <- isTRUE(input$cluster_rows)
+        cl_cols <- isTRUE(input$cluster_cols)
 
-      .last_ht(ht)
-      gc()
-    }, res = 120)
+        ht <- ComplexHeatmap::Heatmap(
+          mat,
+          name = legend_title,
+          col  = col_fun,
+          top_annotation = ha_top,
+          show_row_dend     = cl_rows,
+          show_column_dend  = cl_cols,
+          cluster_rows      = cl_rows,
+          cluster_columns   = cl_cols,
+          row_names_side    = "left",
+          column_names_side = "top",
+          show_row_names    = dims$show_row_names,
+          show_column_names = dims$show_col_names,
+          row_names_gp      = grid::gpar(fontsize = dims$row_cex),
+          column_names_gp   = grid::gpar(fontsize = dims$col_cex),
+          na_col            = "grey80",
+          border            = TRUE,
+
+          # ---- critical for XQuartz-free macOS ----
+          use_raster    = TRUE,
+          raster_device = .pick_raster_device_name()
+        )
+
+        ComplexHeatmap::draw(
+          ht,
+          heatmap_legend_side    = "right",
+          annotation_legend_side = "right",
+          padding = grid::unit(c(6, 20, 20, 6), "mm")
+        )
+
+        .last_ht(ht)
+        gc()
+      },
+      res = 120
+    )
+
 
     output$heatmap_ui <- renderUI({
       dims <- plot_dims()
