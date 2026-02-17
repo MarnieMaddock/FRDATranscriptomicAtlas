@@ -66,6 +66,9 @@ app_ui <- function() {
         conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.2",
                          degVennUI("deg_venn")
         ),
+        conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.3",
+                         queryGeneAcrossDatasetsSidebarUI("gene_query")
+        ),
         conditionalPanel(
           condition = "input.tabselected == 3",
           volcanoSidebarUI("volc", pretty_map = pretty_map)
@@ -135,7 +138,11 @@ app_ui <- function() {
                      tabPanel("Compare Datasets",
                               value = 2.2,
                               degVennMainUI("deg_venn")
-                              )
+                              ),
+                     tabPanel("Query Gene Across Datasets",
+                              value = 2.3,
+                              queryGeneAcrossDatasetsMainUI("gene_query")
+                    )
                    )
           ),
           tabPanel("Volcano Plots", value = 3,

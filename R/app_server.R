@@ -40,6 +40,7 @@ app_server <- function(input, output, session) {
   biomarkerServer("biomarkers")
   degTablesServer("deg_tables", pkg = pkg)
   degVennServer("deg_venn", pkg = pkg)
+  queryGeneAcrossDatasetsServer("gene_query")
   pcaServer("pca")
   isoformConfidenceServer("isoform_confidence")
 
