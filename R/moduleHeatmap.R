@@ -110,19 +110,6 @@ tpmHeatmapServer <- function(
       )
     })
 
-    .use_ragg_bitmap <- function() {
-      if (!requireNamespace("ragg", quietly = TRUE)) return(invisible(FALSE))
-
-      # This controls what grDevices::png()/jpeg()/tiff()/bmp use internally.
-      # It also affects a lot of packages that ask for a "png" device.
-      options(bitmapType = "agg")
-
-      # Optionally: if you ever call png(type=...) explicitly elsewhere,
-      # remove that and let bitmapType control it.
-      invisible(TRUE)
-    }
-
-    .use_ragg_bitmap()
 
 
     # ---------------- helpers ----------------
