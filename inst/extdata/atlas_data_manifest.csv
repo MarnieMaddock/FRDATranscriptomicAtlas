@@ -1,5 +1,5 @@
 key,description,url,local_dir,md5,version
-tpm_gene,Gene-level TPM matrices,https://zenodo.org/record/18476851/files/tpm_gene.zip,tpm,3e018eaa80a3c2247697c693dec98e78,0.0.0.9025
+tpm_gene,Gene-level TPM matrices,https://zenodo.org/records/18476851/files/tpm_gene.zip,tpm,3e018eaa80a3c2247697c693dec98e78,0.0.0.9025
 deg_genes,DEG gene-level results (DESeq2),https://zenodo.org/records/18476851/files/deg_genes.zip,genes,209ded1e5ded4ab21d82bd7932a20dbd,0.0.0.9025
 biomarker,Biomarker baseline DEG summary,https://zenodo.org/records/18476851/files/biomarker.zip,biomarker,973251df55be478d9fade341a3db99f5,0.0.0.9025
 deg_transcripts,Transcript-level DESeq2 results,https://zenodo.org/records/18476851/files/deg_transcripts.zip,txs,8db6d31216d01d227c6039322a7210df,0.0.0.9025

@@ -138,13 +138,28 @@ ensure_atlas_data <- function(
         )
 
 
-        utils::unzip(zip_path, exdir = cache_root)
+        target_dir <- file.path(cache_root, row$local_dir)
+        dir.create(target_dir, recursive = TRUE, showWarnings = FALSE)
+
+        utils::unzip(zip_path, exdir = target_dir)
         unlink(zip_path)
 
-        target_dir <- file.path(cache_root, row$local_dir)
-        if (!dir.exists(target_dir)) {
-          stop("Expected data directory not created: ", target_dir)
+        # Validate that something was extracted
+        if (!length(list.files(target_dir, recursive = TRUE, all.files = FALSE))) {
+          stop("Unzip completed but no files were extracted into: ", target_dir, call. = FALSE)
         }
+
+        # If the zip contains a single top-level folder, flatten it (avoids tpm/tpm nesting)
+        subdirs <- list.dirs(target_dir, recursive = FALSE, full.names = TRUE)
+        top_files <- list.files(target_dir, recursive = FALSE, all.files = FALSE)
+
+        if (length(subdirs) == 1 && length(top_files) == 0) {
+          nested <- subdirs[1]
+          moved <- file.path(nested, list.files(nested, full.names = FALSE))
+          file.rename(moved, file.path(target_dir, basename(moved)))
+          unlink(nested, recursive = TRUE, force = TRUE)
+        }
+
 
         # mark as complete ONLY after successful unzip + directory exists
         file.create(file.path(target_dir, paste0(".", row$key, ".complete")))
