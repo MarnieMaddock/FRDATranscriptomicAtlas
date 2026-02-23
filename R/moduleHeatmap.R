@@ -484,12 +484,29 @@ tpmHeatmapServer <- function(
     # ---------------- build matrix ----------------
     unified_matrix <- reactive({
       req(input$datasets)
+      level <- input$feature_level %||% "genes"
       order_mode <- input$column_order
 
       q <- parse_feature_query(input$feature_query)
-      validate(need(length(q) > 0, "Enter at least one gene symbol or gene ID."))
+      all_available_ids <- unique(unlist(lapply(input$datasets, function(ds) {
+        df <- load_one_tpm(ds, level = level)
+        c(df$gene_id, df$gene_name)
+      })))
 
-      level <- input$feature_level %||% "genes"
+      missing <- setdiff(toupper(q), toupper(all_available_ids))
+
+      if (length(missing) > 0) {
+        shiny::showNotification(
+          sprintf(
+            "Warning – The following genes were not found: %s",
+            paste(missing, collapse = ", ")
+          ),
+          type = "warning",
+          duration = 5
+        )
+      }
+
+
 
       # ---- SINGLE DATASET: TPM mode (original behaviour) ----
       if (length(input$datasets) == 1) {
@@ -513,7 +530,17 @@ tpmHeatmapServer <- function(
         keep_rows <- by_id | by_sym
 
         sub <- df[keep_rows, c(id_col, if (has_name) name_col, sc), drop = FALSE]
-        validate(need(nrow(sub) > 0, "No matching genes in this dataset."))
+        if (nrow(sub) == 0) {
+          shiny::showNotification(
+            sprintf(
+              "Warning – None of the entered features were found in dataset '%s'.",
+              pretty_map[ds] %||% ds
+            ),
+            type = "error",
+            duration = 5
+          )
+          validate("No matching genes in this dataset.")
+        }
 
         key <- if (has_name) {
           ifelse(nzchar(sub[[name_col]]),
@@ -645,8 +672,16 @@ tpmHeatmapServer <- function(
         }
 
       }
-      validate(need(length(long_list) > 0,
-                    "No matching genes/samples for the current filters."))
+      if (length(long_list) == 0) {
+        shiny::showNotification(
+          sprintf(
+            "Warning – None of the entered features were found in the selected datasets."
+          ),
+          type = "error",
+          duration = 5
+        )
+        validate("No matching genes/samples for the current filters.")
+      }
 
       all_long <- dplyr::bind_rows(long_list)
       all_long$feature <- factor(all_long$feature, levels = all_keys)
