@@ -30,5 +30,5 @@ page-layout: full     # optional: no side gutters
 License Authors retain copyright and release the FRDA Transcriptomic Atlas Handbook work under a Creative Commons Attribution 4.0 International License (CC BY 4.0). The accompanying software code is licensed under the [MIT License](https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/blob/main/LICENSE.md). Please refer to the [LICENSE](https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/blob/main/LICENSE.md) file included with the code for the full terms.
 
 
-![](images/footer.svg){width=700px .center}
+![](images/footer.svg){width=950px .center}
 :::
