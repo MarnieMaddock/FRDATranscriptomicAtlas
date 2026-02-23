@@ -28,8 +28,10 @@ tpmHeatmapSidebarUI <- function(id) {
       choices = c("Both" = "both", "CTRL only" = "ctrl", "FRDA only" = "frda"),
       selected = "both"
     ),
-    checkboxInput(ns("cluster_rows"), "Cluster rows", value = TRUE),
-    checkboxInput(ns("cluster_cols"), "Cluster columns", value = TRUE),
+    shiny::fluidRow(
+      shiny::column(6, shiny::checkboxInput(ns("cluster_rows"), "Cluster rows", value = TRUE)),
+      shiny::column(6, shiny::checkboxInput(ns("cluster_cols"), "Cluster columns", value = TRUE))
+    ),
     conditionalPanel(
       condition = sprintf("!input['%s'] && input['%s'].length > 1",
                           ns("cluster_cols"), ns("datasets")),
@@ -44,9 +46,16 @@ tpmHeatmapSidebarUI <- function(id) {
       )
     ),
     br(),
-    downloadButton(ns("dl_svg"), "Download SVG"),
-    downloadButton(ns("dl_png"), "Download PNG"),
-    uiOutput(ns("plot_notes"))
+    shiny::downloadButton(ns("dl_svg"), "Download SVG"),
+    shiny::downloadButton(ns("dl_png"), "Download PNG"),
+        shiny::h4("Export size"),
+        shiny::fluidRow(
+          shiny::column(4, shiny::numericInput(ns("export_w_cm"), "Width (cm)",  value = 20, min = 5, max = 200, step = 1)),
+          shiny::column(4, shiny::numericInput(ns("export_h_cm"), "Height (cm)", value = 20, min = 5, max = 200, step = 1)),
+          shiny::column(4, shiny::numericInput(ns("export_dpi"), "PNG DPI", value = 300, min = 72, max = 600, step = 25))
+        ),
+    shiny::hr(),
+    shiny::uiOutput(ns("plot_notes"))
   )
 }
 
@@ -687,15 +696,19 @@ tpmHeatmapServer <- function(
     # Dynamically size the graphics device by matrix dimensions
     plot_dims <- reactive({
       mat <- unified_matrix()
-      nr <- nrow(mat); nc <- ncol(mat)
+      nr <- nrow(mat)
+      nc <- ncol(mat)
 
       cell_h_pt <- 16
+      cell_w_pt <- 16
       extra_pad <- if (nr < 30) 700 else if (nr < 60) 800 else if (nr > 100) 1200 else 1000
+      extra_w_pad <- 450  # <- add this (space for legends / margins)
 
       list(
         dev_h_px = max(500, round(nr * (cell_h_pt * 96/72)) + extra_pad),
-        dev_w_px = NULL,
+        dev_w_px = max(900, round(nc * (cell_w_pt * 96/72)) + extra_w_pad),
         cell_h_pt = cell_h_pt,
+        cell_w_pt = cell_w_pt,
         show_row_names = nr <= 120,
         show_col_names = nc <= 120,
         row_cex = if (nr <= 80) 10 else if (nr <= 150) 8 else 6,
@@ -815,9 +828,15 @@ tpmHeatmapServer <- function(
     output$heatmap_ui <- renderUI({
       dims <- plot_dims()
       h_px <- paste0(round(dims$dev_h_px), "px")
+      w_px <- paste0(round(dims$dev_w_px), "px")
       div(
-        style = "overflow: visible;",
-        plotOutput(ns("heatmap_plot"), height = h_px, width = "100%")
+        style = paste(
+          "max-width: 100%;",
+          "overflow-x: auto;",   # <- horizontal scroll
+          "overflow-y: visible;",
+          "padding-bottom: 8px;"
+        ),
+        plotOutput(ns("heatmap_plot"), height = h_px, width = w_px)
       )
     })
 
@@ -844,16 +863,42 @@ tpmHeatmapServer <- function(
       }
     })
 
+    .cm_to_in <- function(cm) cm / 2.54
+    .cm_to_px <- function(cm, dpi) as.integer(round((cm / 2.54) * dpi))
+
+    .export_dims <- reactive({
+      # fallback to something sensible if user leaves blank
+      w_cm <- input$export_w_cm %||% 20
+      h_cm <- input$export_h_cm %||% 20
+      dpi  <- input$export_dpi  %||% 300
+
+      # basic validation
+      validate(
+        need(is.finite(w_cm) && w_cm > 0, "Export width must be > 0."),
+        need(is.finite(h_cm) && h_cm > 0, "Export height must be > 0."),
+        need(is.finite(dpi)  && dpi  >= 72, "DPI must be >= 72.")
+      )
+
+      # convert
+      list(
+        w_in = .cm_to_in(w_cm),
+        h_in = .cm_to_in(h_cm),
+        w_px = .cm_to_px(w_cm, dpi),
+        h_px = .cm_to_px(h_cm, dpi),
+        dpi  = dpi
+      )
+    })
 
     # ---------------- downloads ----------------
     output$dl_svg <- downloadHandler(
       filename = function() paste0("heatmap_", Sys.Date(), ".svg"),
       content = function(file) {
-        dims <- plot_dims()
-        w_in <- (session$clientData[[paste0("output_", ns("heatmap_plot"), "_width")]] %||% 1000) / 96
-        h_in <- (dims$dev_h_px %||% 800) / 96
-        svglite::svglite(file, width = w_in, height = h_in)
+
+        ed <- .export_dims()
+        svglite::svglite(file, width = ed$w_in, height = ed$h_in)
         on.exit(grDevices::dev.off(), add = TRUE)
+
+        # IMPORTANT: ideally rebuild heatmap for download (see note below)
         ComplexHeatmap::draw(
           .last_ht(),
           heatmap_legend_side    = "right",
@@ -866,11 +911,29 @@ tpmHeatmapServer <- function(
     output$dl_png <- downloadHandler(
       filename = function() paste0("heatmap_", Sys.Date(), ".png"),
       content = function(file) {
-        dims <- plot_dims()
-        w_px <- session$clientData[[paste0("output_", ns("heatmap_plot"), "_width")]] %||% 1000
-        h_px <- dims$dev_h_px %||% 800
-        ragg::agg_png(file, width = w_px, height = h_px, units = "px", res = 150)
+
+        ed <- .export_dims()  # must return w_px, h_px, dpi
+
+        if (requireNamespace("ragg", quietly = TRUE)) {
+          ragg::agg_png(
+            filename = file,
+            width    = ed$w_px,
+            height   = ed$h_px,
+            units    = "px",
+            res      = ed$dpi
+          )
+        } else {
+          grDevices::png(
+            filename = file,
+            width    = ed$w_px,
+            height   = ed$h_px,
+            units    = "px",
+            res      = ed$dpi,
+            type     = "cairo-png"
+          )
+        }
         on.exit(grDevices::dev.off(), add = TRUE)
+
         ComplexHeatmap::draw(
           .last_ht(),
           heatmap_legend_side    = "right",
@@ -879,6 +942,23 @@ tpmHeatmapServer <- function(
         )
       }
     )
+
+    # output$dl_png <- downloadHandler(
+    #   filename = function() paste0("heatmap_", Sys.Date(), ".png"),
+    #   content = function(file) {
+    #     dims <- plot_dims()
+    #     w_px  <- (dims$dev_w_px %||% 20000)
+    #     h_px  <- (dims$dev_h_px %||% 10000)
+    #     ragg::agg_png(file, width = w_px, height = h_px, units = "px", res = 300)
+    #     on.exit(grDevices::dev.off(), add = TRUE)
+    #     ComplexHeatmap::draw(
+    #       .last_ht(),
+    #       heatmap_legend_side    = "right",
+    #       annotation_legend_side = "right",
+    #       padding = grid::unit(c(6,10,16,6), "mm")
+    #     )
+    #   }
+    # )
 
     magick_ok <- requireNamespace("magick", quietly = TRUE)
     if (magick_ok) {
