@@ -9,6 +9,8 @@ GSEASidebarUI <- function(id) {
     selectInput(ns("dataset"), "Dataset", choices = NULL),
     radioButtons(ns("ont"), "Ontology",
                  choices = c("BP", "CC", "MF"), inline = TRUE),
+    helpText("BP - Biological Processes; CC - Cellular Components; MF - Molecular Functions"),
+    br(),
     sliderInput(ns("ncat"), "Show top categories",
                 min = 2, max = 500, value = 10, step = 1),
     tags$hr(),
