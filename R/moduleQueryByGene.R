@@ -34,7 +34,7 @@ queryGeneAcrossDatasetsSidebarUI <- function(id) {
 
     shiny::textInput(
       ns("gene_query"),
-      label = "Gene / ID (symbol or Ensembl ID)",
+      label = "Enter One Gene / ID (symbol or Ensembl ID)",
       value = "",
       placeholder = "e.g., FXN or ENSG00000165060 (or ENST... if transcripts)"
     ),
@@ -42,39 +42,59 @@ queryGeneAcrossDatasetsSidebarUI <- function(id) {
 
     shiny::hr(),
 
-    shiny::radioButtons(
-      ns("p_filter_mode"),
-      "Adjusted P-value Threshold (for highlighting)",
-      inline = FALSE,
-      choiceNames = list(
-        "None",
-        shiny::HTML("&le; 0.10"),
-        shiny::HTML("&le; 0.05"),
-        shiny::HTML("&le; 0.01"),
-        shiny::HTML("&le; 0.001")
-      ),
-      choiceValues = list(
-        NA,
-        0.10,
-        0.05,
-        0.01,
-        0.001
-      ),
-      selected = 0.05
-    ),
+    shiny::fluidRow(
 
-    shiny::numericInput(
-      ns("lfc_min"),
-      label = "Minimum |log2FC| (for highlighting)",
-      value = 0, min = 0, max = 10, step = 0.1
-    ),
+      shiny::column(
+        width = 4,
+        shiny::radioButtons(
+          ns("p_filter_mode"),
+          "Adjusted P-value Threshold",
+          inline = FALSE,
+          choiceNames = list(
+            "None",
+            shiny::HTML("&le; 0.10"),
+            shiny::HTML("&le; 0.05"),
+            shiny::HTML("&le; 0.01"),
+            shiny::HTML("&le; 0.001")
+          ),
+          choiceValues = list(
+            NA,
+            0.10,
+            0.05,
+            0.01,
+            0.001
+          ),
+          selected = 0.05
+        )
+      ),
 
-    shiny::radioButtons(
-      ns("direction"),
-      label = "Direction (for highlighting)",
-      inline = TRUE,
-      choices = c("Both" = "both", "Up" = "up", "Down" = "down"),
-      selected = "both"
+      shiny::column(
+        width = 3,
+        shiny::numericInput(
+          ns("lfc_min"),
+          label = "Minimum |log2FC|",
+          value = 0,
+          min = 0,
+          max = 10,
+          step = 0.1
+        )
+      ),
+
+      shiny::column(
+        width = 5,
+        shiny::radioButtons(
+          ns("direction"),
+          label = "Direction",
+          inline = TRUE,
+          choices = c(
+            "Both" = "both",
+            "Up"   = "up",
+            "Down" = "down"
+          ),
+          selected = "both"
+        )
+      )
+
     ),
 
     shiny::strong("Download"),
@@ -198,16 +218,37 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
       labs <- pretty_map[avail]
       labs[is.na(labs)] <- avail[is.na(labs)]
 
+      shiny::tagList(
+        shiny::div(
+          style = "display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;",
+          shiny::actionButton(session$ns("datasets_all"),   "Select all"),
+          shiny::actionButton(session$ns("datasets_none"),  "Clear")
+        ),
       shiny::checkboxGroupInput(
         session$ns("datasets"),
         label   = "Datasets (select multiple)",
         choices = stats::setNames(avail, labs),
         selected = intersect(input$datasets %||% character(0), avail)
       )
+      )
     })
 
 
+    observeEvent(input$datasets_all, {
+      m   <- manifest()
+      lvl <- input$feature_level %||% "genes"
+      avail <- sort(unique(m$dataset[m$level == lvl]))
 
+      updateCheckboxGroupInput(
+        session,
+        "datasets",
+        selected = avail
+      )
+    })
+
+    observeEvent(input$datasets_none, {
+      updateCheckboxGroupInput(session, "datasets", selected = character(0))
+    })
 
     # ---- pick the most permissive file for each dataset/level ----
     # If p in filename corresponds to a pre-filter, we want the largest p (least strict).
