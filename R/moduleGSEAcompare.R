@@ -34,11 +34,19 @@ gseaCompareUI <- function(id) {
       ),
       column(
         width = 8,
+        div(
+          style = "display:flex; gap:8px; margin-bottom:8px;",
+          actionButton(ns("gsea_all"),  "Select all",  class = "btn btn-sm btn-default"),
+          actionButton(ns("gsea_none"), "Clear",       class = "btn btn-sm btn-default")
+        ),
+
+        # --- CHECKBOX GROUP ---
         checkboxGroupInput(
           ns("gsea_datasets"),
           label = "Datasets (select any number)",
           choices = character(0)
         ),
+
         div(class = "alert alert-info", uiOutput(ns("gsea_selection_info")))
       )
     )
@@ -407,6 +415,18 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
         shinyjs::toggleState(ns("dl_gsea_venn_svg"), condition = have_plot)
         shinyjs::toggleState(ns("dl_gsea_venn_png"), condition = have_plot)
       }
+    })
+
+    observeEvent(input$gsea_none, {
+      updateCheckboxGroupInput(session, "gsea_datasets", selected = character(0))
+    })
+
+    observeEvent(input$gsea_all, {
+      ids <- dataset_ids()
+      ids <- ids[!is.na(ids) & nzchar(ids)]
+      ids <- unique(ids)
+
+      updateCheckboxGroupInput(session, "gsea_datasets", selected = ids)
     })
 
     # ---- DT renders ----
