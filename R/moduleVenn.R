@@ -47,11 +47,18 @@ degVennUI <- function(id) {
       ),
       column(
         width = 8,
+        div(
+          style = "display:flex; gap:8px; margin-bottom:8px;",
+          actionButton(ns("datasets_all"),  "Select all", class = "btn btn-sm btn-default"),
+          actionButton(ns("datasets_none"), "Clear",      class = "btn btn-sm btn-default")
+        ),
+
         checkboxGroupInput(
           ns("datasets"),
           label = "Datasets (select any number)",
           choices = character(0)
         ),
+
         div(class = "alert alert-info", uiOutput(ns("selection_info")))
       )
     )
@@ -169,8 +176,23 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       labs <- pretty_map[avail]
       labs[is.na(labs)] <- avail[is.na(labs)]
       updateCheckboxGroupInput(session, "datasets",
-                               choices = stats::setNames(avail, labs))
+                               choices = stats::setNames(avail, labs),
+                               selected = intersect(input$datasets %||% character(0), avail))
     }, ignoreInit = FALSE)
+
+    # Select all (for current feature level)
+    observeEvent(input$datasets_all, {
+      m   <- manifest()
+      lvl <- input$feature_level %||% "genes"
+
+      avail <- sort(unique(m$dataset[m$level == lvl]))
+      updateCheckboxGroupInput(session, "datasets", selected = avail)
+    })
+
+    # Clear
+    observeEvent(input$datasets_none, {
+      updateCheckboxGroupInput(session, "datasets", selected = character(0))
+    })
 
     # --- helper: read + filter IDs ---
     # Return the filtered ID vector for one dataset (genes or transcripts)
@@ -390,7 +412,7 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       labs <- stringr::str_wrap(labs, width = 24)
       names(s) <- labs
       suppressWarnings(suppressMessages(
-      ggVennDiagram::ggVennDiagram(s, label = "count", label_size = 8, set_size = 10) +
+      ggVennDiagram::ggVennDiagram(s, label = "count", label_size = 8, set_size = 8) +
         ggplot2::scale_fill_gradient(low = "#ccdcda", high = "#005249") +
         ggplot2::theme_void(base_size = 30) +
         ggplot2::theme(legend.position = "right",
@@ -459,17 +481,33 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     observe({
       tbl <- overlaps_tbl()
       combos <- tbl$`Dataset Combination`
-      updateSelectInput(session, "combo_pick", choices = combos,
-                        selected = combos[[1]] %||% character(0))
+
+      # preserve current selection if still valid; else fall back to first
+      sel <- isolate(input$combo_pick)
+      if (is.null(sel) || !nzchar(sel) || !(sel %in% combos)) {
+        sel <- combos[[1]] %||% ""
+      }
+
+      updateSelectizeInput(
+        session,
+        "combo_pick",
+        choices  = combos,
+        selected = sel,
+        server   = TRUE
+      )
     })
 
-    # also react to row click in the overlaps DT
+    # react to row click in overlaps DT
     observeEvent(input$venn_overlaps_rows_selected, {
       idx <- input$venn_overlaps_rows_selected
       tbl <- overlaps_tbl()
       if (length(idx) && nrow(tbl) >= idx) {
-        updateSelectInput(session, "combo_pick",
-                          selected = tbl$`Dataset Combination`[idx])
+        updateSelectizeInput(
+          session,
+          "combo_pick",
+          selected = tbl$`Dataset Combination`[idx],
+          server   = TRUE
+        )
       }
     })
 
