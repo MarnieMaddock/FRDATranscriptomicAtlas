@@ -48,7 +48,7 @@ biomarkerUI <- function(id) {
     ),
     helpText("A gene is included only if it is significant in more than this number of datasets."),
     br(),
-    selectInput(
+    radioButtons(
       ns("alpha"),
       "Adjusted p-value threshold:",
       choices = c("0.10", "0.05", "0.01", "0.001"),
