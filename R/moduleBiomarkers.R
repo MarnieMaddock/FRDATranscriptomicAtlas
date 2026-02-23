@@ -5,10 +5,16 @@ biomarkerUI <- function(id) {
   ns <- NS(id)
   tagList(
     h4("Biomarker Discovery"),
+    div(
+      style = "display:flex; gap:8px; margin-bottom:8px;",
+      actionButton(ns("datasets_all"),  "Select all", class = "btn btn-sm btn-default"),
+      actionButton(ns("datasets_none"), "Clear",      class = "btn btn-sm btn-default")
+    ),
+
     checkboxGroupInput(
       ns("datasets"),
       label = "Datasets",
-      choices = character(0)   # populated dynamically
+      choices = character(0)
     ),
     br(),
     h4("Gene selection mode"),
@@ -37,7 +43,7 @@ biomarkerUI <- function(id) {
     sliderInput(
       ns("min_study_count"),
       "Dataset significance threshold:",
-      min = 1, max = 12,
+      min = 6, max = 12,
       value = 8, step = 1
     ),
     helpText("A gene is included only if it is significant in more than this number of datasets."),
@@ -52,7 +58,56 @@ biomarkerUI <- function(id) {
     helpText("Comma-separated gene symbols or Ensembl IDs. Leave blank to include all ranked genes."),
     br(),
     downloadButton(ns("download_data"), "Download Ranked Genes"),
-    downloadButton(ns("download_plot"), "Download Figure")
+    br(),
+    h4("Export Figure"),
+    fluidRow(
+      column(
+        width = 4,
+        numericInput(
+          ns("export_width"),
+          "Width (cm)",
+          value = 20,
+          min = 5,
+          max = 100,
+          step = 1
+        )
+      ),
+      column(
+        width = 4,
+        numericInput(
+          ns("export_height"),
+          "Height (cm)",
+          value = 20,
+          min = 5,
+          max = 100,
+          step = 1
+        )
+      ),
+      column(
+        width = 4,
+        numericInput(
+          ns("export_dpi"),
+          "PNG DPI",
+          value = 300,
+          min = 72,
+          max = 600,
+          step = 50
+        )
+      )
+    ),
+
+    br(),
+
+    fluidRow(
+      column(
+        width = 6,
+        downloadButton(ns("download_svg"), "Download SVG")
+      ),
+      column(
+        width = 6,
+        downloadButton(ns("download_png"), "Download PNG")
+      )
+    )
   )
 }
 
@@ -125,6 +180,15 @@ biomarkerServer <- function(id,
     # ============================================================
     # Dataset selector
     # ============================================================
+    observeEvent(input$datasets_all, {
+      avail <- sort(unique(baseline_long$study))
+      updateCheckboxGroupInput(session, "datasets", selected = avail)
+    })
+
+    observeEvent(input$datasets_none, {
+      updateCheckboxGroupInput(session, "datasets", selected = character(0))
+    })
+
     observe({
       avail <- sort(unique(baseline_long$study))
       updateCheckboxGroupInput(
@@ -302,21 +366,33 @@ biomarkerServer <- function(id,
 
       n_genes <- length(unique(df$gene_lab))
 
-      # pixels per gene row
-      per_gene <- 25
+      per_gene <- if (n_genes <= 10) 26 else
+          if (n_genes <= 80) 25 else 23
 
-      # compute base height
-      h <- n_genes * per_gene
+      top_padding    <- 20
+      bottom_padding <- 80   # <- important for 45° labels
 
-      # enforce min/max bounds
-      h <- max(400, min(h, 3000))
+      h <- (n_genes * per_gene) + top_padding + bottom_padding
 
-      h
+      max(700, min(h, 8000))
     })
 
     plot_width <- reactive({
       n_ds <- length(input$datasets)
-      max(800, n_ds * 70)
+
+      # base width for readability
+      base_width <- 800
+
+      # add extra space only when datasets exceed threshold
+      extra_per_dataset <- 50
+
+      extra <- if (n_ds > 8) {
+        (n_ds - 8) * extra_per_dataset
+      } else {
+        0
+      }
+
+      base_width + extra
     })
 
     # ============================================================
@@ -385,7 +461,7 @@ biomarkerServer <- function(id,
           axis.text.y = element_text(face = "italic", color = "black"),
           legend.title = element_text(color = "black"),
           legend.text  = element_text(color = "black"),
-          plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
+          plot.margin = margin(t = 20, r = 30, b = 120, l = 120)
         ) +
         ggplot2:: scale_y_discrete(expand = expansion(add = c(0.7, 1))) +
         ggplot2::scale_x_discrete(
@@ -435,7 +511,7 @@ biomarkerServer <- function(id,
           axis.text.y = element_blank(),
           axis.text.x = element_text(color = "black"),
           axis.title.x = element_text(color = "black"),
-          plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
+          plot.margin = margin(t = 20, r = 30, b = 120, l = 10)
         ) +
         ggplot2::scale_y_discrete(expand = expansion(add = c(0.7, 1))) +
         ggplot2::geom_text(
@@ -491,25 +567,70 @@ biomarkerServer <- function(id,
       }
     )
 
-    px_to_in <- function(px, dpi = 96) px / dpi
-
-    output$download_plot <- downloadHandler(
-      filename = function() "biomarker_plot.svg",
+    output$download_svg <- downloadHandler(
+      filename = function() {
+        "biomarker_plot.svg"
+      },
       content = function(file) {
 
-        # Use the SAME dimensions as the on-screen plot
-        w_in <- px_to_in(plot_width())
-        h_in <- px_to_in(plot_height())
+        w_cm <- input$export_width
+        h_cm <- input$export_height
 
-        grDevices::svg(
-          file,
-          width  = w_in,
+        w_in <- w_cm / 2.54
+        h_in <- h_cm / 2.54
+
+        svglite::svglite(
+          file = file,
+          width = w_in,
           height = h_in
         )
 
         print(combined_plot_obj())
         grDevices::dev.off()
       }
+    )
+
+    output$download_png <- downloadHandler(
+      filename = function() {
+        "biomarker_plot.png"
+      },
+      content = function(file) {
+
+        w_cm <- input$export_width
+        h_cm <- input$export_height
+        dpi  <- input$export_dpi
+
+        w_in <- w_cm / 2.54
+        h_in <- h_cm / 2.54
+
+        ggplot2::ggsave(
+          filename = file,
+          plot     = combined_plot_obj(),
+          width    = w_in,
+          height   = h_in,
+          dpi      = dpi,
+          units    = "in"
+        )
+      }
+    )
+
+    px_to_cm <- function(px, dpi = 96) (px / dpi) * 2.54
+    cm_to_px <- function(cm, dpi = 96) (cm / 2.54) * dpi
+
+    observeEvent(
+      list(plot_width(), plot_height(), input$export_dpi),
+      {
+        dpi <- input$export_dpi %||% 300
+
+        # Convert the current on-screen plot px -> cm for the UI defaults
+        updateNumericInput(session, "export_width",
+                           value = round(plot_width() / 37, 1)
+        )
+        updateNumericInput(session, "export_height",
+                           value = round(plot_height() / 37, 1)
+        )
+      },
+      ignoreInit = FALSE
     )
 
     observeEvent(input$gene_mode == "discover", {
