@@ -166,13 +166,33 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
 
     pretty_label <- function(id) pretty_map[[id]] %||% id
 
+    pretty_label_vec <- function(ids) {
+      ids <- as.character(ids)
+      out <- unname(pretty_map[ids])   # <-- vectorised lookup
+      bad <- is.na(out) | !nzchar(out)
+      out[bad] <- ids[bad]
+      out
+    }
+
+    pretty_label_1 <- function(id) pretty_label_vec(id)[1]
+
     # ---- populate dataset choices ----
     observe({
       ids <- dataset_ids()
-      labs <- vapply(ids, pretty_label, character(1))
+      ids <- ids[!is.na(ids) & nzchar(ids)]
+      ids <- unique(ids)
+      # Order by pretty_map (anything not in pretty_map goes last, alphabetic within)
+      ord <- match(ids, names(pretty_map))
+      ord[is.na(ord)] <- Inf
+      labs_for_order <- pretty_label_vec(ids)
+      ids <- ids[order(ord, labs_for_order)]
+
+      labs <- pretty_label_vec(ids)
+
       updateCheckboxGroupInput(
         session, "gsea_datasets",
-        choices = stats::setNames(ids, labs)
+        choices  = stats::setNames(ids, labs),
+        selected = intersect(input$gsea_datasets %||% character(0), ids)
       )
     })
 
