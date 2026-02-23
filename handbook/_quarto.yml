@@ -6,6 +6,7 @@ website:
   title: "<img src='images/dottori_lab_pentagon.svg' height='32' style='vertical-align: middle; margin-right: 0.5em;'> FRDA Transcriptomic Atlas Handbook"
   site-url: "https://marniemaddock.github.io/FRDATranscriptomicAtlas/"
   favicon: favicon.ico
+  google-analytics: "G-Y3M6X68VNJ"
   navbar:
     left:
       - text: "Overview"
@@ -29,7 +30,6 @@ format:
     toc: true
     toc-depth: 3
     css: styles.css
-    google-analytics: "G-Y3M6X68VNJ"
     include-in-header:
       text: |
         <meta name="google-site-verification" content="Yl5oJWY-HTVA-q5QncfpMR0TLVEtV9MNmGy8dbswmIM" />
