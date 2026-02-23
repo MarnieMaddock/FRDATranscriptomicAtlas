@@ -29,6 +29,7 @@ format:
     toc: true
     toc-depth: 3
     css: styles.css
+    google-analytics: "G-Y3M6X68VNJ"
     include-in-header:
       text: |
         <meta name="google-site-verification" content="Yl5oJWY-HTVA-q5QncfpMR0TLVEtV9MNmGy8dbswmIM" />
