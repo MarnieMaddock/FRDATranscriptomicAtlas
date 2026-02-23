@@ -9,6 +9,12 @@ tpmHeatmapSidebarUI <- function(id) {
       choices = c("Genes" = "genes", "Isoforms (transcripts)" = "transcripts"),
       selected = "genes"
     ),
+    div(
+      style = "display:flex; gap:8px; margin-bottom:8px;",
+      actionButton(ns("datasets_all"),  "Select all", class = "btn btn-sm btn-default"),
+      actionButton(ns("datasets_none"), "Clear",      class = "btn btn-sm btn-default")
+    ),
+
     checkboxGroupInput(
       ns("datasets"),
       label = "Datasets (select any number)",
@@ -415,6 +421,15 @@ tpmHeatmapServer <- function(
       out[!is.finite(out)] <- 0
       out
     }
+
+    observeEvent(input$datasets_all, {
+      all_ids <- names(pretty_map)
+      updateCheckboxGroupInput(session, "datasets", selected = all_ids)
+    })
+
+    observeEvent(input$datasets_none, {
+      updateCheckboxGroupInput(session, "datasets", selected = character(0))
+    })
 
     # dataset choices: show pretty labels but return ids
     observe({
