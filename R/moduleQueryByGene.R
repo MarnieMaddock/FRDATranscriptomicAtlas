@@ -50,21 +50,14 @@ queryGeneAcrossDatasetsSidebarUI <- function(id) {
           ns("p_filter_mode"),
           "Adjusted P-value Threshold",
           inline = FALSE,
-          choiceNames = list(
-            "None",
-            shiny::HTML("&le; 0.10"),
-            shiny::HTML("&le; 0.05"),
-            shiny::HTML("&le; 0.01"),
-            shiny::HTML("&le; 0.001")
+          choices = c(
+            "None"          = "none",
+            "\u2264 0.10"   = "0.10",
+            "\u2264 0.05"   = "0.05",
+            "\u2264 0.01"   = "0.01",
+            "\u2264 0.001"  = "0.001"
           ),
-          choiceValues = list(
-            NA,
-            0.10,
-            0.05,
-            0.01,
-            0.001
-          ),
-          selected = 0.05
+          selected = "none"
         )
       ),
 
@@ -450,75 +443,58 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
         ))
       }
 
-      # ---- highlight rules (optional) ----
-      thr     <- suppressWarnings(as.numeric(input$p_filter_mode))
+
+      # ---- optional filters (apply only to rows that are present) ----
+      thr <- if (identical(input$p_filter_mode, "none")) NA_real_
+      else suppressWarnings(as.numeric(input$p_filter_mode)) # NA means "None"
       lfc_min <- input$lfc_min %||% 0
       dir     <- input$direction %||% "both"
 
-      n <- nrow(out)
-
-      # pass_p: only meaningful if thr is set AND padj exists
-      if (!is.na(thr) && "padj" %in% names(out)) {
-        pass_p <- !is.na(out$padj) & (out$padj <= thr)
-      } else {
-        pass_p <- rep(NA, n)
-      }
-
-      # pass_dir: only meaningful if log2FoldChange exists
-      if ("log2FoldChange" %in% names(out)) {
-        lfc <- out$log2FoldChange
-        pass_dir <- dplyr::case_when(
-          is.na(lfc) ~ FALSE,
-          dir == "up"   ~ lfc >=  lfc_min,
-          dir == "down" ~ lfc <= -lfc_min,
-          TRUE          ~ abs(lfc) >= lfc_min
-        )
-      } else {
-        pass_dir <- rep(NA, n)
-      }
-
-      # meets_threshold logic
-      if (is.na(thr)) {
-        meets_threshold <- pass_dir
-      } else {
-        meets_threshold <- pass_p & pass_dir
-      }
-
-      # attach as columns
-      out <- out |>
-        dplyr::mutate(
-          pass_p         = pass_p,
-          pass_dir       = pass_dir,
-          meets_threshold = meets_threshold
-        ) |>
-        dplyr::mutate(
-          `Present in dataset`    = found,
-          `FDR <= threshold`       = pass_p,
-          `Meets log2FC filter`   = pass_dir,
-          `Meets all filters`     = meets_threshold
-        ) |>
-        dplyr::select(-found, -pass_p, -pass_dir, -meets_threshold, -dataset_id)
-
-
-      # Prefer a tidy, stable column order
-      keep_first <- c("dataset", "query", "found",
-                      "ensembl_gene_id", "transcript_id", "gene_id", "symbol",
-                      "baseMean", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj",
-                      "meets_threshold")
-      keep_first <- keep_first[keep_first %in% names(out)]
-      out <- dplyr::relocate(out, dplyr::all_of(keep_first), .before = dplyr::everything())
-
-      # round numeric columns (except pvalue/padj)
-      num_cols <- names(out)[vapply(out, is.numeric, logical(1))]
-      exclude  <- intersect(num_cols, c("pvalue", "padj"))
-      round_these <- setdiff(num_cols, exclude)
+      has_padj <- "padj" %in% names(out)
+      has_lfc  <- "log2FoldChange" %in% names(out)
 
       out <- out |>
         dplyr::mutate(
-          dplyr::across(dplyr::all_of(round_these), ~ round(.x, 4))
-        )
+          `Present in dataset` = found,
 
-      out
+          # Per-row pass flags (NA for not-present rows OR when column/threshold not available)
+          pass_p = dplyr::case_when(
+            !found ~ NA,
+            is.na(thr) ~ NA,
+            !has_padj ~ NA,
+            TRUE ~ (!is.na(padj) & padj <= thr)
+          ),
+
+          pass_lfc = dplyr::case_when(
+            !found ~ NA,
+            !has_lfc ~ NA,
+            lfc_min <= 0 ~ NA,  # if no LFC filter requested, don't compute pass/fail
+            TRUE ~ dplyr::case_when(
+              is.na(log2FoldChange) ~ FALSE,
+              dir == "up"   ~ log2FoldChange >=  lfc_min,
+              dir == "down" ~ log2FoldChange <= -lfc_min,
+              TRUE          ~ abs(log2FoldChange) >= lfc_min
+            )
+          ),
+
+          # Should we filter?
+          filter_p_active   = !is.na(thr) & has_padj,
+          filter_lfc_active = (lfc_min > 0) & has_lfc,
+
+          # Keep rule:
+          # - keep all not-found rows
+          # - for found rows, enforce only the active filters
+          keep = !found |
+            (
+              (!filter_p_active   | dplyr::coalesce(pass_p, FALSE)) &
+                (!filter_lfc_active | dplyr::coalesce(pass_lfc, FALSE))
+            )
+        ) |>
+        dplyr::filter(keep) |>
+        dplyr::select(-keep, -filter_p_active, -filter_lfc_active)
+
+      out <- out |>
+        dplyr::select(-found, -dataset_id)
     })
 
     output$summary_bar <- shiny::renderUI({
