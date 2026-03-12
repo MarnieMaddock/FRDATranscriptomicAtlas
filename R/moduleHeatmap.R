@@ -498,7 +498,7 @@ tpmHeatmapServer <- function(
       if (length(missing) > 0) {
         shiny::showNotification(
           sprintf(
-            "Warning – The following genes were not found: %s",
+            "Warning - The following genes were not found: %s",
             paste(missing, collapse = ", ")
           ),
           type = "warning",
@@ -533,7 +533,7 @@ tpmHeatmapServer <- function(
         if (nrow(sub) == 0) {
           shiny::showNotification(
             sprintf(
-              "Warning – None of the entered features were found in dataset '%s'.",
+              "Warning - None of the entered features were found in dataset '%s'.",
               pretty_map[ds] %||% ds
             ),
             type = "error",
@@ -675,7 +675,7 @@ tpmHeatmapServer <- function(
       if (length(long_list) == 0) {
         shiny::showNotification(
           sprintf(
-            "Warning – None of the entered features were found in the selected datasets."
+            "Warning - None of the entered features were found in the selected datasets."
           ),
           type = "error",
           duration = 5

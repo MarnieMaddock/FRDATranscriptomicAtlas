@@ -51,7 +51,7 @@ utils::globalVariables(c(
   # gene Query
   "found", "dataset_id",
 
-
+  "filter_p_active", "pass_p", "filter_lfc_active", "pass_lfc", "keep",
   # --- app-level objects ---
   "PRETTY_MAP_LOCAL", "check_atlas_updates", "cran_install_if_missing"
 ))
