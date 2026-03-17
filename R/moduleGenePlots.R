@@ -25,7 +25,8 @@ genePlotsSidebarUI <- function(id) {
     br(),
     downloadButton(ns("dl_points"), "Replicates (CSV)"),
     downloadButton(ns("dl_summary"), "Summary (CSV)"),
-    downloadButton(ns("dl_plot"), "Plot (SVG)")
+    downloadButton(ns("dl_plot"), "Plot (SVG)"),
+    downloadButton(ns("dl_plot_png"), "Plot (PNG)")
   )
 }
 
@@ -382,5 +383,40 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
         grDevices::dev.off()
       }
     )
+    output$dl_plot_png <- shiny::downloadHandler(
+      filename = function() sprintf(
+        "TPM_%s_%s.png",
+        safe_stem(input$gp_datasets), input$gp_gene
+      ),
+      content = function(file) {
+
+        pts <- isolate(dat_points())
+        sms <- isolate(dat_summary())
+
+        validate(need(nrow(pts) > 0, "No data available for this gene."))
+
+        ds_lab <- isolate(
+          if (length(input$gp_datasets) == 1) {
+            pretty_label(input$gp_datasets)
+          } else {
+            paste0(length(input$gp_datasets), " datasets")
+          }
+        )
+
+        gp <- build_plot(
+          pts, sms, isolate(input$gp_logy),
+          paste(isolate(input$gp_gene), "-", ds_lab)
+        )
+
+        ggplot2::ggsave(
+          filename = file,
+          plot = gp,
+          width = 11,
+          height = 7,
+          dpi = 300
+        )
+      }
+    )
+
   })
 }
