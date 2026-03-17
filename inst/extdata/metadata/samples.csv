@@ -33,8 +33,6 @@ Maddock,Maddock_FA1SN_REP7,FRDA,FRDA,SN,Maddock_FA1SN
 Maddock,Maddock_FA1SN_REP8,FRDA,FRDA,SN,Maddock_FA1SN
 Maddock,Maddock_FA1SN_REP9,FRDA,FRDA,SN,Maddock_FA1SN
 Maddock,Maddock_FA1SN_REP10,FRDA,FRDA,SN,Maddock_FA1SN
-Maddock,Maddock_FA2SN_REP1.2,FRDA,FRDA,SN,Maddock_FA1SN
-Maddock,Maddock_FA2icSN_REP1.2,IC,CTRL,SN,Maddock_FA2icSN
 Maddock,Maddock_FA1NCC_REP1,FRDA,FRDA,NCC,Maddock_FA1NCC
 Maddock,Maddock_FA1NCC_REP2,FRDA,FRDA,NCC,Maddock_FA1NCC
 Maddock,Maddock_FA1NCC_REP3,FRDA,FRDA,NCC,Maddock_FA1NCC
@@ -44,6 +42,8 @@ Maddock,Maddock_FA1icNCC_REP1,IC,CTRL,NCC,Maddock_FA1icNCC
 Maddock,Maddock_FA1icNCC_REP2,IC,CTRL,NCC,Maddock_FA1icNCC
 Maddock,Maddock_FA1icNCC_REP3,IC,CTRL,NCC,Maddock_FA1icNCC
 Maddock,Maddock_FA1icNCC_REP4,IC,CTRL,NCC,Maddock_FA1icNCC
+Maddock,Maddock_FA2SN_REP1.2,FRDA,FRDA,SN,Maddock_FA1SN
+Maddock,Maddock_FA2icSN_REP1.2,IC,CTRL,SN,Maddock_FA2icSN
 Erwin,Erwin_FRDA_REP1,FRDA,FRDA,LCL,Erwin_FRDA
 Erwin,Erwin_FRDA_REP2,FRDA,FRDA,LCL,Erwin_FRDA
 Erwin,Erwin_FRDA_REP3,FRDA,FRDA,LCL,Erwin_FRDA
