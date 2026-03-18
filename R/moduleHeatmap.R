@@ -200,6 +200,43 @@ tpmHeatmapServer <- function(
       return(fixed)
     }
 
+    display_maddock_names <- function(x) {
+
+      out <- x
+
+      # ---------- LMN ----------
+      out <- sub("^Maddock_FA([0-9]+)icLMN_REP3$", "Maddock_FA\\1icLMN_REP1", out)
+      out <- sub("^Maddock_FA([0-9]+)icLMN_REP4$", "Maddock_FA\\1icLMN_REP2", out)
+      out <- sub("^Maddock_FA([0-9]+)icLMN_REP5$", "Maddock_FA\\1icLMN_REP3", out)
+      out <- sub("^Maddock_FA([0-9]+)icLMN_REP6$", "Maddock_FA\\1icLMN_REP4", out)
+
+      out <- sub("^Maddock_FA([0-9]+)LMN_REP3$", "Maddock_FA\\1LMN_REP1", out)
+      out <- sub("^Maddock_FA([0-9]+)LMN_REP4$", "Maddock_FA\\1LMN_REP2", out)
+      out <- sub("^Maddock_FA([0-9]+)LMN_REP5$", "Maddock_FA\\1LMN_REP3", out)
+      out <- sub("^Maddock_FA([0-9]+)LMN_REP6$", "Maddock_FA\\1LMN_REP4", out)
+
+      # ---------- SN FA1 ----------
+      out <- sub("^Maddock_FA1icSN_REP10$", "Maddock_FA1icSN_REP1", out)
+      out <- sub("^Maddock_FA1icSN_REP7$",  "Maddock_FA1icSN_REP2", out)
+      out <- sub("^Maddock_FA1icSN_REP8$",  "Maddock_FA1icSN_REP3", out)
+      out <- sub("^Maddock_FA1icSN_REP9$",  "Maddock_FA1icSN_REP4", out)
+      out <- sub("^Maddock_FA1icSN_REP6$",  "Maddock_FA1icSN_REP5", out)
+
+      out <- sub("^Maddock_FA1SN_REP10$", "Maddock_FA1SN_REP1", out)
+      out <- sub("^Maddock_FA1SN_REP7$",  "Maddock_FA1SN_REP2", out)
+      out <- sub("^Maddock_FA1SN_REP8$",  "Maddock_FA1SN_REP3", out)
+      out <- sub("^Maddock_FA1SN_REP9$",  "Maddock_FA1SN_REP4", out)
+      out <- sub("^Maddock_FA1SN_REP6$",  "Maddock_FA1SN_REP5", out)
+
+      # ---------- SN FA2 ----------
+      out <- sub("^Maddock_FA2icSN_REP4$", "Maddock_FA2icSN_REP3", out)
+      out <- sub("^Maddock_FA2icSN_REP5$", "Maddock_FA2icSN_REP4", out)
+
+      out <- sub("^Maddock_FA2SN_REP4$", "Maddock_FA2SN_REP3", out)
+      out <- sub("^Maddock_FA2SN_REP5$", "Maddock_FA2SN_REP4", out)
+
+      out
+    }
 
     base_of <- function(dataset_id) sub("(_.*)$", "", dataset_id)
 
@@ -615,24 +652,39 @@ tpmHeatmapServer <- function(
           vsd_mat <- SummarizedExperiment::assay(vsd_obj)
 
           # Determine samples (columns) to keep
-          # Attempt direct intersection first
-          sc_use <- intersect(sc, colnames(vsd_mat))
+          # # Attempt direct intersection first
+          # sc_use <- intersect(sc, colnames(vsd_mat))
+          #
+          # # If nothing matches, attempt safe harmonization
+          # if (!length(sc_use) && grepl("^Maddock", ds)) {
+          #
+          #   new_names <- harmonize_maddock_names(colnames(vsd_mat), sc)
+          #
+          #   # Reassign ONLY if the length matches and no duplicates
+          #   if (length(new_names) == length(colnames(vsd_mat)) &&
+          #       length(unique(new_names)) == length(new_names)) {
+          #
+          #     colnames(vsd_mat) <- new_names
+          #     sc_use <- intersect(sc, new_names)
+          #   }
+          # }
 
-          # If nothing matches, attempt safe harmonization
-          if (!length(sc_use) && grepl("^Maddock", ds)) {
+          # For Maddock datasets, always harmonize first
+          if (grepl("^Maddock", ds)) {
 
             new_names <- harmonize_maddock_names(colnames(vsd_mat), sc)
-
+            # --- DEBUG: after harmonization ---
+            message("After harmonization: ",
+                    paste(new_names, collapse = ", "))
             # Reassign ONLY if the length matches and no duplicates
             if (length(new_names) == length(colnames(vsd_mat)) &&
                 length(unique(new_names)) == length(new_names)) {
-
               colnames(vsd_mat) <- new_names
-              sc_use <- intersect(sc, new_names)
             }
           }
 
-          if (!length(sc_use)) next
+          # Now determine samples to keep
+          sc_use <- intersect(sc, colnames(vsd_mat))
 
           # Identify gene IDs of interest
           annot <- tpm_df[, c("gene_id", "gene_name")]
@@ -792,13 +844,16 @@ tpmHeatmapServer <- function(
         .auto_downshift(mat)
         dims <- plot_dims()
 
+        display_names <- display_maddock_names(colnames(mat))
+        colnames(mat) <- display_names
+
         ann_df <- {
-          ds_id <- dataset_from_sample(colnames(mat), input$datasets)
-          grp   <- vapply(colnames(mat), group_from_name, character(1))
+          ds_id <- dataset_from_sample(display_names, input$datasets)
+          grp   <- vapply(display_names, group_from_name, character(1))
           data.frame(
             Dataset = ds_id,
             Group   = factor(grp, levels = c("CTRL","FRDA")),
-            row.names = colnames(mat),
+            row.names = display_names,
             check.names = FALSE
           )
         }
