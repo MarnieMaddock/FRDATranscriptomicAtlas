@@ -198,17 +198,22 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     dataset_key3 <- function(x) {
       b <- basename(x)
       b <- sub("\\.rds$", "", b)
-      # b <- sub("_batchcorrection", "", b, ignore.case = TRUE)  # <-- REMOVE THIS
-      b <- sub("(_0\\.[0-9].*)$", "", b)
-      parts <- strsplit(b, "_", fixed = TRUE)[[1]]
-      if (length(parts) >= 3) paste(parts[1:3], collapse = "_")
-      else if (length(parts) >= 2) paste(parts[1:2], collapse = "_")
-      else parts[1]
+
+      # remove trailing analysis suffix like _0.05_all_genes
+      b <- sub("_[0-9]+\\.[0-9]+_all_genes$", "", b)
+
+      b
     }
 
     labels <- vapply(datasets_vec, function(d) {
       key <- dataset_key3(d)
-      unname(pretty_map[key]) %||% gsub("_", " ", key)
+      lbl <- unname(pretty_map[key])
+
+      if (length(lbl) == 0 || is.na(lbl) || !nzchar(lbl)) {
+        gsub("_", " ", key)
+      } else {
+        lbl
+      }
     }, character(1))
 
     choices_named <- stats::setNames(datasets_vec, labels)
