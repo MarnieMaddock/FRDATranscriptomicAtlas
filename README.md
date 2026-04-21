@@ -4,6 +4,8 @@
 
 [![r-universe version](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 [![r-universe status](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
+![Static Badge](https://img.shields.io/badge/License-MIT-brightgreen)
+
 
 The Atlas integrates multiple publicly available RNA-seq studies. Features include:
 
@@ -68,6 +70,7 @@ If you encounter any issues or have suggestions, feel free to:
 
   
 ## License
+
 FRDATranscriptomicAtlas is licensed under the MIT License. See [LICENSE](https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/blob/main/LICENSE) for details.
 
 ---- 
