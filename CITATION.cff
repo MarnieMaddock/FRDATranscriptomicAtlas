@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+title: FRDA Transcriptomic Atlas
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Marnie L
+    family-names: Maddock
+    email: mlm715@uowmail.edu.au
+    affiliation: 'Molecular Horizons, University of Wollongong'
+    orcid: 'https://orcid.org/0000-0001-6393-4837'
+identifiers:
+  - type: doi
+    value: 10.64898/2026.03.18.712785
+    description: The BioRxiv deposit of the encompassing paper.
+  - type: doi
+    value: 10.5281/zenodo.18666286
+    description: FRDA Transcriptomic Atlas Processed RNA-seq Data
+  - type: doi
+    value: 10.5281/zenodo.19688845
+    description: v1.0.0 of FRDA Transcriptomic Atlas Code
+repository-code: 'https://github.com/MarnieMaddock/FRDATranscriptomicAtlas'
+url: 'https://marniemaddock.github.io/FRDATranscriptomicAtlas/'
+abstract: >-
+  Exploring Friedreich’s Ataxia RNA-seq Data. An interactive
+  platform for RNA-seq visualisation and cross-study
+  meta-analysis for FRDA datasets
+license: MIT
+version: v1.0.0
+date-released: '2026-04-22'
