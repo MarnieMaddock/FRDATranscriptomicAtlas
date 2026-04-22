@@ -5,7 +5,7 @@
 [![r-universe version](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 [![r-universe status](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 ![Static Badge](https://img.shields.io/badge/License-MIT-brightgreen)
-
+[![DOI](https://zenodo.org/badge/1074154403.svg)](https://doi.org/10.5281/zenodo.19688845)
 
 The Atlas integrates multiple publicly available RNA-seq studies. Features include:
 
