@@ -1,6 +1,11 @@
 # FRDATranscriptomicAtlas <img src="/images/dottori_lab_pentagon.svg" alt="Logo" align="right" width="180">
 
-**FRDA Transcriptomic Atlas** is an interactive R/Shiny application for exploring and comparing transcriptomic datasets related to **Friedreich’s ataxia (FRDA)**.  This app was produced as an aid to the publication XXXXXXXXXXXXXXXXXXXXX.
+**FRDA Transcriptomic Atlas** is an interactive R/Shiny application for exploring and comparing transcriptomic datasets related to **Friedreich’s ataxia (FRDA)**.  This app was produced as an aid to the publication (Details Coming Soon). The manuscript is currently available on [BioRxiv](https://doi.org/10.64898/2026.03.18.712785) 
+
+[![r-universe version](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
+[![r-universe status](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
+![Static Badge](https://img.shields.io/badge/License-MIT-brightgreen)
+[![DOI](https://zenodo.org/badge/1074154403.svg)](https://doi.org/10.5281/zenodo.19688845)
 
 The Atlas integrates multiple publicly available RNA-seq studies. Features include:
 
@@ -38,14 +43,18 @@ run_app()
 
 The FRDA Transcriptomic Atlas is designed for users with no programming experience. All analyses and visualisations are accessible through an intuitive point-and-click interface. Trust me - you do not need to know how to use R!
 
-[![r-universe version](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
-[![r-universe status](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 
 ## Citation and Acknowledgements
 
 We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis. If you use this Atlas or any underlying data/analyses in your work, please cite the associated publication:
 
-Maddock, M. et al. (2026). XXXXXXXXXXXXXXXXXX. [Journal details forthcoming].
+Maddock, M. et al. XXXXXXXXXXXXXXXXXX. [Journal details forthcoming].
+
+The manuscript is currently on **BioRxiv**!
+
+Friedreich ataxia transcriptomic dysregulation and identification of cell type-specific biomarkers: A systematic review and meta-analysis
+Marnie L Maddock, Sara Miellet, Anjila Dongol, Amy J Hulme, Chloe K Kennedy, Louise A Corben, Rocio K Finol-Urdaneta, Alberto Nettel-Aguirre, Chiara Dionsi, Martin B Delatycki, Joel M Gottesfeld, Massimo Pandolfo, Elisabetta Soragni, Sanjay I Bidichandani, Jarmon G Lees, Shiang Y Lim, Jill S Napierala, Marek Napierala, Mirella Dottori
+bioRxiv 2026.03.18.712785; doi: [https://doi.org/10.64898/2026.03.18.712785]
 
 Users must cite the publication in any derivative analyses, figures, or reports generated from this resource. Users must also cite the original studies from which the data were derived. Please refer to the 'Datasets' section within the app for details on each dataset and its original publication.
 
@@ -61,6 +70,7 @@ If you encounter any issues or have suggestions, feel free to:
 
   
 ## License
+
 FRDATranscriptomicAtlas is licensed under the MIT License. See [LICENSE](https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/blob/main/LICENSE) for details.
 
 ---- 
