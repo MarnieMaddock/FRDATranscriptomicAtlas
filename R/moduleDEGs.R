@@ -92,6 +92,7 @@ degTablesMainUI <- function(id) {
 #'
 degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local") {
   moduleServer(id, function(input, output, session) {
+    message("[DEG] Server started. data_mode = ", data_mode)
     ns <- session$ns
 
     # --- make pkg safe (length-1 string) ---------------------------------
@@ -120,6 +121,7 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
 
     # ---------- manifest of DEG files ----------
     manifest <- reactive({
+      message("[DEG] Loading manifest. data_mode = ", data_mode)
       get_deg_manifest(pkg = pkg, data_mode = data_mode)
     })
 
@@ -161,6 +163,10 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
 
     # ---------- main data reactive ----------
     dat <- reactive({
+      message("[DEG] dat() triggered")
+      message("[DEG] dataset = ", input$dataset)
+      message("[DEG] feature_level = ", input$feature_level)
+
       fp <- file_sel()
 
       x <- get_deg_data(
