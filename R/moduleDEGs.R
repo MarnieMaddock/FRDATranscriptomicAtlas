@@ -89,8 +89,10 @@ degTablesMainUI <- function(id) {
 
 #' Server logic for DEG-by-dataset (robust for package + project)
 #' @noRd
-degTablesServer <- function(id, pkg = utils::packageName()) {
+#'
+degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local") {
   moduleServer(id, function(input, output, session) {
+    message("degTablesServer data_mode = ", data_mode)
     ns <- session$ns
 
     # --- make pkg safe (length-1 string) ---------------------------------
