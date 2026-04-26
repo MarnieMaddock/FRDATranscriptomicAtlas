@@ -88,15 +88,28 @@ get_deg_manifest <- function(pkg = "FRDATranscriptomicAtlas", data_mode = "local
 #cloud
 
 get_deg_manifest_cloud <- function(pkg = "FRDATranscriptomicAtlas") {
-  ds <- arrow::open_dataset("s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results")
+  ds <- arrow::open_dataset(
+    "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results",
+    partitioning = c("level", "dataset", "threshold")
+  )
 
   ds |>
-    dplyr::distinct(dataset, p_str, level, p) |>
+    dplyr::distinct(dataset, level, threshold) |>
     dplyr::collect() |>
-    dplyr::mutate(path = NA_character_) |>
+    dplyr::mutate(
+      path = NA_character_,
+      p_str = dplyr::case_when(
+        threshold == "padj_0.10" ~ "0.10",
+        threshold == "padj_0.05" ~ "0.05",
+        threshold == "padj_0.01" ~ "0.01",
+        threshold == "padj_0.001" ~ "0.001",
+        threshold == "all" ~ NA_character_,
+        TRUE ~ NA_character_
+      ),
+      p = suppressWarnings(as.numeric(p_str))
+    ) |>
     dplyr::select(path, dataset, p_str, level, p)
 }
-
 
 
 get_deg_data_cloud <- function(
@@ -106,18 +119,22 @@ get_deg_data_cloud <- function(
     lfc_min = 0,
     direction = "both"
 ) {
+  threshold <- padj_max_to_threshold(padj_max)
+
   ds <- arrow::open_dataset(
     "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results",
-    partitioning = c("level", "dataset")
+    partitioning = c("level", "dataset", "threshold")
   )
 
   q <- ds |>
     dplyr::filter(
       .data$dataset == !!dataset_id,
-      .data$level == !!feature_level
+      .data$level == !!feature_level,
+      .data$threshold == !!threshold
     )
 
-  if (!is.null(padj_max) && !is.na(padj_max)) {
+  # Safety filter. This is useful if padj_max is not one of the prebuilt thresholds.
+  if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all") {
     q <- q |>
       dplyr::filter(!is.na(.data$padj), .data$padj <= !!padj_max)
   }
@@ -134,7 +151,7 @@ get_deg_data_cloud <- function(
   }
 
   x <- q |>
-    dplyr::select(-dataset, -level, -p_str, -p) |>
+    dplyr::select(-dplyr::any_of(c("dataset", "level", "threshold", "p_str", "p"))) |>
     dplyr::collect()
 
   if (feature_level == "genes" && "transcript_id" %in% names(x)) {
@@ -146,4 +163,18 @@ get_deg_data_cloud <- function(
   }
 
   return(x)
+}
+
+padj_max_to_threshold <- function(padj_max) {
+  if (is.null(padj_max) || is.na(padj_max)) {
+    return("all")
+  }
+
+  dplyr::case_when(
+    padj_max == 0.10 ~ "padj_0.10",
+    padj_max == 0.05 ~ "padj_0.05",
+    padj_max == 0.01 ~ "padj_0.01",
+    padj_max == 0.001 ~ "padj_0.001",
+    TRUE ~ "all"
+  )
 }

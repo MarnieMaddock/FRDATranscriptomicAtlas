@@ -295,9 +295,14 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
       x <- x |>
         dplyr::mutate(
           dplyr::across(
-            .cols = dplyr::where(is.numeric) & !c(pvalue, padj),
+            .cols = dplyr::where(is.numeric) & !dplyr::any_of(c("pvalue", "padj")),
             ~ round(.x, 4)
           )
+        )
+      x <- x |>
+        mutate(
+          pvalue = signif(pvalue, 3),
+          padj   = signif(padj, 3)
         )
 
       x
