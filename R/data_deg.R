@@ -19,7 +19,7 @@ get_deg_data <- function(
   }
 
   if (identical(data_mode, "cloud")) {
-    return(get_deg_data_cloud(
+    return(get_deg_data_cloud_rds_cached(
       dataset_id = dataset,
       feature_level = level,
       padj_max = padj_max,
@@ -191,3 +191,52 @@ padj_max_to_threshold <- function(padj_max) {
     TRUE ~ "all"
   )
 }
+
+get_deg_data_cloud_rds <- function(
+    dataset_id,
+    feature_level,
+    padj_max = NULL,
+    lfc_min = 0,
+    direction = "both"
+) {
+  threshold <- padj_max_to_threshold(padj_max)
+
+  url <- paste0(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/",
+    "deg_results_rds/",
+    feature_level, "/",
+    dataset_id, "/",
+    threshold, ".rds"
+  )
+
+  tf <- tempfile(fileext = ".rds")
+  on.exit(unlink(tf), add = TRUE)
+
+  utils::download.file(
+    url,
+    destfile = tf,
+    mode = "wb",
+    quiet = TRUE
+  )
+
+  x <- readRDS(tf)
+
+  if ("log2FoldChange" %in% names(x)) {
+    if (identical(direction, "up")) {
+      x <- x[x$log2FoldChange >= lfc_min, , drop = FALSE]
+    } else if (identical(direction, "down")) {
+      x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
+    } else {
+      x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
+    }
+  }
+
+  x
+}
+
+deg_cache <- cachem::cache_mem(max_size = 500 * 1024^2)
+
+get_deg_data_cloud_rds_cached <- memoise::memoise(
+  get_deg_data_cloud_rds,
+  cache = deg_cache
+)

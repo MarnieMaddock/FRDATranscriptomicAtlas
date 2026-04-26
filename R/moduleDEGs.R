@@ -92,7 +92,6 @@ degTablesMainUI <- function(id) {
 #'
 degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local") {
   moduleServer(id, function(input, output, session) {
-    message("[DEG] Server started. data_mode = ", data_mode)
     ns <- session$ns
 
     # --- make pkg safe (length-1 string) ---------------------------------
@@ -123,8 +122,6 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
     manifest <- reactiveVal(NULL)
 
     observeEvent(TRUE, {
-      message("[DEG] Loading manifest ONCE. data_mode = ", data_mode)
-
       m <- get_deg_manifest(pkg = pkg, data_mode = data_mode)
       manifest(m)
 
