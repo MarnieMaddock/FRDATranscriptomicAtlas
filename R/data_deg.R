@@ -86,16 +86,12 @@ get_deg_manifest <- function(pkg = "FRDATranscriptomicAtlas", data_mode = "local
 }
 
 #cloud
-
 get_deg_manifest_cloud <- function(pkg = "FRDATranscriptomicAtlas") {
-  ds <- arrow::open_dataset(
-    "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results",
-    partitioning = c("level", "dataset", "threshold")
-  )
 
-  ds |>
-    dplyr::distinct(dataset, level, threshold) |>
-    dplyr::collect() |>
+  readr::read_csv(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/metadata/deg_manifest.csv",
+    show_col_types = FALSE
+  ) |>
     dplyr::mutate(
       path = NA_character_,
       p_str = dplyr::case_when(
@@ -108,9 +104,8 @@ get_deg_manifest_cloud <- function(pkg = "FRDATranscriptomicAtlas") {
       ),
       p = suppressWarnings(as.numeric(p_str))
     ) |>
-    dplyr::select(path, dataset, p_str, level, p)
+    dplyr::select(path, dataset, p_str, level, p, threshold)
 }
-
 
 get_deg_data_cloud <- function(
     dataset_id,

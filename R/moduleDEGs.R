@@ -137,21 +137,26 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
     )
 
 
-    observe({
+    observeEvent(input$feature_level, {
+
       m <- manifest()
       lvl <- input$feature_level %||% "genes"
+
       avail_ids <- sort(unique(m$dataset[m$level == lvl]))
 
       pm_sub <- pretty_map[avail_ids]
       pm_sub[is.na(pm_sub)] <- avail_ids[is.na(pm_sub)]
       labelled_choices <- stats::setNames(avail_ids, pm_sub)
 
-      updateSelectizeInput(session, "dataset",
-                           choices  = labelled_choices,
-                           selected = if (length(avail_ids)) avail_ids[1] else NULL,
-                           server   = TRUE
+      updateSelectizeInput(
+        session,
+        "dataset",
+        choices = c("Select a dataset..." = "", labelled_choices),
+        selected = "",
+        server = TRUE
       )
-    })
+
+    }, ignoreInit = FALSE)
 
     # ---------- file selection ----------
     file_sel <- reactive({
@@ -164,44 +169,6 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
     # ---------- main data reactive ----------
     dat <- reactive({
       req(input$dataset, input$feature_level)
-
-      fp <- file_sel()
-
-      thr <- suppressWarnings(as.numeric(input$p_filter_mode))
-      lfc_min <- input$lfc_min %||% 0
-      direction <- input$direction %||% "both"
-
-      x <- get_deg_data(
-        dataset = input$dataset,
-        level = input$feature_level,
-        file_path = fp,
-        data_mode = data_mode,
-        padj_max = thr,
-        lfc_min = lfc_min,
-        direction = direction
-      )
-
-      if (identical(data_mode, "local")) {
-
-        if (!is.na(thr) && "padj" %in% names(x)) {
-          x <- x[!is.na(x$padj) & x$padj <= thr, , drop = FALSE]
-        }
-
-        if ("log2FoldChange" %in% names(x)) {
-          if (identical(direction, "up")) {
-            x <- x[x$log2FoldChange >= lfc_min, , drop = FALSE]
-          } else if (identical(direction, "down")) {
-            x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
-          } else {
-            x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
-          }
-        }
-      }
-
-      x
-    })
-
-    dat <- reactive({
       fp <- file_sel()
 
       thr <- suppressWarnings(as.numeric(input$p_filter_mode))
@@ -330,7 +297,21 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
 
 
     output$deg_table <- DT::renderDataTable({
+
+      # Show placeholder if no dataset selected
+      if (is.null(input$dataset) || input$dataset == "") {
+        return(
+          DT::datatable(
+            data.frame(Message = "Please select a dataset"),
+            options = list(dom = "t"),
+            rownames = FALSE
+          )
+        )
+      }
+
+      # Normal table
       req(dat())
+
       DT::datatable(
         dat(),
         filter = "top",
@@ -344,6 +325,7 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
           scrollX = TRUE
         )
       )
+
     }, server = TRUE)
 
     output$download_filtered <- downloadHandler(
