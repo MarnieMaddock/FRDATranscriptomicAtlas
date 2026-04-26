@@ -18,7 +18,7 @@ degVennUI <- function(id) {
         ),
         radioButtons(
           ns("p_filter_mode"),
-          "P-value threshold",
+          "Adjusted P-value threshold",
           inline = FALSE,
           choiceNames = list(
             "None",
