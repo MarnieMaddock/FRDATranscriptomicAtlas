@@ -8,6 +8,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 4.3)
 Imports:
+    arrow,
     shiny,
     fontawesome,
     dplyr,
