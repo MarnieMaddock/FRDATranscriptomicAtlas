@@ -531,6 +531,25 @@ queryGeneAcrossDatasetsServer <- function(
         dplyr::mutate(`Present in dataset` = found) |>
         dplyr::select(-found, -dataset_id)
 
+
+      # ---- rounding ----
+      out <- out |>
+        dplyr::mutate(
+          dplyr::across(
+            .cols = dplyr::where(is.numeric) &
+              !dplyr::any_of(c("pvalue", "padj")),
+            ~ round(.x, 4)
+          )
+        )
+
+      # only apply signif if columns exist (important for robustness)
+      if ("pvalue" %in% names(out)) {
+        out$pvalue <- signif(out$pvalue, 3)
+      }
+      if ("padj" %in% names(out)) {
+        out$padj <- signif(out$padj, 3)
+      }
+
       out
     })
 
