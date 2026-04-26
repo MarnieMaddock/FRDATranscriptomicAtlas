@@ -92,29 +92,12 @@ degTablesMainUI <- function(id) {
 #'
 degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local") {
   moduleServer(id, function(input, output, session) {
-    message("degTablesServer data_mode = ", data_mode)
     ns <- session$ns
 
     # --- make pkg safe (length-1 string) ---------------------------------
     pkg <- tryCatch(pkg, error = function(e) "")
     if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
     pkg <- pkg[[1L]]
-
-    ensure_atlas_data(
-      keys    = c("deg_genes", "deg_transcripts"),
-      package = pkg
-    )
-
-    cache_root <- tools::R_user_dir(pkg, which = "cache")
-
-    deg_dir_genes <- file.path(cache_root, "genes")
-    deg_dir_transcripts <- file.path(cache_root, "txs")
-
-
-    validate(
-      need(dir.exists(deg_dir_genes), "Gene-level DEG data not found."),
-      need(dir.exists(deg_dir_transcripts), "Transcript-level DEG data not found.")
-    )
 
 
     tx2_path <- system.file(
@@ -137,18 +120,7 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
 
     # ---------- manifest of DEG files ----------
     manifest <- reactive({
-      files <- c(
-        if (nzchar(deg_dir_genes)       && dir.exists(deg_dir_genes))
-          list.files(deg_dir_genes,       full.names = TRUE) else character(0),
-        if (nzchar(deg_dir_transcripts) && dir.exists(deg_dir_transcripts))
-          list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
-      )
-      if (!length(files)) return(tibble::tibble())
-
-      rx <- "^.*/DESEQ2_res_(.+)_(0\\.[0-9]+)_all_(genes|transcripts)\\.rds$"
-      tibble::tibble(path = files) |>
-        tidyr::extract(path, into = c("dataset","p_str","level"), regex = rx, remove = FALSE) |>
-        dplyr::mutate(p = suppressWarnings(as.numeric(p_str)))
+      get_deg_manifest(pkg = pkg, data_mode = data_mode)
     })
 
     # ---------- dataset dropdown ----------
@@ -190,10 +162,18 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
     # ---------- main data reactive ----------
     dat <- reactive({
       fp <- file_sel()
-      validate(need(!is.null(fp) && file.exists(fp), "No results file found."))
 
-      x <- read_cached(fp)
-      if (!is.data.frame(x)) x <- as.data.frame(x)
+      x <- get_deg_data(
+        dataset = input$dataset,
+        level = input$feature_level,
+        file_path = fp,
+        data_mode = data_mode
+      )
+      # fp <- file_sel()
+      # validate(need(!is.null(fp) && file.exists(fp), "No results file found."))
+      #
+      # x <- read_cached(fp)
+      # if (!is.data.frame(x)) x <- as.data.frame(x)
 
       # ID column by level
       lvl <- input$feature_level %||% "genes"
