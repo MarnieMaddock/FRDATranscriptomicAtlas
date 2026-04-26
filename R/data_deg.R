@@ -7,6 +7,16 @@ get_deg_data <- function(
     lfc_min = 0,
     direction = "both"
 ) {
+  # if (identical(data_mode, "local")) {
+  #   validate(
+  #     need(!is.null(file_path) && file.exists(file_path), "No results file found.")
+  #   )
+  #
+  #   x <- readRDS(file_path)
+  #   if (!is.data.frame(x)) x <- as.data.frame(x)
+  #
+  #   return(x)
+  # }
   if (identical(data_mode, "local")) {
     validate(
       need(!is.null(file_path) && file.exists(file_path), "No results file found.")
@@ -14,6 +24,39 @@ get_deg_data <- function(
 
     x <- readRDS(file_path)
     if (!is.data.frame(x)) x <- as.data.frame(x)
+
+    # Harmonise columns
+    if (!"log2FoldChange" %in% names(x)) {
+      if ("log2FC" %in% names(x)) {
+        x$log2FoldChange <- x$log2FC
+      } else if ("beta" %in% names(x)) {
+        x$log2FoldChange <- x$beta
+      }
+    }
+
+    if (!"padj" %in% names(x)) {
+      if ("qvalue" %in% names(x)) {
+        x$padj <- x$qvalue
+      } else if ("adj.P.Val" %in% names(x)) {
+        x$padj <- x$adj.P.Val
+      }
+    }
+
+    # Apply p-value filter
+    if (!is.null(padj_max) && !is.na(padj_max) && "padj" %in% names(x)) {
+      x <- x[!is.na(x$padj) & x$padj <= padj_max, , drop = FALSE]
+    }
+
+    # Apply logFC / direction filter
+    if ("log2FoldChange" %in% names(x)) {
+      if (identical(direction, "up")) {
+        x <- x[!is.na(x$log2FoldChange) & x$log2FoldChange >= lfc_min, , drop = FALSE]
+      } else if (identical(direction, "down")) {
+        x <- x[!is.na(x$log2FoldChange) & x$log2FoldChange <= -lfc_min, , drop = FALSE]
+      } else {
+        x <- x[!is.na(x$log2FoldChange) & abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
+      }
+    }
 
     return(x)
   }
