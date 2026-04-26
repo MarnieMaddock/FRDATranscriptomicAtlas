@@ -116,17 +116,34 @@ get_deg_data_cloud <- function(
 ) {
   threshold <- padj_max_to_threshold(padj_max)
 
-  ds <- arrow::open_dataset(
-    "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results",
-    partitioning = c("level", "dataset", "threshold")
+  path <- paste0(
+    "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results/",
+    "level=", feature_level,
+    "/dataset=", dataset_id,
+    "/threshold=", threshold
   )
 
-  q <- ds |>
-    dplyr::filter(
-      .data$dataset == !!dataset_id,
-      .data$level == !!feature_level,
-      .data$threshold == !!threshold
-    )
+  ds <- arrow::open_dataset(path)
+  #
+  # threshold <- padj_max_to_threshold(padj_max)
+  #
+  # ds <- arrow::open_dataset(
+  #   "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results",
+  #   partitioning = c("level", "dataset", "threshold")
+  # )
+  q <- ds
+
+  if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all") {
+    q <- q |>
+      dplyr::filter(!is.na(.data$padj), .data$padj <= !!padj_max)
+  }
+
+  # q <- ds |>
+  #   dplyr::filter(
+  #     .data$dataset == !!dataset_id,
+  #     .data$level == !!feature_level,
+  #     .data$threshold == !!threshold
+  #   )
 
   # Safety filter. This is useful if padj_max is not one of the prebuilt thresholds.
   if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all") {
@@ -159,6 +176,7 @@ get_deg_data_cloud <- function(
 
   return(x)
 }
+
 
 padj_max_to_threshold <- function(padj_max) {
   if (is.null(padj_max) || is.na(padj_max)) {
