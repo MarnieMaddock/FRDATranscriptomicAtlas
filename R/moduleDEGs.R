@@ -120,10 +120,15 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
     read_cached <- memoise::memoise(readRDS)
 
     # ---------- manifest of DEG files ----------
-    manifest <- reactive({
-      message("[DEG] Loading manifest. data_mode = ", data_mode)
-      get_deg_manifest(pkg = pkg, data_mode = data_mode)
-    })
+    manifest <- reactiveVal(NULL)
+
+    observeEvent(TRUE, {
+      message("[DEG] Loading manifest ONCE. data_mode = ", data_mode)
+
+      m <- get_deg_manifest(pkg = pkg, data_mode = data_mode)
+      manifest(m)
+
+    }, once = TRUE)
 
     # ---------- dataset dropdown ----------
     `%||%` <- function(a,b) if (is.null(a)) b else a
