@@ -55,8 +55,15 @@ download_with_retry <- function(url, destfile, md5 = NA_character_, retries = 5)
 #' @noRd
 ensure_atlas_data <- function(
     keys,
-    package = "FRDATranscriptomicAtlas"
+    package = "FRDATranscriptomicAtlas",
+    data_mode = getOption("FRDATranscriptomicAtlas.data_mode", "local")
 ) {
+
+  if (identical(data_mode, "cloud")) {
+    message("Skipping Zenodo download because data_mode = cloud")
+    return(invisible(TRUE))
+  }
+
 
   manifest_path <- system.file(
     "extdata", "atlas_data_manifest.csv",

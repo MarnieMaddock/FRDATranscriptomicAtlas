@@ -5,6 +5,8 @@
 run_app <- function(data_mode = c("local", "cloud")) {
   data_mode <- match.arg(data_mode)
 
+  options(FRDATranscriptomicAtlas.data_mode = data_mode)
+
   shiny::shinyApp(
     ui = app_ui(),
     server = function(input, output, session) {
@@ -12,7 +14,3 @@ run_app <- function(data_mode = c("local", "cloud")) {
     }
   )
 }
-
-# run_app <- function() {
-#   shiny::shinyApp(ui = app_ui(), server = app_server)
-# }
