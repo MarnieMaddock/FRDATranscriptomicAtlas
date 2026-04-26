@@ -60,9 +60,11 @@ ensure_atlas_data <- function(
 ) {
 
   if (identical(data_mode, "cloud")) {
-    message("Skipping Zenodo download because data_mode = cloud")
+    message("[Atlas] Cloud mode: skipping Zenodo download for keys: ",
+            paste(keys, collapse = ", "))
     return(invisible(TRUE))
   }
+
 
 
   manifest_path <- system.file(
