@@ -1,4 +1,12 @@
-get_deg_data <- function(dataset, level, file_path = NULL, data_mode = "local") {
+get_deg_data <- function(
+    dataset,
+    level,
+    file_path = NULL,
+    data_mode = "local",
+    padj_max = NULL,
+    lfc_min = 0,
+    direction = "both"
+) {
   if (identical(data_mode, "local")) {
     validate(
       need(!is.null(file_path) && file.exists(file_path), "No results file found.")
@@ -13,7 +21,10 @@ get_deg_data <- function(dataset, level, file_path = NULL, data_mode = "local") 
   if (identical(data_mode, "cloud")) {
     return(get_deg_data_cloud(
       dataset_id = dataset,
-      feature_level = level
+      feature_level = level,
+      padj_max = padj_max,
+      lfc_min = lfc_min,
+      direction = direction
     ))
   }
 
@@ -87,26 +98,45 @@ get_deg_manifest_cloud <- function(pkg = "FRDATranscriptomicAtlas") {
 }
 
 
-get_deg_data_cloud <- function(dataset_id, feature_level) {
+
+get_deg_data_cloud <- function(
+    dataset_id,
+    feature_level,
+    padj_max = NULL,
+    lfc_min = 0,
+    direction = "both"
+) {
   ds <- arrow::open_dataset(
     "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results",
     partitioning = c("level", "dataset")
   )
 
-  x <- ds |>
+  q <- ds |>
     dplyr::filter(
       .data$dataset == !!dataset_id,
       .data$level == !!feature_level
-    ) |>
+    )
+
+  if (!is.null(padj_max) && !is.na(padj_max)) {
+    q <- q |>
+      dplyr::filter(!is.na(.data$padj), .data$padj <= !!padj_max)
+  }
+
+  if (identical(direction, "up")) {
+    q <- q |>
+      dplyr::filter(.data$log2FoldChange >= !!lfc_min)
+  } else if (identical(direction, "down")) {
+    q <- q |>
+      dplyr::filter(.data$log2FoldChange <= -!!lfc_min)
+  } else {
+    q <- q |>
+      dplyr::filter(abs(.data$log2FoldChange) >= !!lfc_min)
+  }
+
+  x <- q |>
     dplyr::select(-dataset, -level, -p_str, -p) |>
-    dplyr::mutate(
-      dplyr::across(
-        .cols = dplyr::all_of(c("pvalue", "padj")),
-        ~ round(.x, 12)
-      )
-    ) |>
     dplyr::collect()
-  # --- conditional cleanup ---
+
   if (feature_level == "genes" && "transcript_id" %in% names(x)) {
     x <- dplyr::select(x, -transcript_id)
   }

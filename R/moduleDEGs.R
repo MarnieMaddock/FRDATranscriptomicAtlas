@@ -163,23 +163,60 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
 
     # ---------- main data reactive ----------
     dat <- reactive({
-      message("[DEG] dat() triggered")
-      message("[DEG] dataset = ", input$dataset)
-      message("[DEG] feature_level = ", input$feature_level)
+      req(input$dataset, input$feature_level)
 
       fp <- file_sel()
+
+      thr <- suppressWarnings(as.numeric(input$p_filter_mode))
+      lfc_min <- input$lfc_min %||% 0
+      direction <- input$direction %||% "both"
 
       x <- get_deg_data(
         dataset = input$dataset,
         level = input$feature_level,
         file_path = fp,
-        data_mode = data_mode
+        data_mode = data_mode,
+        padj_max = thr,
+        lfc_min = lfc_min,
+        direction = direction
       )
-      # fp <- file_sel()
-      # validate(need(!is.null(fp) && file.exists(fp), "No results file found."))
-      #
-      # x <- read_cached(fp)
-      # if (!is.data.frame(x)) x <- as.data.frame(x)
+
+      if (identical(data_mode, "local")) {
+
+        if (!is.na(thr) && "padj" %in% names(x)) {
+          x <- x[!is.na(x$padj) & x$padj <= thr, , drop = FALSE]
+        }
+
+        if ("log2FoldChange" %in% names(x)) {
+          if (identical(direction, "up")) {
+            x <- x[x$log2FoldChange >= lfc_min, , drop = FALSE]
+          } else if (identical(direction, "down")) {
+            x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
+          } else {
+            x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
+          }
+        }
+      }
+
+      x
+    })
+
+    dat <- reactive({
+      fp <- file_sel()
+
+      thr <- suppressWarnings(as.numeric(input$p_filter_mode))
+      lfc_min <- input$lfc_min %||% 0
+      dir <- input$direction %||% "both"
+
+      x <- get_deg_data(
+        dataset = input$dataset,
+        level = input$feature_level,
+        file_path = fp,
+        data_mode = data_mode,
+        padj_max = thr,
+        lfc_min = lfc_min,
+        direction = dir
+      )
 
       # ID column by level
       lvl <- input$feature_level %||% "genes"
@@ -195,6 +232,7 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
           any(grepl("^ENST", utils::head(x$ensembl_gene_id, 20)))) {
         x <- dplyr::rename(x, transcript_id = ensembl_gene_id)
       }
+
       if (identical(lvl, "genes") &&
           ("transcript_id" %in% names(x)) && !("ensembl_gene_id" %in% names(x)) &&
           any(grepl("^ENSG", utils::head(x$transcript_id, 20)))) {
@@ -203,24 +241,40 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
 
       # standardize columns
       if (!"log2FoldChange" %in% names(x)) {
-        if ("log2FC" %in% names(x))    x <- dplyr::rename(x, log2FoldChange = log2FC)
-        else if ("beta" %in% names(x)) x <- dplyr::rename(x, log2FoldChange = beta)
-      }
-      if (!"padj" %in% names(x) && "qvalue" %in% names(x)) x <- dplyr::rename(x, padj = qvalue)
-
-      # p-value filter
-      thr <- suppressWarnings(as.numeric(input$p_filter_mode))
-      if (!is.na(thr) && "padj" %in% names(x)) {
-        x <- x[!is.na(x$padj) & x$padj <= thr, , drop = FALSE]
+        if ("log2FC" %in% names(x)) {
+          x <- dplyr::rename(x, log2FoldChange = log2FC)
+        } else if ("beta" %in% names(x)) {
+          x <- dplyr::rename(x, log2FoldChange = beta)
+        }
       }
 
-      # |log2FC| + direction
-      lfc_min <- input$lfc_min %||% 0
-      dir     <- input$direction %||% "both"
-      if ("log2FoldChange" %in% names(x)) {
-        if (identical(dir, "up"))   x <- x[x$log2FoldChange >=  lfc_min, , drop = FALSE]
-        if (identical(dir, "down")) x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
-        if (identical(dir, "both")) x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
+      if (!"padj" %in% names(x) && "qvalue" %in% names(x)) {
+        x <- dplyr::rename(x, padj = qvalue)
+      }
+
+      # Local mode only: filtering happens after loading local RDS
+      # Cloud mode already filters in Arrow/S3 before collect()
+      if (identical(data_mode, "local")) {
+
+        # p-value filter
+        if (!is.na(thr) && "padj" %in% names(x)) {
+          x <- x[!is.na(x$padj) & x$padj <= thr, , drop = FALSE]
+        }
+
+        # |log2FC| + direction
+        if ("log2FoldChange" %in% names(x)) {
+          if (identical(dir, "up")) {
+            x <- x[x$log2FoldChange >= lfc_min, , drop = FALSE]
+          }
+
+          if (identical(dir, "down")) {
+            x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
+          }
+
+          if (identical(dir, "both")) {
+            x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
+          }
+        }
       }
 
       # symbols mapping
@@ -236,7 +290,8 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
             dplyr::relocate(transcript_id, gene_id, symbol, .before = dplyr::everything())
         }
       }
-      # ---- round numeric columns except pvalue and padj ----
+
+      # round numeric columns except pvalue and padj
       x <- x |>
         dplyr::mutate(
           dplyr::across(
