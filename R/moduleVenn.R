@@ -593,22 +593,51 @@ degVennServer <- function(
     }, server = TRUE)
 
     # keep combo list in sync with overlaps table
+    # observe({
+    #   tbl <- overlaps_tbl()
+    #   combos <- tbl$`Dataset Combination`
+    #
+    #   # preserve current selection if still valid; else fall back to first
+    #   sel <- isolate(input$combo_pick)
+    #   if (is.null(sel) || !nzchar(sel) || !(sel %in% combos)) {
+    #     sel <- combos[[1]] %||% ""
+    #   }
+    #
+    #   updateSelectizeInput(
+    #     session,
+    #     "combo_pick",
+    #     choices  = combos,
+    #     selected = sel,
+    #     server   = TRUE
+    #   )
+    # })
     observe({
       tbl <- overlaps_tbl()
       combos <- tbl$`Dataset Combination`
 
-      # preserve current selection if still valid; else fall back to first
+      if (!length(combos)) {
+        updateSelectizeInput(
+          session,
+          "combo_pick",
+          choices = character(0),
+          selected = character(0),
+          server = TRUE
+        )
+        return()
+      }
+
       sel <- isolate(input$combo_pick)
+
       if (is.null(sel) || !nzchar(sel) || !(sel %in% combos)) {
-        sel <- combos[[1]] %||% ""
+        sel <- combos[1]
       }
 
       updateSelectizeInput(
         session,
         "combo_pick",
-        choices  = combos,
+        choices = combos,
         selected = sel,
-        server   = TRUE
+        server = TRUE
       )
     })
 
@@ -628,10 +657,19 @@ degVennServer <- function(
 
 
     combo_items <- reactive({
-      s <- sets_list(); req(length(s) >= 2)
+      s <- sets_list()
+      req(length(s) >= 2)
 
       # Universe + membership matrix
       Universe <- unique(unlist(s, use.names = FALSE))
+      if (!length(Universe)) {
+        return(tibble::tibble(
+          ID = character(0),
+          Symbol = character(0),
+          Sum = integer(0)
+        ))
+      }
+
       M <- vapply(s, function(v) Universe %in% v, logical(length(Universe)))
       colnames(M) <- names(s)
 
