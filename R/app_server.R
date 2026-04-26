@@ -41,7 +41,7 @@ app_server <- function(input, output, session, data_mode = "local") {
   #degTablesServer("deg_tables", pkg = pkg)
   degTablesServer("deg_tables", pkg = pkg, data_mode = data_mode)
   degVennServer("deg_venn", pkg = pkg, data_mode = data_mode)
-  #queryGeneAcrossDatasetsServer("gene_query")
+  queryGeneAcrossDatasetsServer("gene_query", data_mode = data_mode)
   #pcaServer("pca")
   #isoformConfidenceServer("isoform_confidence")
   if (data_mode == "local") {
