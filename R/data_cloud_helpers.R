@@ -167,26 +167,12 @@ get_deg_data_cloud <- function(
   )
 
   ds <- arrow::open_dataset(path)
-  #
-  # threshold <- padj_max_to_threshold(padj_max)
-  #
-  # ds <- arrow::open_dataset(
-  #   "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results",
-  #   partitioning = c("level", "dataset", "threshold")
-  # )
   q <- ds
 
   if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all") {
     q <- q |>
       dplyr::filter(!is.na(.data$padj), .data$padj <= !!padj_max)
   }
-
-  # q <- ds |>
-  #   dplyr::filter(
-  #     .data$dataset == !!dataset_id,
-  #     .data$level == !!feature_level,
-  #     .data$threshold == !!threshold
-  #   )
 
   # Safety filter. This is useful if padj_max is not one of the prebuilt thresholds.
   if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all") {
@@ -372,6 +358,69 @@ get_tpm_gene_cloud_cached <- memoise::memoise(
     file.path(
       tools::R_user_dir("FRDATranscriptomicAtlas", "cache"),
       "cloud_tpm_gene"
+    )
+  )
+)
+
+
+get_tpm_transcript_manifest_cloud <- function() {
+  readr::read_csv(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/metadata/tpm_transcript_manifest.csv",
+    show_col_types = FALSE
+  )
+}
+
+get_tpm_transcript_cloud <- function(filename) {
+  url <- paste0(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/",
+    "tpm_transcript/",
+    filename
+  )
+
+  tmp <- tempfile(fileext = ".rds")
+
+  download.file(url, tmp, mode = "wb", quiet = TRUE)
+
+  readRDS(tmp)
+}
+
+get_tpm_transcript_cloud_cached <- memoise::memoise(
+  get_tpm_transcript_cloud,
+  cache = cachem::cache_disk(
+    file.path(
+      tools::R_user_dir("FRDATranscriptomicAtlas", "cache"),
+      "cloud_tpm_transcript"
+    )
+  )
+)
+
+get_vsd_manifest_cloud <- function() {
+  readr::read_csv(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/metadata/vsd_manifest.csv",
+    show_col_types = FALSE
+  )
+}
+
+get_vsd_cloud <- function(filename) {
+  url <- paste0(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/",
+    "vsd/",
+    filename
+  )
+
+  tmp <- tempfile(fileext = ".rds")
+
+  download.file(url, tmp, mode = "wb", quiet = TRUE)
+
+  readRDS(tmp)
+}
+
+get_vsd_cloud_cached <- memoise::memoise(
+  get_vsd_cloud,
+  cache = cachem::cache_disk(
+    file.path(
+      tools::R_user_dir("FRDATranscriptomicAtlas", "cache"),
+      "cloud_vsd"
     )
   )
 )

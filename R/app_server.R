@@ -31,7 +31,7 @@ app_server <- function(input, output, session, data_mode = "local") {
   # --- Call modules (pass the same `pkg`) -------------------------------
   aboutServer("about", package_name = pkg)
   datasetsServer("datasets")
-  #tpmHeatmapServer("tpm_hm", pkg = pkg)
+  tpmHeatmapServer("tpm_hm", pkg = pkg, data_mode = data_mode)
   volcanoServer("volc", level = "genes", pkg = pkg, data_mode = data_mode)
   #GSEAServer("gsea",  pkg = pkg)
   #gseaCompareServer("gsea_compare",  pkg = pkg)
