@@ -454,3 +454,21 @@ get_gsea_data_cloud_cached <- memoise::memoise(
   get_gsea_data_cloud,
   cache = gsea_cache
 )
+
+# GSEA compare / Venn summary ---------------------------------------------
+
+gsea_compare_cache <- cachem::cache_mem(max_size = 100 * 1024^2)
+
+get_gsea_compare_summary_cloud <- function() {
+  url <- paste0(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/",
+    "GSEA_results/summary/GO_GSEA_direction_summary.csv"
+  )
+
+  readr::read_csv(url, show_col_types = FALSE)
+}
+
+get_gsea_compare_summary_cloud_cached <- memoise::memoise(
+  get_gsea_compare_summary_cloud,
+  cache = gsea_compare_cache
+)
