@@ -3813,7 +3813,7 @@
     },
     "ggtree": {
       "Package": "ggtree",
-      "Version": "4.0.4",
+      "Version": "4.0.5",
       "Source": "Bioconductor",
       "Type": "Package",
       "Title": "an R package for visualization of tree and annotation data",
@@ -3871,7 +3871,7 @@
       "Repository": "https://bioc-release.r-universe.dev",
       "RemoteUrl": "https://github.com/bioc/ggtree",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "8e25254da5a9aa23db9e2f58acd14cc4e58a2893",
+      "RemoteSha": "a91f8e66f543e611e4ba3b34ba1623b662a16ef7",
       "NeedsCompilation": "no",
       "Author": "Guangchuang Yu [aut, cre, cph] (ORCID: <https://orcid.org/0000-0002-6485-8781>), Tommy Tsan-Yuk Lam [aut, ths], Shuangbin Xu [aut] (ORCID: <https://orcid.org/0000-0003-3513-5362>), Lin Li [ctb], Bradley Jones [ctb], Justin Silverman [ctb], Watal M. Iwasaki [ctb], Yonghe Xia [ctb], Ruizhu Huang [ctb]"
     },
