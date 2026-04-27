@@ -36,9 +36,7 @@ Imports:
     htmltools,
     patchwork,
     glue,
-    ComplexHeatmap,
-    SummarizedExperiment,
-    DESeq2
+    ComplexHeatmap
 Suggests:
     BiocManager,
     magick
