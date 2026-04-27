@@ -143,22 +143,31 @@ pcaServer <- function(id, pkg = utils::packageName(), data_mode = "local") {
       # Named vector: values = file paths, names = pretty labels
       choices_named <- stats::setNames(pf$value, pretty_label)
 
-      wanted <- c("Lai_iPSC_FRDA_vs_IC", "Lai_CNS_FRDA_vs_IC", "Lai_PNS_FRDA_vs_IC")
-      sel <- pf$value[match(wanted, pf$label, nomatch = 0)]
-      if (length(sel) == 0) sel <- pf$value[1]
+      # wanted <- c("Indelicato_FRDA_vs_CTRL")
+      # sel <- pf$value[match(wanted, pf$label, nomatch = 0)]
+      # if (length(sel) == 0) sel <- pf$value[1]
 
       selectizeInput(
         ns("picked"), "Comparison(s)",
         choices  = choices_named,
-        selected = sel,
+        selected = character(0),
         multiple = TRUE,
-        options  = list(plugins = list("remove_button"))
+        options  = list(
+          plugins = list("remove_button"),
+          placeholder = "Choose one or more PCA datasets..."
+        )
       )
+
+
     })
+
 
     # Load and merge (intersect genes across selections)
     merged_input <- reactive({
-      req(input$picked)
+      validate(
+        need(length(input$picked) >= 1, "Select at least one PCA dataset.")
+      )
+
       paths  <- as.character(input$picked)
       objs <- lapply(paths, function(p) {
 
