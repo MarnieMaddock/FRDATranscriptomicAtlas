@@ -41,8 +41,7 @@ Imports:
     DESeq2
 Suggests:
     BiocManager,
-    magick,
-    DOSE
+    magick
 RoxygenNote: 7.3.3
 URL: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas
 BugReports: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/issues

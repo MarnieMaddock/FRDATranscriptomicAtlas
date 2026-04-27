@@ -60,13 +60,15 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-
-    dose_ok <- suppressMessages(requireNamespace("DOSE", quietly = TRUE))
-    if (!dose_ok) {
-      shiny::validate(shiny::need(FALSE,
-                                  "GSEA features require the optional package 'DOSE'. Please exit the app and run FRDATranscriptomicAtlas::install_deps() to install the required package."
-      ))
-    }
+    # dose_ok <- tryCatch({
+    #   "DOSE" %in% loadedNamespaces() || requireNamespace("DOSE", quietly = TRUE)
+    # }, error = function(e) FALSE)
+    #
+    # if (!dose_ok) {
+    #   shiny::validate(shiny::need(FALSE,
+    #                               "GSEA features are not available in this deployment."
+    #   ))
+    # }
 
     # --- maps (tx2gene) ---
     tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
@@ -116,7 +118,6 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     requireNamespace("DT", quietly = TRUE)
     requireNamespace("ggplot2", quietly = TRUE)
     requireNamespace("svglite", quietly = TRUE)
-    requireNamespace("enrichplot", quietly = TRUE)
 
 
     `%||%` <- function(x,y) if (is.null(x) || (is.character(x) && !nzchar(x))) y else x
@@ -287,14 +288,14 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       if (inherits(x, "gseaResult")) {
 
         # enrichplot NOT installed -> fallback message plot
-        if (!requireNamespace("enrichplot", quietly = TRUE)) {
+        if (!("enrichplot" %in% loadedNamespaces())) {
           return(
             ggplot2::ggplot() +
               ggplot2::annotate(
                 "text",
                 x = 0.5, y = 0.5,
                 hjust = 0.5,
-                label = "Dotplot requires the Bioconductor package 'enrichplot',\nwhich is not available for R >= 4.5.\nShowing message instead.",
+                label = "GSEA plotting not available in this deployment.",
                 size = 5
               ) +
               ggplot2::theme_void()
@@ -304,7 +305,8 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
 
         # enrichplot available -> use standard dotplot
         return(
-          enrichplot::dotplot(
+          getNamespace("enrichplot")$dotplot(
+          #enrichplot::dotplot(
             x,
             x = metric,
             showCategory = input$ncat %||% 10
