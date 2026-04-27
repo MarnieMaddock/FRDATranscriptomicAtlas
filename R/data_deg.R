@@ -283,3 +283,25 @@ get_deg_data_cloud_rds_cached <- memoise::memoise(
   get_deg_data_cloud_rds,
   cache = deg_cache
 )
+
+
+#biomarker server
+biomarker_cache <- cachem::cache_mem(max_size = 200 * 1024^2)
+
+get_biomarker_baseline_cloud <- function() {
+  url <- paste0(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/",
+    "biomarker/baseline_long.rds"
+  )
+
+  tf <- tempfile(fileext = ".rds")
+  on.exit(unlink(tf), add = TRUE)
+
+  utils::download.file(url, tf, mode = "wb", quiet = TRUE)
+  readRDS(tf)
+}
+
+get_biomarker_baseline_cloud_cached <- memoise::memoise(
+  get_biomarker_baseline_cloud,
+  cache = biomarker_cache
+)

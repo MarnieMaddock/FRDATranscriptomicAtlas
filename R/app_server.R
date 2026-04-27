@@ -37,7 +37,7 @@ app_server <- function(input, output, session, data_mode = "local") {
   #gseaCompareServer("gsea_compare",  pkg = pkg)
   #genePlotsServer("gene_plots", pkg = pkg)
 
-  #biomarkerServer("biomarkers")
+  biomarkerServer("biomarkers", data_mode = data_mode)
   degTablesServer("deg_tables", pkg = pkg, data_mode = data_mode)
   degVennServer("deg_venn", pkg = pkg, data_mode = data_mode)
   forestPlotsServer("forest", pkg = pkg, data_mode = data_mode)
