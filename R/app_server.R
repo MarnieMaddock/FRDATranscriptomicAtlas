@@ -36,13 +36,14 @@ app_server <- function(input, output, session, data_mode = "local") {
   #GSEAServer("gsea",  pkg = pkg)
   #gseaCompareServer("gsea_compare",  pkg = pkg)
   #genePlotsServer("gene_plots", pkg = pkg)
-  #forestPlotsServer("forest", pkg = pkg)
+
   #biomarkerServer("biomarkers")
   degTablesServer("deg_tables", pkg = pkg, data_mode = data_mode)
   degVennServer("deg_venn", pkg = pkg, data_mode = data_mode)
+  forestPlotsServer("forest", pkg = pkg, data_mode = data_mode)
   queryGeneAcrossDatasetsServer("gene_query", data_mode = data_mode)
   #pcaServer("pca")
-  #isoformConfidenceServer("isoform_confidence")
+  isoformConfidenceServer("isoform_confidence")
   if (data_mode == "local") {
     GSEAServer("gsea", pkg = pkg)
     gseaCompareServer("gsea_compare", pkg = pkg)
