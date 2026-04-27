@@ -35,8 +35,7 @@ app_server <- function(input, output, session, data_mode = "local") {
   volcanoServer("volc", level = "genes", pkg = pkg, data_mode = data_mode)
   #GSEAServer("gsea",  pkg = pkg)
   #gseaCompareServer("gsea_compare",  pkg = pkg)
-  #genePlotsServer("gene_plots", pkg = pkg)
-
+  genePlotsServer("gene_plots", pkg = pkg, data_mode = data_mode)
   biomarkerServer("biomarkers", data_mode = data_mode)
   degTablesServer("deg_tables", pkg = pkg, data_mode = data_mode)
   degVennServer("deg_venn", pkg = pkg, data_mode = data_mode)
