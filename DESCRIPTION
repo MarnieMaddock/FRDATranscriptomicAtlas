@@ -35,14 +35,14 @@ Imports:
     data.table,
     htmltools,
     patchwork,
-    glue
-Suggests:
-    BiocManager,
-    magick,
+    glue,
     enrichplot,
     ComplexHeatmap,
     SummarizedExperiment,
-    DESeq2,
+    DESeq2
+Suggests:
+    BiocManager,
+    magick,
     DOSE
 RoxygenNote: 7.3.3
 URL: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas
