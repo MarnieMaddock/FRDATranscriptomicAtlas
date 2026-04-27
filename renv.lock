@@ -19,14 +19,6 @@
         "URL": "https://bioconductor.org/packages/3.22/workflows"
       },
       {
-        "Name": "BioCbooks",
-        "URL": "https://bioconductor.org/packages/3.22/books"
-      },
-      {
-        "Name": "Bioconductor",
-        "URL": "https://bioconductor.org/packages/3.21/bioc"
-      },
-      {
         "Name": "CRAN",
         "URL": "https://cran.rstudio.com"
       }
