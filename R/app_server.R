@@ -33,7 +33,7 @@ app_server <- function(input, output, session, data_mode = "local") {
   datasetsServer("datasets")
   tpmHeatmapServer("tpm_hm", pkg = pkg, data_mode = data_mode)
   volcanoServer("volc", level = "genes", pkg = pkg, data_mode = data_mode)
-  #GSEAServer("gsea",  pkg = pkg)
+  GSEAServer("gsea",  pkg = pkg, data_mode = data_mode)
   #gseaCompareServer("gsea_compare",  pkg = pkg)
   genePlotsServer("gene_plots", pkg = pkg, data_mode = data_mode)
   biomarkerServer("biomarkers", data_mode = data_mode)
@@ -43,12 +43,6 @@ app_server <- function(input, output, session, data_mode = "local") {
   queryGeneAcrossDatasetsServer("gene_query", data_mode = data_mode)
   pcaServer("pca", data_mode = data_mode)
   isoformConfidenceServer("isoform_confidence")
-  if (data_mode == "local") {
-    GSEAServer("gsea", pkg = pkg)
-    gseaCompareServer("gsea_compare", pkg = pkg)
-  } else {
-    message("[Atlas] Cloud mode: skipping GSEA modules until cloud backend is implemented.")
-  }
 
 
   # --- sidebar behavior for SwitchPlots full-width tab ------------------

@@ -7,16 +7,7 @@ get_deg_data <- function(
     lfc_min = 0,
     direction = "both"
 ) {
-  # if (identical(data_mode, "local")) {
-  #   validate(
-  #     need(!is.null(file_path) && file.exists(file_path), "No results file found.")
-  #   )
-  #
-  #   x <- readRDS(file_path)
-  #   if (!is.data.frame(x)) x <- as.data.frame(x)
-  #
-  #   return(x)
-  # }
+
   if (identical(data_mode, "local")) {
     validate(
       need(!is.null(file_path) && file.exists(file_path), "No results file found.")
@@ -423,4 +414,43 @@ get_vsd_cloud_cached <- memoise::memoise(
       "cloud_vsd"
     )
   )
+)
+
+
+# GSEA -----------------------------------------------------------
+# GSEA -----------------------------------------------------------
+
+gsea_cache <- cachem::cache_mem(max_size = 500 * 1024^2)
+
+get_gsea_manifest_cloud <- function() {
+  readr::read_csv(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/metadata/gsea_manifest.csv",
+    show_col_types = FALSE
+  )
+}
+
+get_gsea_data_cloud <- function(filename) {
+
+  url <- paste0(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/",
+    "GSEA_results/",
+    filename
+  )
+
+  tf <- tempfile(fileext = ".rds")
+  on.exit(unlink(tf), add = TRUE)
+
+  utils::download.file(
+    url,
+    destfile = tf,
+    mode = "wb",
+    quiet = TRUE
+  )
+
+  readRDS(tf)
+}
+
+get_gsea_data_cloud_cached <- memoise::memoise(
+  get_gsea_data_cloud,
+  cache = gsea_cache
 )

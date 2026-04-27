@@ -56,7 +56,7 @@ GSEAMainUI <- function(id) {
 # R/modules/goGSEA_module.R
 # -------------------------
 # Server for GSEA (CSV/RDS-on-disk, on-demand)
-GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
+GSEAServer <- function(id, base_dir = NULL, pkg = NULL, data_mode = "local") {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -148,48 +148,110 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       df
     }
 
-    # ---- ensure GSEA data are available (Zenodo-backed) ----
-    ensure_atlas_data(
-      keys    = "gsea_results",
-      package = pkg
-    )
+    # ---- index builders ----
 
-    # ---- cached GSEA directory ----
-    cache_root <- tools::R_user_dir(pkg, which = "cache")
-    base_dir   <- file.path(cache_root, "GSEA_results")
-
-    if (!dir.exists(base_dir)) {
-      stop(
-        "Cached GSEA_results directory not found after download:\n  ",
-        base_dir,
-        call. = FALSE
-      )
-    }
-
-
-    # ---- index: dataset folder -> {BP,CC,MF} -> file path ----
-    build_index <- function(root) {
+    build_index_local <- function(root) {
       if (!dir.exists(root)) return(list())
+
       ds_dirs <- list.dirs(root, recursive = FALSE, full.names = TRUE)
+
       idx <- lapply(ds_dirs, function(d) {
-        # prefer .rds; fallback to .csv (if you kept CSVs)
-        map <- stats::setNames(vector("list", 3), c("BP","CC","MF"))
-        for (ont in c("BP","CC","MF")) {
+        map <- stats::setNames(vector("list", 3), c("BP", "CC", "MF"))
+
+        for (ont in c("BP", "CC", "MF")) {
           p_rds <- file.path(d, sprintf("gsea_GO_%s.rds", ont))
+
           if (file.exists(p_rds)) {
             map[[ont]] <- p_rds
           } else {
             map[[ont]] <- ""
           }
         }
+
         map
       })
+
       names(idx) <- basename(ds_dirs)
-      # keep datasets that have at least one ontology file
+
       idx[vapply(idx, function(x) any(nzchar(unlist(x))), logical(1))]
     }
 
-    idx <- build_index(base_dir)
+
+    build_index_cloud <- function(manifest) {
+
+      required_cols <- c("dataset", "ont", "filename")
+      missing_cols <- setdiff(required_cols, names(manifest))
+
+      if (length(missing_cols) > 0) {
+        stop(
+          "GSEA cloud manifest is missing required columns: ",
+          paste(missing_cols, collapse = ", "),
+          call. = FALSE
+        )
+      }
+
+      manifest <- manifest |>
+        dplyr::filter(
+          .data$ont %in% c("BP", "CC", "MF"),
+          !is.na(.data$dataset),
+          !is.na(.data$filename)
+        )
+
+      datasets <- unique(manifest$dataset)
+
+      idx <- lapply(datasets, function(ds) {
+        map <- stats::setNames(vector("list", 3), c("BP", "CC", "MF"))
+
+        for (ont in c("BP", "CC", "MF")) {
+          row <- manifest |>
+            dplyr::filter(
+              .data$dataset == .env$ds,
+              .data$ont == .env$ont
+            ) |>
+            dplyr::slice(1)
+
+          if (nrow(row) == 1) {
+            map[[ont]] <- row$filename[[1]]
+          } else {
+            map[[ont]] <- ""
+          }
+        }
+
+        map
+      })
+
+      names(idx) <- datasets
+
+      idx[vapply(idx, function(x) any(nzchar(unlist(x))), logical(1))]
+    }
+
+    if (identical(data_mode, "cloud")) {
+
+      gsea_manifest <- get_gsea_manifest_cloud()
+
+      idx <- build_index_cloud(gsea_manifest)
+
+    } else {
+
+      ensure_atlas_data(
+        keys = "gsea_results",
+        package = pkg
+      )
+
+      cache_root <- tools::R_user_dir(pkg, which = "cache")
+      base_dir <- file.path(cache_root, "GSEA_results")
+
+      if (!dir.exists(base_dir)) {
+        stop(
+          "Cached GSEA_results directory not found after download:\n  ",
+          base_dir,
+          call. = FALSE
+        )
+      }
+
+      idx <- build_index_local(base_dir)
+    }
+
     datasets_vec <- names(idx)
 
     # ---- pretty labels for the dataset select ----
@@ -220,38 +282,46 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     choices_named <- stats::setNames(datasets_vec, labels)
 
     label_from_value <- stats::setNames(labels, datasets_vec)
-
-    # ---- reactive: are we safe to render? ----
-    ready <- reactive({
-      ds_ok  <- !is.null(input$dataset) && input$dataset %in% datasets_vec
-      ont_ok <- !is.null(input$ont) && input$ont %in% c("BP","CC","MF")
-      file_ok <- if (ds_ok && ont_ok) nzchar(idx[[input$dataset]][[input$ont]]) else FALSE
-      ds_ok && ont_ok && file_ok
-    })
-
-    # ---- populate controls ----
     observe({
-      validate(need(length(datasets_vec) > 0, "No GSEA files found under extdata/GSEA_results."))
-      updateSelectInput(session, "dataset", choices = choices_named, selected = datasets_vec[[1]])
-    })
-    observeEvent(input$dataset, {
-      updateRadioButtons(session, "ont", choices = c("BP","CC","MF"), selected = "BP")
-    }, ignoreInit = TRUE)
+      validate(
+        need(length(datasets_vec) > 0, "No GSEA files found.")
+      )
 
-    # ---- current file path & object ----
+      updateSelectInput(
+        session,
+        "dataset",
+        choices = choices_named,
+        selected = datasets_vec[[1]]
+      )
+    })
+    # ---- reactive: are we safe to render? ----
+
+    ready <- reactive({
+      !is.null(input$dataset) &&
+        input$dataset %in% datasets_vec &&
+        !is.null(input$ont) &&
+        input$ont %in% c("BP", "CC", "MF") &&
+        nzchar(idx[[input$dataset]][[input$ont]])
+    })
+
     r_path <- reactive({
       req(ready())
-      idx[[input$dataset]][[input$ont]]
+
+      p <- idx[[input$dataset]][[input$ont]]
+
+      p
     })
 
     read_any <- function(p) {
-      if (grepl("\\.rds$", p, ignore.case = TRUE)) {
-        readRDS(p)
-      } else {
-        # CSV fallback support (returns a df, not a gseaResult). We convert.
-        df <- utils::read.csv(p, check.names = FALSE)
-        df
+      if (identical(data_mode, "cloud")) {
+        return(get_gsea_data_cloud_cached(p))
       }
+
+      if (grepl("\\.rds$", p, ignore.case = TRUE)) {
+        return(readRDS(p))
+      }
+
+      utils::read.csv(p, check.names = FALSE)
     }
 
     r_obj <- reactive({
@@ -259,20 +329,28 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       read_any(r_path())
     })
 
+    r_df <- reactive({
+      x <- r_obj()
+
+      df <- if (is.data.frame(x)) {
+        x
+      } else {
+        as.data.frame(x)
+      }
+
+      if ("p.adjust" %in% names(df)) {
+        df <- df[order(df$p.adjust, -abs(df$NES %||% 0)), , drop = FALSE]
+      }
+
+      .add_core_cols(df)
+    })
+
     # ---- title ----
     title_txt <- reactive({
       ds_label <- label_from_value[[input$dataset %||% ""]] %||% (input$dataset %||% "")
       paste0(ds_label, " - GO ", input$ont %||% "", " GSEA")
     })
-    # ---- df accessor (works for gseaResult or data.frame fallback) ----
-    r_df <- reactive({
-      x <- r_obj()
-      df <- if (inherits(x, "gseaResult")) as.data.frame(x) else x
-      if ("p.adjust" %in% names(df)) {
-        df <- df[order(df$p.adjust, -abs(df$NES %||% 0)), , drop = FALSE]
-      }
-      .add_core_cols(df)   # uses symbols now
-    })
+
 
 
 
@@ -280,49 +358,17 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
     # ---- plot helpers ----
     make_dotplot <- function(metric = c("GeneRatio","NES")) {
       metric <- match.arg(metric)
-      x <- r_obj()
+
 
       # ----------------------------
-      # Case 1: object is a gseaResult from clusterProfiler
-      # ----------------------------
-      if (inherits(x, "gseaResult")) {
-
-        # enrichplot NOT installed -> fallback message plot
-        if (!("enrichplot" %in% loadedNamespaces())) {
-          return(
-            ggplot2::ggplot() +
-              ggplot2::annotate(
-                "text",
-                x = 0.5, y = 0.5,
-                hjust = 0.5,
-                label = "GSEA plotting not available in this deployment.",
-                size = 5
-              ) +
-              ggplot2::theme_void()
-          )
-        }
-
-
-        # enrichplot available -> use standard dotplot
-        return(
-          getNamespace("enrichplot")$dotplot(
-          #enrichplot::dotplot(
-            x,
-            x = metric,
-            showCategory = input$ncat %||% 10
-          ) +
-            ggplot2::ggtitle(title_txt())
-        )
-      }
-
-      # ----------------------------
-      # Case 2: fallback for data.frame CSV results
+      # data.frame CSV results
       # ----------------------------
       df <- r_df()
       n  <- max(1, as.integer(input$ncat %||% 10))
-      d  <- utils::head(df, n)
+      d <- df |>
+        dplyr::arrange(p.adjust) |>
+        dplyr::slice_head(n = n)
 
-      # Compute GeneRatio if missing
       if (!"GeneRatio" %in% names(d)) {
         if ("core_enrichment" %in% names(d) && "setSize" %in% names(d)) {
           core_n <- vapply(
@@ -334,44 +380,112 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
         }
       }
 
-      metric_col <- switch(metric,
-                           "GeneRatio" = "GeneRatio",
-                           "NES"       = "NES")
+      metric_col <- switch(
+        metric,
+        GeneRatio = "GeneRatio",
+        NES = "NES"
+      )
 
-      # When metric column is missing -> safe fallback
-      if (!metric_col %in% names(d)) {
-        return(
-          ggplot2::ggplot() +
-            ggplot2::annotate(
-              "text",
-              x = 0.5, y = 0.5,
-              hjust = 0.5,
-              label = sprintf("Metric '%s' not available in results.", metric),
-              size = 5
-            ) +
-            ggplot2::theme_void()
-        )
-      }
+      validate(
+        need(metric_col %in% names(d), sprintf("Metric '%s' not available.", metric)),
+        need("Description" %in% names(d), "Description column not found."),
+        need("p.adjust" %in% names(d), "p.adjust column not found.")
+      )
 
-      # ----------------------------
-      # Clean fallback dotplot (ggplot2 only)
-      # ----------------------------
-      ggplot2::ggplot(
-        d,
-        ggplot2::aes(
-          x = stats::reorder(Description, !!rlang::sym(metric_col)),
-          y = !!rlang::sym(metric_col)
-        )
-      ) +
-        ggplot2::geom_point(size = 3, color = "#3366AA") +
-        ggplot2::coord_flip() +
-        ggplot2::labs(
-          title = title_txt(),
-          x     = "Term",
-          y     = metric
+      size_col <- if ("setSize" %in% names(d)) "setSize" else "core_count"
+
+      d$Description <- stats::reorder(d$Description, d[[metric_col]])
+
+      return(
+        ggplot2::ggplot(
+          d,
+          ggplot2::aes(
+            x = .data[[metric_col]],
+            y = Description,
+            size = .data[[size_col]],
+            fill = p.adjust
+          )
         ) +
-        ggplot2::theme_bw(base_size = 12)
+          ggplot2::geom_point(
+            aes(fill = p.adjust),
+            shape = 21,
+            colour = "black",
+            stroke = 0.5,
+            alpha = 0.9
+          ) +
+          ggplot2::scale_fill_gradient(
+            low = "#e47f7dff",
+            high = "#5a95c5ff",
+            trans = "reverse"
+          ) +
+          ggplot2::labs(
+            title = title_txt(),
+            x = metric,
+            y = NULL,
+            size = if (size_col == "setSize") "Set size" else "Core genes",
+            fill = "Adjusted p-value"
+          ) +
+          ggplot2::theme_bw(base_size = 12) +
+          ggplot2::theme(
+            plot.title = ggplot2::element_text(face = "bold"),
+            axis.text.y = ggplot2::element_text(size = 10),
+            panel.grid.major.y = ggplot2::element_line(linewidth = 0.2),
+            panel.grid.minor = ggplot2::element_blank()
+          )
+      )
     }
+    #   d  <- utils::head(df, n)
+    #
+    #   # Compute GeneRatio if missing
+    #   if (!"GeneRatio" %in% names(d)) {
+    #     if ("core_enrichment" %in% names(d) && "setSize" %in% names(d)) {
+    #       core_n <- vapply(
+    #         strsplit(as.character(d$core_enrichment), "/", fixed = TRUE),
+    #         function(v) sum(nzchar(v)),
+    #         integer(1)
+    #       )
+    #       d$GeneRatio <- core_n / as.numeric(d$setSize)
+    #     }
+    #   }
+    #
+    #   metric_col <- switch(metric,
+    #                        "GeneRatio" = "GeneRatio",
+    #                        "NES"       = "NES")
+    #
+    #   # When metric column is missing -> safe fallback
+    #   if (!metric_col %in% names(d)) {
+    #     return(
+    #       ggplot2::ggplot() +
+    #         ggplot2::annotate(
+    #           "text",
+    #           x = 0.5, y = 0.5,
+    #           hjust = 0.5,
+    #           label = sprintf("Metric '%s' not available in results.", metric),
+    #           size = 5
+    #         ) +
+    #         ggplot2::theme_void()
+    #     )
+    #   }
+    #
+    #   # ----------------------------
+    #   # Clean fallback dotplot (ggplot2 only)
+    #   # ----------------------------
+    #   ggplot2::ggplot(
+    #     d,
+    #     ggplot2::aes(
+    #       x = stats::reorder(Description, !!rlang::sym(metric_col)),
+    #       y = !!rlang::sym(metric_col)
+    #     )
+    #   ) +
+    #     ggplot2::geom_point(size = 3, color = "#3366AA") +
+    #     ggplot2::coord_flip() +
+    #     ggplot2::labs(
+    #       title = title_txt(),
+    #       x     = "Term",
+    #       y     = metric
+    #     ) +
+    #     ggplot2::theme_bw(base_size = 12)
+    # }
 
     # helper to compute how many rows will be drawn (guard against short tables)
     n_rows_to_plot <- reactive({
@@ -416,26 +530,19 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL) {
       )
     })
 
-    # keep your existing renderPlot() calls:
-    # output$plot_gr  <- renderPlot({ ... }, res = 96)
-    # output$plot_nes <- renderPlot({ ... }, res = 96)
+    output$plot_gr <- renderPlot({
+      req(ready())
+      make_dotplot("GeneRatio")
+    }, res = 96, height = function() dyn_height())
 
-    output$plot_gr <- renderPlot(
-      { req(ready()); make_dotplot("GeneRatio") },
-      res    = 96,
-      height = function() dyn_height()
-    )
-
-
-    output$plot_nes <- renderPlot(
-      { req(ready()); make_dotplot("NES") },
-      res    = 96,
-      height = function() dyn_height()
-    )
+    output$plot_nes <- renderPlot({
+      req(ready())
+      make_dotplot("NES")
+    }, res = 96, height = function() dyn_height())
 
 
     output$tbl <- DT::renderDT({
-      req(ready())
+      req(input$dataset, input$ont)
       df <- r_df()
       # choose a sensible subset/order if you like:
       keep <- intersect(c("ID","Description","NES","p.adjust","setSize","core_count","core_preview"),
