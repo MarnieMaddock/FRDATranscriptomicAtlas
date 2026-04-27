@@ -305,3 +305,34 @@ get_biomarker_baseline_cloud_cached <- memoise::memoise(
   get_biomarker_baseline_cloud,
   cache = biomarker_cache
 )
+
+
+#PCA -----------------------------------------------------------
+pca_cache <- cachem::cache_mem(max_size = 500 * 1024^2)
+
+get_pca_manifest_cloud <- function() {
+  readr::read_csv(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/metadata/pca_manifest.csv",
+    show_col_types = FALSE
+  )
+}
+
+get_pca_data_cloud <- function(filename) {
+
+  url <- paste0(
+    "https://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an.s3.ap-southeast-2.amazonaws.com/",
+    "pca_input/",
+    filename
+  )
+
+  tf <- tempfile(fileext = ".rds")
+  on.exit(unlink(tf), add = TRUE)
+
+  utils::download.file(url, tf, mode = "wb", quiet = TRUE)
+  readRDS(tf)
+}
+
+get_pca_data_cloud_cached <- memoise::memoise(
+  get_pca_data_cloud,
+  cache = pca_cache
+)

@@ -42,7 +42,7 @@ app_server <- function(input, output, session, data_mode = "local") {
   degVennServer("deg_venn", pkg = pkg, data_mode = data_mode)
   forestPlotsServer("forest", pkg = pkg, data_mode = data_mode)
   queryGeneAcrossDatasetsServer("gene_query", data_mode = data_mode)
-  #pcaServer("pca")
+  pcaServer("pca", data_mode = data_mode)
   isoformConfidenceServer("isoform_confidence")
   if (data_mode == "local") {
     GSEAServer("gsea", pkg = pkg)
