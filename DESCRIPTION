@@ -36,7 +36,6 @@ Imports:
     htmltools,
     patchwork,
     glue,
-    enrichplot,
     ComplexHeatmap,
     SummarizedExperiment,
     DESeq2
