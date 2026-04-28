@@ -12,7 +12,7 @@ run_app <- function(data_mode = c("cloud", "local")) {
   message("[Atlas] Running in ", data_mode, " mode")
 
   shiny::shinyApp(
-    ui = app_ui(),
+    ui = app_ui(data_mode = data_mode),
     server = function(input, output, session) {
       app_server(input, output, session, data_mode = data_mode)
     }
