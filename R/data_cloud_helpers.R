@@ -184,7 +184,8 @@ get_deg_data_cloud_rds <- function(
 
   x <- readRDS(tf)
 
-  # Apply padj filter when a non-standard threshold falls back to the "all" file.
+  # Apply padj filter in memory when a non-standard threshold (i.e. not one of
+  # 0.001, 0.01, 0.05, 0.10) falls back to the "all" prebuilt file.
   if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all" && "padj" %in% names(x)) {
     x <- x[!is.na(x$padj) & x$padj <= padj_max, , drop = FALSE]
   }
