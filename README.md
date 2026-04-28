@@ -16,6 +16,7 @@ The Atlas integrates multiple publicly available RNA-seq studies. Features inclu
 - Expression Heatmaps - Compare transcript abundance patterns across conditions and datasets.
 - Gene TPM Plots (Gene Plots) - Visualise expression of selected genes (TPM) by condition, replicate, and dataset for direct comparison.
 - Cross-Dataset Forest Plots - Compare per-dataset effect sizes for selected genes to assess concordance and heterogeneity across studies.
+- Gene Prioritisation: Re-create figures from the original publication in the Biomarker Discovery tab
 - Download and Export - Tables and plots can be exported for reporting and reuse.
 
 ---
