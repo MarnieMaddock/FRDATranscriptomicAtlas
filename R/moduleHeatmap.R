@@ -80,7 +80,7 @@ tpmHeatmapMainUI <- function(id) {
 
 
 missing_heatmap_deps <- function() {
-  pkgs <- c("ComplexHeatmap", "SummarizedExperiment", "DESeq2")
+  pkgs <- c("ComplexHeatmap", "SummarizedExperiment")
   pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
 }
 
@@ -727,24 +727,6 @@ tpmHeatmapServer <- function(
 
           vsd_mat <- SummarizedExperiment::assay(vsd_obj)
 
-          # Determine samples (columns) to keep
-          # # Attempt direct intersection first
-          # sc_use <- intersect(sc, colnames(vsd_mat))
-          #
-          # # If nothing matches, attempt safe harmonization
-          # if (!length(sc_use) && grepl("^Maddock", ds)) {
-          #
-          #   new_names <- harmonize_maddock_names(colnames(vsd_mat), sc)
-          #
-          #   # Reassign ONLY if the length matches and no duplicates
-          #   if (length(new_names) == length(colnames(vsd_mat)) &&
-          #       length(unique(new_names)) == length(new_names)) {
-          #
-          #     colnames(vsd_mat) <- new_names
-          #     sc_use <- intersect(sc, new_names)
-          #   }
-          # }
-
           # For Maddock datasets, always harmonize first
           if (grepl("^Maddock", ds)) {
 
@@ -1130,22 +1112,6 @@ tpmHeatmapServer <- function(
       }
     )
 
-    # output$dl_png <- downloadHandler(
-    #   filename = function() paste0("heatmap_", Sys.Date(), ".png"),
-    #   content = function(file) {
-    #     dims <- plot_dims()
-    #     w_px  <- (dims$dev_w_px %||% 20000)
-    #     h_px  <- (dims$dev_h_px %||% 10000)
-    #     ragg::agg_png(file, width = w_px, height = h_px, units = "px", res = 300)
-    #     on.exit(grDevices::dev.off(), add = TRUE)
-    #     ComplexHeatmap::draw(
-    #       .last_ht(),
-    #       heatmap_legend_side    = "right",
-    #       annotation_legend_side = "right",
-    #       padding = grid::unit(c(6,10,16,6), "mm")
-    #     )
-    #   }
-    # )
 
     magick_ok <- requireNamespace("magick", quietly = TRUE)
     if (magick_ok) {
