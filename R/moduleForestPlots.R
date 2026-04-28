@@ -56,21 +56,17 @@ forestPlotMainUI <- function(id) {
 
 
 ## SERVER ----
-forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
+forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL, data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
     ensure_atlas_data(
-      keys    = "deg_genes",
-      package = pkg
+      keys = "deg_genes",
+      package = pkg,
+      data_mode = data_mode
     )
-
-    deg_gene_dir <- function(package) {
-      file.path(
-        tools::R_user_dir(package, "cache"),
-        "genes"
-      )
-    }
 
     # --- make pkg safe (length-1 string) ---------------------------------
     pkg <- tryCatch(pkg, error = function(e) "")
@@ -103,31 +99,6 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
       nm
     }
 
-    # ---------- choose DEG folder (genes) --------------------------------
-    data_path <- if (!is.null(data_dir)) {
-      data_dir
-    } else {
-      deg_gene_dir(pkg)
-    }
-
-    validate(need(nzchar(data_path) && dir.exists(data_path),
-                  paste0("Data folder not found: ", data_path)))
-
-    # ---------- list RDS files -------------------------------------------
-    rds_files <- list.files(data_path, pattern = "\\.rds$", full.names = TRUE)
-    validate(need(length(rds_files) > 0,
-                  paste0("No .rds files found in ", data_path)))
-
-    # ---------- read + harmonize per study --------------------------------
-    read_one <- function(f) {
-      df <- readRDS(f)
-      study <- .study_key_from_path(f)
-      # rename effect/se columns with study suffix
-      have <- c("log2FoldChange","lfcSE","padj")
-      have <- have[have %in% names(df)]
-      ren  <- stats::setNames(paste0(have, "_", study), have)
-      dplyr::rename(df, !!!ren)
-    }
 
     # ---------- gene resolver ---------------------------------------------
     resolve_gene <- function(q, df) {
@@ -145,64 +116,131 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
 
     gene_query <- eventReactive(input$plot_gene, input$gene_text, ignoreInit = TRUE)
 
+
+    manifest <- reactiveVal(NULL)
+
+    observeEvent(TRUE, {
+      m <- get_deg_manifest(pkg = pkg, data_mode = data_mode)
+      manifest(m)
+    }, once = TRUE)
+
     # ---------- merge all studies ----------------------------------------
     merged_all <- reactive({
-      rds_paths <- list.files(data_path, pattern = "all_genes\\.rds$", full.names = TRUE)
-      validate(need(length(rds_paths) > 0,
-                    paste0("No *all_genes.rds files in ", data_path)))
+      m <- req(manifest())
 
-      read_ok <- list()
-      for (f in rds_paths) {
-        nm <- sub("\\.rds$", "", basename(f))
-        obj <- tryCatch(readRDS(f), error = function(e) NULL)
-        if (!is.null(obj)) read_ok[[nm]] <- obj
-      }
-      validate(need(length(read_ok) > 0, "No readable DEG RDS files."))
+      m <- m |>
+        dplyr::filter(level == "genes")
 
-      study_key <- function(objname) {
-        x <- objname
-        x <- sub("^DESEQ2_res_", "", x)
-        x <- sub("^DESEQ2_results_", "", x)   # Erwin naming
-        x <- sub("_0[.]?0*5?_all_genes$", "", x)
-        x
+      validate(need(nrow(m) > 0, "No gene-level DEG files found."))
+
+      # For each dataset, use the most permissive available file.
+      # In cloud mode, this will usually be threshold == "all".
+      if ("threshold" %in% names(m)) {
+        m <- m |>
+          dplyr::mutate(
+            threshold_rank = dplyr::case_when(
+              threshold == "all" ~ 999,
+              threshold == "padj_0.10" ~ 0.10,
+              threshold == "padj_0.05" ~ 0.05,
+              threshold == "padj_0.01" ~ 0.01,
+              threshold == "padj_0.001" ~ 0.001,
+              TRUE ~ p
+            )
+          ) |>
+          dplyr::arrange(dataset, dplyr::desc(threshold_rank)) |>
+          dplyr::group_by(dataset) |>
+          dplyr::slice(1) |>
+          dplyr::ungroup()
+      } else {
+        m <- m |>
+          dplyr::arrange(dataset, dplyr::desc(p)) |>
+          dplyr::group_by(dataset) |>
+          dplyr::slice(1) |>
+          dplyr::ungroup()
       }
 
       prep_df <- function(df, study_name) {
         df <- as.data.frame(df)
 
         if (!"gene_id" %in% names(df)) {
-          if ("gene" %in% names(df)) df <- dplyr::rename(df, gene_id = gene)
-          else if (!is.null(rownames(df))) df <- tibble::rownames_to_column(df, var = "gene_id")
-          else stop("'", study_name, "' has no gene_id/gene column or rownames.")
+          if ("ensembl_gene_id" %in% names(df)) {
+            df <- dplyr::rename(df, gene_id = ensembl_gene_id)
+          } else if ("gene" %in% names(df)) {
+            df <- dplyr::rename(df, gene_id = gene)
+          } else if (!is.null(rownames(df))) {
+            df <- tibble::rownames_to_column(df, var = "gene_id")
+          } else {
+            stop("'", study_name, "' has no gene_id/gene column or rownames.")
+          }
         }
+
         df$gene_id <- sub("\\.\\d+$", "", df$gene_id)
 
-        keep <- intersect(c("log2FoldChange","lfcSE","padj","external_gene_name"), names(df))
-        if (!all(c("log2FoldChange","lfcSE") %in% keep))
+        if (!"log2FoldChange" %in% names(df)) {
+          if ("log2FC" %in% names(df)) {
+            df <- dplyr::rename(df, log2FoldChange = log2FC)
+          } else if ("beta" %in% names(df)) {
+            df <- dplyr::rename(df, log2FoldChange = beta)
+          }
+        }
+
+        keep <- intersect(
+          c("log2FoldChange", "lfcSE", "padj", "external_gene_name"),
+          names(df)
+        )
+
+        if (!all(c("log2FoldChange", "lfcSE") %in% keep)) {
           stop("'", study_name, "' missing log2FoldChange or lfcSE.")
+        }
 
         out <- dplyr::select(df, gene_id, dplyr::all_of(keep))
-        non_id <- setdiff(names(out), c("gene_id","external_gene_name"))
+
+        non_id <- setdiff(names(out), c("gene_id", "external_gene_name"))
         names(out)[match(non_id, names(out))] <- paste0(non_id, "_", study_name)
+
         out
       }
 
-
-
-
       all_dfs <- list()
-      for (nm in names(read_ok)) {
-        st <- study_key(nm)
-        all_dfs[[st]] <- tryCatch(
-          prep_df(read_ok[[nm]], st),
+
+      for (i in seq_len(nrow(m))) {
+        ds <- m$dataset[i]
+
+        file_path <- if (identical(data_mode, "local")) {
+          m$path[i]
+        } else {
+          NULL
+        }
+
+        obj <- tryCatch(
+          get_deg_data(
+            dataset = ds,
+            level = "genes",
+            file_path = file_path,
+            data_mode = data_mode,
+            padj_max = NULL,
+            lfc_min = 0,
+            direction = "both"
+          ),
           error = function(e) {
-            message("prep_df FAILED for ", st, ": ", conditionMessage(e))
+            message("Failed to load ", ds, ": ", conditionMessage(e))
             NULL
           }
         )
 
+        if (!is.null(obj)) {
+          all_dfs[[ds]] <- tryCatch(
+            prep_df(obj, ds),
+            error = function(e) {
+              message("prep_df FAILED for ", ds, ": ", conditionMessage(e))
+              NULL
+            }
+          )
+        }
       }
+
       all_dfs <- Filter(Negate(is.null), all_dfs)
+
       validate(need(length(all_dfs) > 0, "No usable DEG tables after prep."))
 
       merged <- purrr::reduce(all_dfs, dplyr::full_join, by = "gene_id")
@@ -211,11 +249,14 @@ forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL) {
         merged <- dplyr::left_join(merged, gene_map, by = "gene_id")
       }
 
-      # coalesce stray symbol columns if present
       sym_cols <- grep("^external_gene_name($|[_\\.])", names(merged), value = TRUE)
+
       if (length(sym_cols) > 1) {
         merged$external_gene_name <- dplyr::coalesce(!!!rlang::syms(sym_cols))
-        merged <- dplyr::select(merged, -dplyr::all_of(setdiff(sym_cols, "external_gene_name")))
+        merged <- dplyr::select(
+          merged,
+          -dplyr::all_of(setdiff(sym_cols, "external_gene_name"))
+        )
       }
 
       merged

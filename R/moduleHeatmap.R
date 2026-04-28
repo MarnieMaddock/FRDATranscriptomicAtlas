@@ -80,7 +80,7 @@ tpmHeatmapMainUI <- function(id) {
 
 
 missing_heatmap_deps <- function() {
-  pkgs <- c("ComplexHeatmap", "SummarizedExperiment", "DESeq2")
+  pkgs <- c("ComplexHeatmap", "SummarizedExperiment")
   pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
 }
 
@@ -89,9 +89,13 @@ missing_heatmap_deps <- function() {
 tpmHeatmapServer <- function(
     id,
     pkg = utils::packageName(),
-    sample_meta = NULL   # pass a data.frame or leave NULL to auto-load from extdata
+    sample_meta = NULL,   # pass a data.frame or leave NULL to auto-load from extdata
+    data_mode = c("cloud", "local")
 ) {
+  data_mode <- match.arg(data_mode)
   moduleServer(id, function(input, output, session) {
+
+
     ns <- session$ns
 
     # ---- make pkg robust ----
@@ -101,16 +105,38 @@ tpmHeatmapServer <- function(
 
     `%||%` <- function(a, b) if (is.null(a)) b else a
 
-    ensure_atlas_data(
-      keys = c(
-        "tpm_gene",
-        "tpm_transcript",
-        "vsd"
-      ),
-      package = pkg
-    )
+    if (identical(data_mode, "local")) {
+      ensure_atlas_data(
+        keys = c(
+          "tpm_gene",
+          "tpm_transcript",
+          "vsd"
+        ),
+        package = pkg,
+        data_mode = data_mode
+      )
+    }
 
     deps_missing <- reactive(missing_heatmap_deps())
+    tpm_gene_manifest <- reactiveVal(NULL)
+    tpm_transcript_manifest <- reactiveVal(NULL)
+    vsd_manifest <- reactiveVal(NULL)
+
+    observeEvent(TRUE, {
+      if (identical(data_mode, "cloud")) {
+
+        tpm_gene_manifest(get_tpm_gene_manifest_cloud())
+        tpm_transcript_manifest(get_tpm_transcript_manifest_cloud())
+        vsd_manifest(get_vsd_manifest_cloud())
+
+      } else {
+
+        tpm_gene_manifest(NULL)
+        tpm_transcript_manifest(NULL)
+        vsd_manifest(NULL)
+
+      }
+    }, once = TRUE)
 
     output$heatmap_notice <- renderUI({
       miss <- deps_missing()
@@ -261,17 +287,47 @@ tpmHeatmapServer <- function(
     }
 
     # ---- TPM loader (your original files) ----
-    load_one_tpm <- function(dataset_id, level = c("genes","transcripts")) {
-      level  <- match.arg(level)
+    load_one_tpm <- function(dataset_id, level = c("genes", "transcripts")) {
+      level <- match.arg(level)
+
+      if (identical(data_mode, "cloud")) {
+
+        if (level == "genes") {
+          man <- tpm_gene_manifest()
+          validate(need(!is.null(man), "Gene TPM manifest has not loaded."))
+
+          hit <- man |>
+            dplyr::filter(dataset == dataset_id)
+
+          validate(need(nrow(hit) == 1, paste("No cloud gene TPM file for", dataset_id)))
+
+          return(get_tpm_gene_cloud_cached(hit$filename[[1]]))
+        }
+
+        if (level == "transcripts") {
+          man <- tpm_transcript_manifest()
+          validate(need(!is.null(man), "Transcript TPM manifest has not loaded."))
+
+          hit <- man |>
+            dplyr::filter(dataset == dataset_id)
+
+          validate(need(nrow(hit) == 1, paste("No cloud transcript TPM file for", dataset_id)))
+
+          return(get_tpm_transcript_cloud_cached(hit$filename[[1]]))
+        }
+      }
+
       subdir <- if (level == "genes") "tpm" else "transcript_tpm"
-      fname  <- if (level == "genes")
-        paste0(dataset_id, "_gene_tpm.rds") else paste0(dataset_id, "_transcript_tpm.rds")
+
+      fname <- if (level == "genes") {
+        paste0(dataset_id, "_gene_tpm.rds")
+      } else {
+        paste0(dataset_id, "_transcript_tpm.rds")
+      }
 
       path <- cache_path(subdir, fname, package = pkg)
 
       if (!file.exists(path)) {
-
-        # Fallback: recursive search inside subdir
         search_root <- cache_path(subdir, package = pkg)
 
         hits <- list.files(
@@ -287,19 +343,35 @@ tpmHeatmapServer <- function(
           warning("Multiple TPM files found; using first match:\n", hits[1])
           path <- hits[1]
         } else {
-          stop("Missing TPM file in cache: ", fname,
-               "\nSearched in: ", search_root,
-               call. = FALSE)
+          stop(
+            "Missing TPM file in cache: ", fname,
+            "\nSearched in: ", search_root,
+            call. = FALSE
+          )
         }
       }
 
-
-      if (!file.exists(path)) stop("Missing TPM file: ", path)
       readRDS(path)
     }
 
     # ---- VST loader from existing *_vsd.rds ----
     load_vsd <- function(dataset_id) {
+
+      if (identical(data_mode, "cloud")) {
+
+        man <- vsd_manifest()
+        validate(need(!is.null(man), "VSD manifest has not loaded."))
+
+        files <- man |>
+          dplyr::filter(dataset == dataset_id) |>
+          dplyr::pull(filename)
+
+        validate(
+          need(length(files) > 0, paste("No cloud VSD files found for", dataset_id))
+        )
+
+        return(lapply(files, get_vsd_cloud_cached))
+      }
 
       ddir <- cache_path("vsd", package = pkg)
 
@@ -307,8 +379,6 @@ tpmHeatmapServer <- function(
         stop("VST cache directory not found: ", ddir)
       }
 
-
-      # Load ALL matching VSDs, not just one
       pat <- paste0("^", dataset_id, ".*_vsd\\.rds$")
 
       files <- list.files(
@@ -318,11 +388,10 @@ tpmHeatmapServer <- function(
         full.names = TRUE
       )
 
-
-      if (!length(files))
+      if (!length(files)) {
         stop("No VST object (*.vsd.rds) found for dataset group: ", dataset_id)
+      }
 
-      # Load each VST, return a list
       lapply(files, readRDS)
     }
 
@@ -561,6 +630,13 @@ tpmHeatmapServer <- function(
         if (!length(sc))
           validate("No samples available for the current group filter.")
 
+        # ---- harmonise sample names BEFORE intersect ----
+        if (grepl("^Wang", ds)) {
+          sc_clean <- sub("^Wang_", "", sc)
+        } else {
+          sc_clean <- sc
+        }
+
         has_name <- name_col %in% names(df)
         by_id    <- df[[id_col]] %in% q
         by_sym   <- if (has_name) toupper(df[[name_col]]) %in% toupper(q) else FALSE
@@ -651,31 +727,10 @@ tpmHeatmapServer <- function(
 
           vsd_mat <- SummarizedExperiment::assay(vsd_obj)
 
-          # Determine samples (columns) to keep
-          # # Attempt direct intersection first
-          # sc_use <- intersect(sc, colnames(vsd_mat))
-          #
-          # # If nothing matches, attempt safe harmonization
-          # if (!length(sc_use) && grepl("^Maddock", ds)) {
-          #
-          #   new_names <- harmonize_maddock_names(colnames(vsd_mat), sc)
-          #
-          #   # Reassign ONLY if the length matches and no duplicates
-          #   if (length(new_names) == length(colnames(vsd_mat)) &&
-          #       length(unique(new_names)) == length(new_names)) {
-          #
-          #     colnames(vsd_mat) <- new_names
-          #     sc_use <- intersect(sc, new_names)
-          #   }
-          # }
-
           # For Maddock datasets, always harmonize first
           if (grepl("^Maddock", ds)) {
 
             new_names <- harmonize_maddock_names(colnames(vsd_mat), sc)
-            # --- DEBUG: after harmonization ---
-            message("After harmonization: ",
-                    paste(new_names, collapse = ", "))
             # Reassign ONLY if the length matches and no duplicates
             if (length(new_names) == length(colnames(vsd_mat)) &&
                 length(unique(new_names)) == length(new_names)) {
@@ -683,9 +738,18 @@ tpmHeatmapServer <- function(
             }
           }
 
-          # Now determine samples to keep
-          sc_use <- intersect(sc, colnames(vsd_mat))
+          if (ds == "Wang") {
+            sc_clean <- sub("^Wang_(CTRL|FRDA)_rep", "Wang_\\1_UTC_rep", sc)
+          } else {
+            sc_clean <- sc
+          }
 
+          # Now determine samples to keep
+          sc_use <- intersect(sc_clean, colnames(vsd_mat))
+          if (!length(sc_use)) {
+            message("Skipping dataset (no matching columns): ", ds)
+            next
+          }
           # Identify gene IDs of interest
           annot <- tpm_df[, c("gene_id", "gene_name")]
           wanted_ids <- unique(c(
@@ -1048,22 +1112,6 @@ tpmHeatmapServer <- function(
       }
     )
 
-    # output$dl_png <- downloadHandler(
-    #   filename = function() paste0("heatmap_", Sys.Date(), ".png"),
-    #   content = function(file) {
-    #     dims <- plot_dims()
-    #     w_px  <- (dims$dev_w_px %||% 20000)
-    #     h_px  <- (dims$dev_h_px %||% 10000)
-    #     ragg::agg_png(file, width = w_px, height = h_px, units = "px", res = 300)
-    #     on.exit(grDevices::dev.off(), add = TRUE)
-    #     ComplexHeatmap::draw(
-    #       .last_ht(),
-    #       heatmap_legend_side    = "right",
-    #       annotation_legend_side = "right",
-    #       padding = grid::unit(c(6,10,16,6), "mm")
-    #     )
-    #   }
-    # )
 
     magick_ok <- requireNamespace("magick", quietly = TRUE)
     if (magick_ok) {

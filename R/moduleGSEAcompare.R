@@ -87,7 +87,9 @@ gseaCompareMainUI <- function(id) {
 }
 
 # ---- SERVER ----
-gseaCompareServer <- function(id, pkg = utils::packageName()) {
+gseaCompareServer <- function(id, pkg = utils::packageName(), data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -103,38 +105,46 @@ gseaCompareServer <- function(id, pkg = utils::packageName()) {
 
     `%||%` <- function(x, y) if (is.null(x)) y else x
 
-    # ---- ensure GSEA summary data are available (Zenodo-backed) ----
-    ensure_atlas_data(
-      keys    = "gsea_results",
-      package = pkg
-    )
-
-    # ---- resolve cached summary CSV ----
-    cache_root <- tools::R_user_dir(pkg, which = "cache")
-
-    csv_path <- file.path(
-      cache_root,
-      "GSEA_results", "summary",
-      "GO_GSEA_direction_summary.csv"
-    )
-
-    validate(
-      need(
-        file.exists(csv_path),
-        paste0(
-          "GSEA summary CSV not found after download.\nExpected at:\n",
-          csv_path
-        )
-      )
-    )
-
     # ---- read summary table once ----
-    gsea_tbl <- reactive({
-      validate(need(file.exists(csv_path), paste0("GSEA summary CSV not found at: ", csv_path)))
-      # Expect columns:
-      # term, <dataset columns...> with values in {-1, 0, 1}, and optionally up_count, down_count, sig_count, consensus
-      readr::read_csv(csv_path, show_col_types = FALSE)
-    })
+    gsea_tbl <- reactiveVal(NULL)
+
+    observeEvent(TRUE, {
+
+      if (identical(data_mode, "cloud")) {
+
+        x <- get_gsea_compare_summary_cloud_cached()
+
+      } else {
+
+        ensure_atlas_data(
+          keys = "gsea_results",
+          package = pkg
+        )
+
+        cache_root <- tools::R_user_dir(pkg, which = "cache")
+
+        csv_path <- file.path(
+          cache_root,
+          "GSEA_results", "summary",
+          "GO_GSEA_direction_summary.csv"
+        )
+
+        validate(
+          need(
+            file.exists(csv_path),
+            paste0(
+              "GSEA summary CSV not found after download.\nExpected at:\n",
+              csv_path
+            )
+          )
+        )
+
+        x <- readr::read_csv(csv_path, show_col_types = FALSE)
+      }
+
+      gsea_tbl(x)
+
+    }, once = TRUE)
 
     # ---- identify dataset columns & dataset IDs ----
     dataset_cols <- reactive({

@@ -128,37 +128,49 @@ biomarkerMainUI <- function(id, pkg = utils::packageName()) {
 
 biomarkerServer <- function(id,
                             pkg = utils::packageName(),
-                            data_dir = NULL) {
+                            data_dir = NULL,
+                            data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     `%||%` <- function(x, y) if (is.null(x)) y else x
 
-    ensure_atlas_data(
-      keys    = "biomarker",
-      package = pkg
-    )
-    biomarker_dir <- function(package) {
-      file.path(
-        tools::R_user_dir(package, "cache"),
-        "biomarker"
-      )
-    }
+    baseline_long <- if (identical(data_mode, "cloud")) {
 
-    baseline_path <- if (!is.null(data_dir)) {
-      file.path(data_dir, "baseline_long.rds")
+      get_biomarker_baseline_cloud_cached()
+
     } else {
-      file.path(biomarker_dir(pkg), "baseline_long.rds")
-    }
 
-    validate(
-      need(
-        file.exists(baseline_path),
-        "Biomarker baseline data not found. Please ensure data download completed."
+      ensure_atlas_data(
+        keys = "biomarker",
+        package = pkg,
+        data_mode = data_mode
       )
-    )
 
-    baseline_long <- readRDS(baseline_path)
+      biomarker_dir <- function(package) {
+        file.path(
+          tools::R_user_dir(package, "cache"),
+          "biomarker"
+        )
+      }
+
+      baseline_path <- if (!is.null(data_dir)) {
+        file.path(data_dir, "baseline_long.rds")
+      } else {
+        file.path(biomarker_dir(pkg), "baseline_long.rds")
+      }
+
+      validate(
+        need(
+          file.exists(baseline_path),
+          "Biomarker baseline data not found. Please ensure data download completed."
+        )
+      )
+
+      readRDS(baseline_path)
+    }
 
 
     alpha <- reactive(as.numeric(input$alpha %||% 0.05))

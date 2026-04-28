@@ -111,7 +111,13 @@ queryGeneAcrossDatasetsMainUI <- function(id) {
 }
 
 
-queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
+queryGeneAcrossDatasetsServer <- function(
+    id,
+    pkg = utils::packageName(),
+    data_mode = c("cloud", "local")
+) {
+  data_mode <- match.arg(data_mode)
+
   shiny::moduleServer(id, function(input, output, session) {
 
     # ---- safe pkg string ----
@@ -136,20 +142,10 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
 
     # ---- ensure cached data ----
     ensure_atlas_data(
-      keys    = c("deg_genes", "deg_transcripts"),
-      package = pkg
+      keys = c("deg_genes", "deg_transcripts"),
+      package = pkg,
+      data_mode = data_mode
     )
-
-    cache_root <- tools::R_user_dir(pkg, which = "cache")
-    deg_dir_genes <- file.path(cache_root, "genes")
-    deg_dir_transcripts <- file.path(cache_root, "txs")
-
-    if (!dir.exists(deg_dir_genes)) {
-      stop("Gene-level DEG data not found: ", deg_dir_genes, call. = FALSE)
-    }
-    if (!dir.exists(deg_dir_transcripts)) {
-      stop("Transcript-level DEG data not found: ", deg_dir_transcripts, call. = FALSE)
-    }
 
     # ---- pretty names ----
     pretty_map <- tryCatch(
@@ -184,26 +180,16 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
         dplyr::rename(symbol = gene_name)
     } else NULL
 
-    read_cached <- memoise::memoise(readRDS)
-
     # ---- manifest of DEG files ----
-    manifest <- shiny::reactive({
-      files <- c(
-        if (nzchar(deg_dir_genes)       && dir.exists(deg_dir_genes))
-          list.files(deg_dir_genes,       full.names = TRUE) else character(0),
-        if (nzchar(deg_dir_transcripts) && dir.exists(deg_dir_transcripts))
-          list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
-      )
-      if (!length(files)) return(tibble::tibble())
+    manifest <- reactiveVal(NULL)
 
-      rx <- "^.*[\\\\/]{1}DESEQ2_res_(.+)_(0\\.[0-9]+)_all_(genes|transcripts)\\.rds$"
-      tibble::tibble(path = files) |>
-        tidyr::extract(path, into = c("dataset", "p_str", "level"), regex = rx, remove = FALSE) |>
-        dplyr::mutate(p = suppressWarnings(as.numeric(p_str)))
-    })
+    observeEvent(TRUE, {
+      m <- get_deg_manifest(pkg = pkg, data_mode = data_mode)
+      manifest(m)
+    }, once = TRUE)
 
     output$datasets_ui <- shiny::renderUI({
-      m   <- manifest()
+      m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
 
       avail <- sort(unique(m$dataset[m$level == lvl]))
@@ -228,7 +214,7 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
 
 
     observeEvent(input$datasets_all, {
-      m   <- manifest()
+      m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
       avail <- sort(unique(m$dataset[m$level == lvl]))
 
@@ -245,16 +231,17 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
 
     # ---- pick the most permissive file for each dataset/level ----
     # If p in filename corresponds to a pre-filter, we want the largest p (least strict).
-    file_for_dataset <- function(dataset_id, lvl) {
-      m <- manifest()
-      cand <- dplyr::filter(m, dataset == dataset_id, level == lvl)
-      if (!nrow(cand)) return(NA_character_)
-
-      # choose max p; if p missing, just take first
-      if (all(is.na(cand$p))) return(cand$path[1])
-      cand <- cand[order(cand$p, decreasing = TRUE), , drop = FALSE]
-      cand$path[1]
-    }
+    # file_for_dataset <- function(dataset_id, lvl) {
+    #   #m <- manifest()
+    #   m <- req(manifest())
+    #   cand <- dplyr::filter(m, dataset == dataset_id, level == lvl)
+    #   if (!nrow(cand)) return(NA_character_)
+    #
+    #   # choose max p; if p missing, just take first
+    #   if (all(is.na(cand$p))) return(cand$path[1])
+    #   cand <- cand[order(cand$p, decreasing = TRUE), , drop = FALSE]
+    #   cand$path[1]
+    # }
 
     # ---- harmonise DESeq2 result columns ----
     standardise_res <- function(df, lvl) {
@@ -290,19 +277,27 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
       req(input$datasets)
       shiny::validate(shiny::need(length(input$datasets) >= 1, "Select at least one dataset."))
 
+      lvl <- input$feature_level %||% "genes"
+
+      thr <- if (identical(input$p_filter_mode, "none")) {
+        NA_real_
+      } else {
+        suppressWarnings(as.numeric(input$p_filter_mode))
+      }
+
+      lfc_min <- input$lfc_min %||% 0
+      dir <- input$direction %||% "both"
+
       query_id <- NULL
       query_symbol <- NULL
 
-      lvl <- input$feature_level %||% "genes"
-
       if (lvl == "genes") {
-        if (grepl("^ENSG", q, ignore.case = FALSE)) {
+        if (grepl("^ENSG", q)) {
           query_id <- q
           if (!is.null(gene_map)) {
             query_symbol <- gene_map$symbol[match(query_id, gene_map$gene_id)]
           }
         } else {
-          # treat as symbol
           query_symbol <- q_raw
           if (!is.null(gene_map)) {
             hit <- gene_map$gene_id[match(toupper(query_symbol), toupper(gene_map$symbol))]
@@ -310,21 +305,49 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
           }
         }
       } else {
-        if (grepl("^ENST", q, ignore.case = FALSE)) {
+        if (grepl("^ENST", q)) {
           query_id <- q
           if (!is.null(tx_map)) {
             query_symbol <- tx_map$symbol[match(query_id, tx_map$transcript_id)]
           }
         } else {
-          # treat as symbol (returns many transcripts; we cant guess one)
           query_symbol <- q_raw
         }
       }
 
-      # pull each dataset result and extract row(s)
+      get_local_file_path <- function(dataset_id, lvl) {
+        m <- req(manifest())
+
+        cand <- dplyr::filter(
+          m,
+          dataset == dataset_id,
+          level == lvl
+        )
+
+        if (!nrow(cand)) return(NA_character_)
+
+        cand <- cand[!is.na(cand$path), , drop = FALSE]
+        if (!nrow(cand)) return(NA_character_)
+
+        if ("p" %in% names(cand) && any(!is.na(cand$p))) {
+          cand <- cand[order(cand$p, decreasing = TRUE), , drop = FALSE]
+        }
+
+        cand$path[1]
+      }
+
       rows <- lapply(input$datasets, function(ds) {
-        fp <- file_for_dataset(ds, lvl)
-        if (!nzchar(fp) || is.na(fp) || !file.exists(fp)) {
+
+        file_path <- if (identical(data_mode, "local")) {
+          get_local_file_path(ds, lvl)
+        } else {
+          NULL
+        }
+
+        if (
+          identical(data_mode, "local") &&
+          (is.na(file_path) || !nzchar(file_path) || !file.exists(file_path))
+        ) {
           return(tibble::tibble(
             dataset_id = ds,
             dataset = pretty_label(ds),
@@ -333,11 +356,29 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
           ))
         }
 
-        res <- standardise_res(read_cached(fp), lvl)
+        res <- get_deg_data(
+          dataset = ds,
+          level = lvl,
+          file_path = file_path,
+          data_mode = data_mode,
+          padj_max = thr,
+          lfc_min = lfc_min,
+          direction = dir
+        )
+
+        if (!is.data.frame(res) || !nrow(res)) {
+          return(tibble::tibble(
+            dataset_id = ds,
+            dataset = pretty_label(ds),
+            query = q_raw,
+            found = FALSE
+          ))
+        }
+
+        res <- standardise_res(res, lvl)
 
         id_col <- if (lvl == "genes") "ensembl_gene_id" else "transcript_id"
 
-        # if user provided symbol at transcript level, we can only match via tx_map
         if (lvl == "transcripts" && (is.null(query_id) || !nzchar(query_id))) {
           if (is.null(tx_map)) {
             return(tibble::tibble(
@@ -347,9 +388,10 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
               found = FALSE
             ))
           }
-          # select all transcripts whose symbol matches
+
           tx_hits <- tx_map$transcript_id[toupper(tx_map$symbol) == toupper(query_symbol)]
           tx_hits <- unique(tx_hits)
+
           if (!length(tx_hits)) {
             return(tibble::tibble(
               dataset_id = ds,
@@ -358,7 +400,9 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
               found = FALSE
             ))
           }
+
           sub <- res[res[[id_col]] %in% tx_hits, , drop = FALSE]
+
           if (!nrow(sub)) {
             return(tibble::tibble(
               dataset_id = ds,
@@ -367,22 +411,27 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
               found = FALSE
             ))
           }
-          # keep all transcript hits for that symbol in that dataset
-          sub <- sub |>
-            dplyr::mutate(dataset_id = ds, dataset = pretty_label(ds), query = q_raw, found = TRUE)
 
-          # add symbol/gene_id if missing
+          sub <- sub |>
+            dplyr::mutate(
+              dataset_id = ds,
+              dataset = pretty_label(ds),
+              query = q_raw,
+              found = TRUE
+            )
+
           if (!("symbol" %in% names(sub)) && !is.null(tx_map) && "transcript_id" %in% names(sub)) {
-            sub <- dplyr::left_join(sub,
-                                    tx_map |> dplyr::select(transcript_id, gene_id, symbol),
-                                    by = "transcript_id")
+            sub <- dplyr::left_join(
+              sub,
+              tx_map |> dplyr::select(transcript_id, gene_id, symbol),
+              by = "transcript_id"
+            )
           }
+
           return(sub)
         }
 
-        # match by ID (genes or transcripts)
         if (is.null(query_id) || !nzchar(query_id)) {
-          # typed symbol but no mapping available
           return(tibble::tibble(
             dataset_id = ds,
             dataset = pretty_label(ds),
@@ -392,6 +441,7 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
         }
 
         hit <- res[res[[id_col]] == query_id, , drop = FALSE]
+
         if (!nrow(hit)) {
           return(tibble::tibble(
             dataset_id = ds,
@@ -402,20 +452,27 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
         }
 
         hit <- hit |>
-          dplyr::mutate(dataset_id = ds, dataset = pretty_label(ds), query = q_raw, found = TRUE)
+          dplyr::mutate(
+            dataset_id = ds,
+            dataset = pretty_label(ds),
+            query = q_raw,
+            found = TRUE
+          )
 
-        # add symbol for genes if missing
         if (lvl == "genes" && !("symbol" %in% names(hit)) && !is.null(gene_map) && "ensembl_gene_id" %in% names(hit)) {
-          hit <- dplyr::left_join(hit,
-                                  gene_map |> dplyr::select(gene_id, symbol),
-                                  by = c("ensembl_gene_id" = "gene_id"))
+          hit <- dplyr::left_join(
+            hit,
+            gene_map |> dplyr::select(gene_id, symbol),
+            by = c("ensembl_gene_id" = "gene_id")
+          )
         }
 
-        # add gene_id/symbol for transcripts if missing
         if (lvl == "transcripts" && !("symbol" %in% names(hit)) && !is.null(tx_map) && "transcript_id" %in% names(hit)) {
-          hit <- dplyr::left_join(hit,
-                                  tx_map |> dplyr::select(transcript_id, gene_id, symbol),
-                                  by = "transcript_id")
+          hit <- dplyr::left_join(
+            hit,
+            tx_map |> dplyr::select(transcript_id, gene_id, symbol),
+            by = "transcript_id"
+          )
         }
 
         hit
@@ -423,11 +480,11 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
 
       out <- dplyr::bind_rows(rows)
 
-      # If nothing was found in any dataset, notify and return an empty table
       if (!nrow(out) || !any(out$found %in% TRUE)) {
         notice_key <- paste0(
           "notfound|", lvl, "|", q_raw, "|", paste(sort(input$datasets), collapse = ",")
         )
+
         notify_once(
           notice_key,
           sprintf("Warning - Query '%s' was not found in the selected datasets.", q_raw),
@@ -435,66 +492,37 @@ queryGeneAcrossDatasetsServer <- function(id, pkg = utils::packageName()) {
           duration = 5
         )
 
-        # Return a clean empty tibble with consistent columns (optional but recommended)
         return(tibble::tibble(
           dataset = character(),
-          query   = character(),
+          query = character(),
           `Present in dataset` = logical()
         ))
       }
 
+      out <- out |>
+        dplyr::mutate(`Present in dataset` = found) |>
+        dplyr::select(-found, -dataset_id)
 
-      # ---- optional filters (apply only to rows that are present) ----
-      thr <- if (identical(input$p_filter_mode, "none")) NA_real_
-      else suppressWarnings(as.numeric(input$p_filter_mode)) # NA means "None"
-      lfc_min <- input$lfc_min %||% 0
-      dir     <- input$direction %||% "both"
 
-      has_padj <- "padj" %in% names(out)
-      has_lfc  <- "log2FoldChange" %in% names(out)
-
+      # ---- rounding ----
       out <- out |>
         dplyr::mutate(
-          `Present in dataset` = found,
+          dplyr::across(
+            .cols = dplyr::where(is.numeric) &
+              !dplyr::any_of(c("pvalue", "padj")),
+            ~ round(.x, 4)
+          )
+        )
 
-          # Per-row pass flags (NA for not-present rows OR when column/threshold not available)
-          pass_p = dplyr::case_when(
-            !found ~ NA,
-            is.na(thr) ~ NA,
-            !has_padj ~ NA,
-            TRUE ~ (!is.na(padj) & padj <= thr)
-          ),
+      # only apply signif if columns exist (important for robustness)
+      if ("pvalue" %in% names(out)) {
+        out$pvalue <- signif(out$pvalue, 3)
+      }
+      if ("padj" %in% names(out)) {
+        out$padj <- signif(out$padj, 3)
+      }
 
-          pass_lfc = dplyr::case_when(
-            !found ~ NA,
-            !has_lfc ~ NA,
-            lfc_min <= 0 ~ NA,  # if no LFC filter requested, don't compute pass/fail
-            TRUE ~ dplyr::case_when(
-              is.na(log2FoldChange) ~ FALSE,
-              dir == "up"   ~ log2FoldChange >=  lfc_min,
-              dir == "down" ~ log2FoldChange <= -lfc_min,
-              TRUE          ~ abs(log2FoldChange) >= lfc_min
-            )
-          ),
-
-          # Should we filter?
-          filter_p_active   = !is.na(thr) & has_padj,
-          filter_lfc_active = (lfc_min > 0) & has_lfc,
-
-          # Keep rule:
-          # - keep all not-found rows
-          # - for found rows, enforce only the active filters
-          keep = !found |
-            (
-              (!filter_p_active   | dplyr::coalesce(pass_p, FALSE)) &
-                (!filter_lfc_active | dplyr::coalesce(pass_lfc, FALSE))
-            )
-        ) |>
-        dplyr::filter(keep) |>
-        dplyr::select(-keep, -filter_p_active, -filter_lfc_active)
-
-      out <- out |>
-        dplyr::select(-found, -dataset_id)
+      out
     })
 
     output$summary_bar <- shiny::renderUI({

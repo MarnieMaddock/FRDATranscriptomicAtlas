@@ -1,6 +1,6 @@
 Package: FRDATranscriptomicAtlas
 Title: FRDA Transcriptomic Atlas
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(person("Marnie", "Maddock", role = c("aut","cre"), email = "mlm715@uowmail.edu.au"))
 Description: Explore FRDA RNA sequencing data through an interactive Shiny interface.
 License: MIT + file LICENSE
@@ -8,6 +8,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 4.3)
 Imports:
+    arrow,
     shiny,
     fontawesome,
     dplyr,
@@ -34,15 +35,12 @@ Imports:
     data.table,
     htmltools,
     patchwork,
-    glue
-Suggests:
-    BiocManager,
-    magick,
-    enrichplot,
+    glue,
     ComplexHeatmap,
     SummarizedExperiment,
-    DESeq2,
-    DOSE
+    magick
+Suggests:
+    BiocManager
 RoxygenNote: 7.3.3
 URL: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas
 BugReports: https://github.com/MarnieMaddock/FRDATranscriptomicAtlas/issues

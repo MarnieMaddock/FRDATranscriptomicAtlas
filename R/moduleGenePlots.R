@@ -48,25 +48,18 @@ genePlotsMainUI <- function(id) {
 
 #' Gene Plots server - multi-dataset (checkboxes)
 #' @noRd
-genePlotsServer <- function(id, pkg = utils::packageName()) {
+genePlotsServer <- function(id, pkg = "FRDATranscriptomicAtlas", data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
 
-    observeEvent(TRUE, {
-      ensure_atlas_data("tpm_gene", package = pkg)
-    }, once = TRUE)
-
-    tpm_dir <- file.path(
-      tools::R_user_dir(pkg, which = "cache"),
-      "tpm"
-    )
-
-    # --- make pkg safe for both project + installed package modes ---
     pkg <- tryCatch(pkg, error = function(e) "")
-    if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
+    if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) {
+      pkg <- "FRDATranscriptomicAtlas"
+    }
     pkg <- pkg[[1L]]
 
-    # ----- Pretty labels matching file base names -----
-    pretty_map  <- c(
+    pretty_map <- c(
       "Chutake"      = "Chutake (Lymphoblastoid Cells)",
       "Erwin"        = "Erwin (Lymphoblastoid Cells)",
       "Indelicato"   = "Indelicato (Skeletal Muscle)",
@@ -83,126 +76,200 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       "Vilema"       = "Vilema-Enriquez (Fibroblasts)",
       "Wang"         = "Wang (Fibroblasts)"
     )
+
     `%||%` <- function(a, b) if (is.null(a)) b else a
     pretty_label <- function(id) pretty_map[[id]] %||% id
-
-    # Define dataset families based on prefix
     dataset_family <- function(ds) sub("_.*$", "", ds)
 
-    observeEvent(input$gp_datasets, {
-      req(input$gp_datasets)
-
-      fams <- dataset_family(input$gp_datasets)
-
-      # More than one family selected?
-      if (length(unique(fams)) > 1) {
-
-        # Drop the newly added dataset and keep only the original family
-        original_family <- dataset_family(input$gp_datasets[1])
-        valid <- input$gp_datasets[fams == original_family]
-
-        showNotification(
-          "Please select datasets from only one dataset family (e.g., only Lai, only Maddock).",
-          type = "error",
-          duration = 5
-        )
-
-        updateCheckboxGroupInput(
-          session, "gp_datasets",
-          selected = valid
-        )
-      }
-    })
-
-    # Locate and source the theme file (works in both modes)
     if (!exists("theme_Marnie", inherits = TRUE)) {
       tp <- system.file("R", "utils_graphTheme.R", package = pkg, mustWork = FALSE)
       if (!nzchar(tp)) tp <- file.path("R", "utils_graphTheme.R")
       if (file.exists(tp)) source(tp)
     }
 
-    # ----- Locate TPM RDS files (package OR project) -----
-    # tpm_dir <- system.file("extdata/tpm", package = pkg, mustWork = FALSE)
-    # if (!nzchar(tpm_dir)) tpm_dir <- file.path("inst", "extdata", "tpm")
+    tpm_manifest <- reactiveVal(NULL)
 
-    manifest <- reactive({
-      files <- if (nzchar(tpm_dir) && dir.exists(tpm_dir)) {
-        list.files(tpm_dir, pattern = "_gene_tpm\\.rds$", full.names = TRUE)
-      } else character(0)
+    observeEvent(TRUE, {
 
-      if (!length(files)) {
-        return(tibble::tibble(path = character(), dataset = character()))
+      if (identical(data_mode, "cloud")) {
+
+        man <- get_tpm_gene_manifest_cloud()
+
+        validate(
+          need("filename" %in% names(man), "Cloud TPM manifest needs a filename column."),
+          need("dataset" %in% names(man), "Cloud TPM manifest needs a dataset column.")
+        )
+
+      } else {
+
+        ensure_atlas_data(
+          "tpm_gene",
+          package = pkg,
+          data_mode = data_mode
+        )
+
+        tpm_dir <- file.path(
+          tools::R_user_dir(pkg, "cache"),
+          "tpm"
+        )
+
+        files <- list.files(
+          tpm_dir,
+          pattern = "_gene_tpm\\.rds$",
+          full.names = TRUE
+        )
+
+        man <- tibble::tibble(
+          dataset = stringr::str_remove(basename(files), "_gene_tpm\\.rds$"),
+          filename = basename(files),
+          file_path = files,
+          level = "gene"
+        )
       }
 
-      tibble::tibble(
-        path = files,
-        dataset = sub("_gene_tpm\\.rds$", "", basename(files))
-      )
+      tpm_manifest(man)
+
+    }, once = TRUE)
+
+    manifest <- reactive({
+      req(tpm_manifest())
+      tpm_manifest()
     })
 
-    # ----- Populate dataset checkboxes -----
     observe({
-      m  <- manifest()
+      m <- manifest()
+
       ds <- sort(intersect(unique(m$dataset), names(pretty_map)))
-      validate(need(length(ds), "No TPM RDS files found in extdata/tpm/."))
+
+      validate(
+        need(length(ds) > 0, "No TPM gene datasets found.")
+      )
 
       choices_named <- stats::setNames(ds, unname(pretty_map[ds]))
       pre_sel <- if ("Maddock_LMN" %in% ds) "Maddock_LMN" else ds[1]
 
-      updateCheckboxGroupInput(session, "gp_datasets",
-                               choices  = choices_named,
-                               selected = pre_sel)
+      updateCheckboxGroupInput(
+        session,
+        "gp_datasets",
+        choices = choices_named,
+        selected = pre_sel
+      )
+    })
+
+    observeEvent(input$gp_datasets, {
+      req(input$gp_datasets)
+
+      fams <- dataset_family(input$gp_datasets)
+
+      if (length(unique(fams)) > 1) {
+
+        original_family <- dataset_family(input$gp_datasets[1])
+        valid <- input$gp_datasets[fams == original_family]
+
+        showNotification(
+          "Please select datasets from only one dataset family.",
+          type = "error",
+          duration = 5
+        )
+
+        updateCheckboxGroupInput(
+          session,
+          "gp_datasets",
+          selected = valid
+        )
+      }
     })
 
     output$gp_datasets_note <- renderUI({
       req(input$gp_datasets)
-      labs <- vapply(input$gp_datasets, pretty_label, "", USE.NAMES = FALSE)
-      htmltools::HTML(sprintf("<small>Selected: <b>%s</b></small>", paste(labs, collapse = ", ")))
+
+      labs <- vapply(
+        input$gp_datasets,
+        pretty_label,
+        "",
+        USE.NAMES = FALSE
+      )
+
+      htmltools::HTML(
+        sprintf(
+          "<small>Selected: <b>%s</b></small>",
+          paste(labs, collapse = ", ")
+        )
+      )
     })
 
-    # ----- Files -> load -> tidy -> plot/table (unchanged below this line) -----
     file_paths <- reactive({
       req(input$gp_datasets)
-      m <- manifest()
-      hits <- dplyr::filter(m, dataset %in% input$gp_datasets)
-      validate(need(nrow(hits) >= 1, "No TPM files found for the selected datasets."))
-      stats::setNames(hits$path, hits$dataset)
+
+      m <- manifest() |>
+        dplyr::filter(dataset %in% input$gp_datasets)
+
+      validate(
+        need(nrow(m) >= 1, "No TPM files found for the selected datasets.")
+      )
+
+      if (identical(data_mode, "cloud")) {
+        stats::setNames(m$filename, m$dataset)
+      } else {
+        stats::setNames(m$file_path, m$dataset)
+      }
     })
 
     tpms_wide_list <- reactive({
       fps <- file_paths()
+
       out <- lapply(names(fps), function(ds) {
-        x <- readRDS(fps[[ds]])
-        if (!is.data.frame(x)) x <- as.data.frame(x)
-        validate(need(all(c("gene_id", "gene_name") %in% names(x)),
-                      sprintf("TPM RDS for '%s' must contain 'gene_id' and 'gene_name'.", ds)))
+
+        if (identical(data_mode, "cloud")) {
+          x <- get_tpm_gene_cloud_cached(fps[[ds]])
+        } else {
+          x <- readRDS(fps[[ds]])
+        }
+
+        if (!is.data.frame(x)) {
+          x <- as.data.frame(x)
+        }
+
+        validate(
+          need(
+            all(c("gene_id", "gene_name") %in% names(x)),
+            sprintf("TPM RDS for '%s' must contain 'gene_id' and 'gene_name'.", ds)
+          )
+        )
+
         x
       })
+
       names(out) <- names(fps)
       out
     })
 
     observeEvent(tpms_wide_list(), {
       wl <- tpms_wide_list()
+
       genes <- sort(unique(unlist(lapply(wl, function(x) x$gene_name))))
+
+      validate(
+        need(length(genes) > 0, "No gene names found in the selected TPM files.")
+      )
 
       current <- isolate(input$gp_gene)
 
-      # keep user choice if it still exists in the new choices
-      if (!is.null(current) && nzchar(current) && current %in% genes) {
-        selected <- current
+      selected <- if (!is.null(current) && nzchar(current) && current %in% genes) {
+        current
+      } else if ("FXN" %in% genes) {
+        "FXN"
       } else {
-        selected <- if ("FXN" %in% genes) "FXN" else genes[1]
+        genes[1]
       }
 
-      updateSelectizeInput(
-        session, "gp_gene",
-        choices = genes,
-        selected = selected,
-        server = TRUE
+      updateTextInput(
+        session,
+        "gp_gene",
+        value = selected
       )
-    }, ignoreInit = FALSE)
 
+    }, ignoreInit = FALSE)
 
     tpms_long_all <- reactive({
       wl <- tpms_wide_list()
@@ -286,11 +353,37 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       dplyr::mutate(df_ds, condition = cond, rep = repnum)
     }
 
+    sample_metadata <- reactive({
+      path <- system.file("extdata/metadata/samples.csv", package = pkg)
+
+      validate(
+        need(nzchar(path), "metadata.csv was not found in inst/extdata.")
+      )
+
+      readr::read_csv(path, show_col_types = FALSE)
+    })
+
     tpms_long_parsed <- reactive({
       all <- tpms_long_all()
       if (!nrow(all)) return(all)
-      parsed <- lapply(split(all, all$dataset), parse_conditions)
-      dplyr::bind_rows(parsed)
+
+      parsed <- lapply(split(all, all$dataset), parse_conditions) |>
+        dplyr::bind_rows()
+
+      meta <- sample_metadata() |>
+        dplyr::select(
+          sample_id,
+          disease_status = case_diff_controls,
+          FRDA_CTRL,
+          cell_type,
+          metadata_group = group
+        )
+
+      parsed |>
+        dplyr::left_join(
+          meta,
+          by = c("sample" = "sample_id")
+        )
     })
 
     dat_points <- reactive({
@@ -347,8 +440,17 @@ genePlotsServer <- function(id, pkg = utils::packageName()) {
       DT::datatable(
         dat_points() |>
           dplyr::arrange(dataset, condition, rep) |>
-          dplyr::select(dataset, condition, rep, gene_id, gene_name, TPM),
-        rownames = FALSE, options = list(pageLength = 5, scrollX = TRUE)
+          dplyr::select(
+            gene_id,
+            gene_name,
+            TPM,
+            dataset,
+            cell_type,
+            disease_status,
+            sample
+          ),
+        rownames = FALSE,
+        options = list(pageLength = 5, scrollX = TRUE)
       )
     }, server = TRUE)
 

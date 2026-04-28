@@ -89,7 +89,10 @@ degTablesMainUI <- function(id) {
 
 #' Server logic for DEG-by-dataset (robust for package + project)
 #' @noRd
-degTablesServer <- function(id, pkg = utils::packageName()) {
+#'
+degTablesServer <- function(id, pkg = utils::packageName(), data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -97,22 +100,6 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
     pkg <- tryCatch(pkg, error = function(e) "")
     if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
     pkg <- pkg[[1L]]
-
-    ensure_atlas_data(
-      keys    = c("deg_genes", "deg_transcripts"),
-      package = pkg
-    )
-
-    cache_root <- tools::R_user_dir(pkg, which = "cache")
-
-    deg_dir_genes <- file.path(cache_root, "genes")
-    deg_dir_transcripts <- file.path(cache_root, "txs")
-
-
-    validate(
-      need(dir.exists(deg_dir_genes), "Gene-level DEG data not found."),
-      need(dir.exists(deg_dir_transcripts), "Transcript-level DEG data not found.")
-    )
 
 
     tx2_path <- system.file(
@@ -134,20 +121,13 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
     read_cached <- memoise::memoise(readRDS)
 
     # ---------- manifest of DEG files ----------
-    manifest <- reactive({
-      files <- c(
-        if (nzchar(deg_dir_genes)       && dir.exists(deg_dir_genes))
-          list.files(deg_dir_genes,       full.names = TRUE) else character(0),
-        if (nzchar(deg_dir_transcripts) && dir.exists(deg_dir_transcripts))
-          list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
-      )
-      if (!length(files)) return(tibble::tibble())
+    manifest <- reactiveVal(NULL)
 
-      rx <- "^.*/DESEQ2_res_(.+)_(0\\.[0-9]+)_all_(genes|transcripts)\\.rds$"
-      tibble::tibble(path = files) |>
-        tidyr::extract(path, into = c("dataset","p_str","level"), regex = rx, remove = FALSE) |>
-        dplyr::mutate(p = suppressWarnings(as.numeric(p_str)))
-    })
+    observeEvent(TRUE, {
+      m <- get_deg_manifest(pkg = pkg, data_mode = data_mode)
+      manifest(m)
+
+    }, once = TRUE)
 
     # ---------- dataset dropdown ----------
     `%||%` <- function(a,b) if (is.null(a)) b else a
@@ -161,21 +141,26 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
     )
 
 
-    observe({
-      m <- manifest()
+    observeEvent(input$feature_level, {
+
+      m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
+
       avail_ids <- sort(unique(m$dataset[m$level == lvl]))
 
       pm_sub <- pretty_map[avail_ids]
       pm_sub[is.na(pm_sub)] <- avail_ids[is.na(pm_sub)]
       labelled_choices <- stats::setNames(avail_ids, pm_sub)
 
-      updateSelectizeInput(session, "dataset",
-                           choices  = labelled_choices,
-                           selected = if (length(avail_ids)) avail_ids[1] else NULL,
-                           server   = TRUE
+      updateSelectizeInput(
+        session,
+        "dataset",
+        choices = c("Select a dataset..." = "", labelled_choices),
+        selected = "",
+        server = TRUE
       )
-    })
+
+    }, ignoreInit = FALSE)
 
     # ---------- file selection ----------
     file_sel <- reactive({
@@ -187,11 +172,22 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
 
     # ---------- main data reactive ----------
     dat <- reactive({
+      req(input$dataset, input$feature_level)
       fp <- file_sel()
-      validate(need(!is.null(fp) && file.exists(fp), "No results file found."))
 
-      x <- read_cached(fp)
-      if (!is.data.frame(x)) x <- as.data.frame(x)
+      thr <- suppressWarnings(as.numeric(input$p_filter_mode))
+      lfc_min <- input$lfc_min %||% 0
+      dir <- input$direction %||% "both"
+
+      x <- get_deg_data(
+        dataset = input$dataset,
+        level = input$feature_level,
+        file_path = fp,
+        data_mode = data_mode,
+        padj_max = thr,
+        lfc_min = lfc_min,
+        direction = dir
+      )
 
       # ID column by level
       lvl <- input$feature_level %||% "genes"
@@ -207,6 +203,7 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
           any(grepl("^ENST", utils::head(x$ensembl_gene_id, 20)))) {
         x <- dplyr::rename(x, transcript_id = ensembl_gene_id)
       }
+
       if (identical(lvl, "genes") &&
           ("transcript_id" %in% names(x)) && !("ensembl_gene_id" %in% names(x)) &&
           any(grepl("^ENSG", utils::head(x$transcript_id, 20)))) {
@@ -215,25 +212,17 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
 
       # standardize columns
       if (!"log2FoldChange" %in% names(x)) {
-        if ("log2FC" %in% names(x))    x <- dplyr::rename(x, log2FoldChange = log2FC)
-        else if ("beta" %in% names(x)) x <- dplyr::rename(x, log2FoldChange = beta)
-      }
-      if (!"padj" %in% names(x) && "qvalue" %in% names(x)) x <- dplyr::rename(x, padj = qvalue)
-
-      # p-value filter
-      thr <- suppressWarnings(as.numeric(input$p_filter_mode))
-      if (!is.na(thr) && "padj" %in% names(x)) {
-        x <- x[!is.na(x$padj) & x$padj <= thr, , drop = FALSE]
+        if ("log2FC" %in% names(x)) {
+          x <- dplyr::rename(x, log2FoldChange = log2FC)
+        } else if ("beta" %in% names(x)) {
+          x <- dplyr::rename(x, log2FoldChange = beta)
+        }
       }
 
-      # |log2FC| + direction
-      lfc_min <- input$lfc_min %||% 0
-      dir     <- input$direction %||% "both"
-      if ("log2FoldChange" %in% names(x)) {
-        if (identical(dir, "up"))   x <- x[x$log2FoldChange >=  lfc_min, , drop = FALSE]
-        if (identical(dir, "down")) x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
-        if (identical(dir, "both")) x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
+      if (!"padj" %in% names(x) && "qvalue" %in% names(x)) {
+        x <- dplyr::rename(x, padj = qvalue)
       }
+
 
       # symbols mapping
       if (identical(lvl, "genes")) {
@@ -248,13 +237,19 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
             dplyr::relocate(transcript_id, gene_id, symbol, .before = dplyr::everything())
         }
       }
-      # ---- round numeric columns except pvalue and padj ----
+
+      # round numeric columns except pvalue and padj
       x <- x |>
         dplyr::mutate(
           dplyr::across(
-            .cols = dplyr::where(is.numeric) & !c(pvalue, padj),
+            .cols = dplyr::where(is.numeric) & !dplyr::any_of(c("pvalue", "padj")),
             ~ round(.x, 4)
           )
+        )
+      x <- x |>
+        mutate(
+          pvalue = signif(pvalue, 3),
+          padj   = signif(padj, 3)
         )
 
       x
@@ -282,7 +277,21 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
 
 
     output$deg_table <- DT::renderDataTable({
+
+      # Show placeholder if no dataset selected
+      if (is.null(input$dataset) || input$dataset == "") {
+        return(
+          DT::datatable(
+            data.frame(Message = "Please select a dataset"),
+            options = list(dom = "t"),
+            rownames = FALSE
+          )
+        )
+      }
+
+      # Normal table
       req(dat())
+
       DT::datatable(
         dat(),
         filter = "top",
@@ -296,6 +305,7 @@ degTablesServer <- function(id, pkg = utils::packageName()) {
           scrollX = TRUE
         )
       )
+
     }, server = TRUE)
 
     output$download_filtered <- downloadHandler(

@@ -18,7 +18,7 @@ degVennUI <- function(id) {
         ),
         radioButtons(
           ns("p_filter_mode"),
-          "P-value threshold",
+          "Adjusted P-value threshold",
           inline = FALSE,
           choiceNames = list(
             "None",
@@ -99,8 +99,15 @@ degVennMainUI <- function(id) {
 
 # --- SERVER -------------------------------------------------------------------
 
-degVennServer <- function(id, pkg = utils::packageName()) {
+degVennServer <- function(
+    id,
+    pkg = utils::packageName(),
+    data_mode = c("cloud", "local")
+) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
+
     ns <- session$ns
 
     # --- packages quietly ---
@@ -110,23 +117,10 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     requireNamespace("svglite", quietly = TRUE)
 
     ensure_atlas_data(
-      keys    = c("deg_genes", "deg_transcripts"),
-      package = pkg
+      keys = c("deg_genes", "deg_transcripts"),
+      package = pkg,
+      data_mode = data_mode
     )
-
-    # --- paths + cached reader ---
-    cache_root <- tools::R_user_dir(pkg, which = "cache")
-
-    deg_dir_genes <- file.path(cache_root, "genes")
-    deg_dir_transcripts <- file.path(cache_root, "txs")
-
-    validate(
-      need(dir.exists(deg_dir_genes), "Gene-level DEG data not available."),
-      need(dir.exists(deg_dir_transcripts), "Transcript-level DEG data not available.")
-    )
-    # --- cached RDS reader ---
-    read_cached <- memoise::memoise(readRDS)
-
 
     # --- maps (tx2gene) ---
     tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
@@ -143,17 +137,12 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     norm_id <- function(x) sub("\\.\\d+$","", as.character(x))
 
     # --- manifest ---
-    manifest <- reactive({
-      files <- c(
-        if (nzchar(deg_dir_genes))       list.files(deg_dir_genes,       full.names = TRUE) else character(0),
-        if (nzchar(deg_dir_transcripts)) list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
-      )
-      if (!length(files)) return(tibble::tibble())
-      rx <- "^.*/DESEQ2_res_(.+)_(0\\.[0-9]+)_all_(genes|transcripts)\\.rds$"
-      tibble::tibble(path = files) |>
-        tidyr::extract(path, into = c("dataset","p_str","level"), regex = rx, remove = FALSE) |>
-        dplyr::mutate(p = suppressWarnings(as.numeric(p_str)))
-    })
+    manifest <- reactiveVal(NULL)
+
+    observeEvent(TRUE, {
+      m <- get_deg_manifest(pkg = pkg, data_mode = data_mode)
+      manifest(m)
+    }, once = TRUE)
 
     # --- pretty names ---
     `%||%` <- function(x, y) if (is.null(x)) y else x
@@ -170,7 +159,8 @@ degVennServer <- function(id, pkg = utils::packageName()) {
 
     # --- populate dataset list per level ---
     observeEvent(input$feature_level, {
-      m <- manifest()
+      # m <- manifest()
+      m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
       avail <- sort(unique(m$dataset[m$level == lvl]))
       labs <- pretty_map[avail]
@@ -182,7 +172,7 @@ degVennServer <- function(id, pkg = utils::packageName()) {
 
     # Select all (for current feature level)
     observeEvent(input$datasets_all, {
-      m   <- manifest()
+      m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
 
       avail <- sort(unique(m$dataset[m$level == lvl]))
@@ -194,44 +184,59 @@ degVennServer <- function(id, pkg = utils::packageName()) {
       updateCheckboxGroupInput(session, "datasets", selected = character(0))
     })
 
-    # --- helper: read + filter IDs ---
-    # Return the filtered ID vector for one dataset (genes or transcripts)
-    one_set_ids <- function(dataset_id, lvl = c("genes","transcripts"),
-                            thr, lfc_min = 0, direction = c("both","up","down")) {
-      lvl       <- match.arg(lvl)
+    one_set_ids <- function(dataset_id,
+                            lvl = c("genes", "transcripts"),
+                            thr,
+                            lfc_min = 0,
+                            direction = c("both", "up", "down")) {
+      lvl <- match.arg(lvl)
       direction <- match.arg(direction)
 
-      # normalise Ensembl-style IDs: ENSGxxxx.xx -> ENSGxxxx
-      norm_id <- function(x) sub("\\.\\d+$", "", as.character(x))
+      m <- req(manifest())
 
-      m <- manifest()
       f <- dplyr::filter(m, dataset == dataset_id, level == lvl)
       if (!nrow(f)) return(character(0))
 
-      # if multiple p-threshold files exist, pick the most permissive (min p)
-      f <- f[which.min(f$p), , drop = FALSE]
+      thr_num <- suppressWarnings(as.numeric(thr))
 
-      x <- read_cached(f$path[1]) |> as.data.frame()
+      if (identical(data_mode, "local")) {
 
-      # --- harmonise common column names ---
-      # log2FC
-      if (!"log2FoldChange" %in% names(x)) {
-        if ("log2FC" %in% names(x))        x$log2FoldChange <- x$log2FC
-        else if ("beta" %in% names(x))     x$log2FoldChange <- x$beta
+        # Local files may only exist for one threshold, often p = 0.05.
+        # Use the most permissive available local file, then filter inside get_deg_data().
+        f2 <- f[!is.na(f$p), , drop = FALSE]
+
+        if (nrow(f2)) {
+          f <- f2[which.max(f2$p), , drop = FALSE]
+        } else {
+          f <- f[1, , drop = FALSE]
+        }
+
+        file_path <- f$path[1]
+
+      } else {
+        file_path <- NULL
       }
-      # padj
-      if (!"padj" %in% names(x)) {
-        if ("qvalue" %in% names(x))        x$padj <- x$qvalue
-        else if ("adj.P.Val" %in% names(x)) x$padj <- x$adj.P.Val
-      }
 
-      # ID column per level (accept several variants; fallback to rownames)
+      x <- get_deg_data(
+        dataset = dataset_id,
+        level = lvl,
+        file_path = file_path,
+        data_mode = data_mode,
+        padj_max = thr_num,
+        lfc_min = lfc_min,
+        direction = direction
+      )
+
+      if (!is.data.frame(x)) x <- as.data.frame(x)
+
       id_candidates <- if (lvl == "genes") {
         c("ensembl_gene_id", "gene_id", "EnsemblGeneID")
       } else {
         c("transcript_id", "ensembl_transcript_id", "tx_id")
       }
+
       id_col <- id_candidates[id_candidates %in% names(x)][1]
+
       if (is.na(id_col) || is.null(id_col)) {
         if (!is.null(rownames(x))) {
           x[["__tmp_id"]] <- rownames(x)
@@ -241,81 +246,85 @@ degVennServer <- function(id, pkg = utils::packageName()) {
         }
       }
 
-      # --- apply filters ---
-      # p-value / FDR
-      thr_num <- suppressWarnings(as.numeric(thr))
-      if (!is.na(thr_num) && "padj" %in% names(x)) {
-        x <- subset(x, !is.na(padj) & padj <= thr_num)
-      }
+      ids <- x[[id_col]]
+      ids <- ids[!is.na(ids) & nzchar(ids)]
 
-      # LFC / direction
-      if ("log2FoldChange" %in% names(x) && is.finite(lfc_min) && lfc_min >= 0) {
-        if (direction == "up") {
-          x <- subset(x, !is.na(log2FoldChange) & log2FoldChange >=  lfc_min)
-        } else if (direction == "down") {
-          x <- subset(x, !is.na(log2FoldChange) & log2FoldChange <= -lfc_min)
-        } else { # both
-          x <- subset(x, !is.na(log2FoldChange) & abs(log2FoldChange) >= lfc_min)
-        }
-      }
-
-      ids_raw <- x[[id_col]]
-      ids <- ids_raw[!is.na(ids_raw) & nzchar(ids_raw)]
-      unique(norm_id(ids))
+      unique(sub("\\.\\d+$", "", as.character(ids)))
     }
 
-
-    # --- NEW: build ID -> symbol map for current level ---
+    # # --- NEW: build ID -> symbol map for current level ---
     id_symbol_map <- reactive({
       lvl <- input$feature_level %||% "genes"
 
-      # If we have tx2gene, build clean maps up front
       if (!is.null(tx2gene)) {
         if (lvl == "genes") {
-          # gene_id -> gene_name (HGNC symbol)
-          gm <- tx2gene |>
-            dplyr::distinct(gene_id, gene_name) |>
-            dplyr::rename(id = gene_id, symbol = gene_name)
-          return(gm)
+          return(
+            tx2gene |>
+              dplyr::distinct(gene_id, gene_name) |>
+              dplyr::rename(id = gene_id, symbol = gene_name)
+          )
         } else {
-          # transcripts: map transcript_id -> gene_name (show gene symbol for each transcript)
-          tm <- tx2gene |>
-            dplyr::distinct(transcript_id, gene_name) |>
-            dplyr::rename(id = transcript_id, symbol = gene_name)
-          return(tm)
+          return(
+            tx2gene |>
+              dplyr::distinct(transcript_id, gene_name) |>
+              dplyr::rename(id = transcript_id, symbol = gene_name)
+          )
         }
       }
 
-      # ---- Fallback (if no tx2gene file available) ----
-      m <- manifest() |> dplyr::filter(level == lvl)
-      if (!nrow(m)) return(tibble::tibble(id = character(0), symbol = character(0)))
-
-      prefer_gene_syms <- c("gene_name","symbol","external_gene_name","hgnc_symbol")
-      prefer_tx_syms   <- c("transcript_name","tx_name")
-
-      maps <- lapply(m$path, function(p) {
-        df <- read_cached(p) |> as.data.frame()
-        if (lvl == "genes") {
-          id_col <- if ("ensembl_gene_id" %in% names(df)) "ensembl_gene_id"
-          else if (!is.null(rownames(df))) { df[["__tmp_id"]] <- rownames(df); "__tmp_id" }
-          else NA_character_
-          sym_col <- intersect(prefer_gene_syms, names(df))
-        } else {
-          id_col <- if ("transcript_id" %in% names(df)) "transcript_id"
-          else if (!is.null(rownames(df))) { df[["__tmp_id"]] <- rownames(df); "__tmp_id" }
-          else NA_character_
-          sym_col <- intersect(prefer_tx_syms, names(df))
-        }
-        if (is.na(id_col)) return(NULL)
-        ids <- norm_id(df[[id_col]])
-        sym <- if (length(sym_col)) df[[sym_col[1]]] else ids
-        tibble::tibble(id = ids, symbol = as.character(sym))
-      })
-
-      d <- dplyr::bind_rows(Filter(Negate(is.null), maps)) |>
-        dplyr::distinct(id, .keep_all = TRUE)
-      d[!is.na(d$id) & nzchar(d$id), , drop = FALSE]
+      tibble::tibble(id = character(0), symbol = character(0))
     })
+    # id_symbol_map <- reactive({
+    #   lvl <- input$feature_level %||% "genes"
+    #
+    #   # If we have tx2gene, build clean maps up front
+    #   if (!is.null(tx2gene)) {
+    #     if (lvl == "genes") {
+    #       # gene_id -> gene_name (HGNC symbol)
+    #       gm <- tx2gene |>
+    #         dplyr::distinct(gene_id, gene_name) |>
+    #         dplyr::rename(id = gene_id, symbol = gene_name)
+    #       return(gm)
+    #     } else {
+    #       # transcripts: map transcript_id -> gene_name (show gene symbol for each transcript)
+    #       tm <- tx2gene |>
+    #         dplyr::distinct(transcript_id, gene_name) |>
+    #         dplyr::rename(id = transcript_id, symbol = gene_name)
+    #       return(tm)
+    #     }
+    #   }
+    #
+    #   # ---- Fallback (if no tx2gene file available) ----
+    #   #m <- manifest() |> dplyr::filter(level == lvl)
+    #   m <- req(manifest()) |> dplyr::filter(level == lvl)
+    #   if (!nrow(m)) return(tibble::tibble(id = character(0), symbol = character(0)))
+    #
+    #   prefer_gene_syms <- c("gene_name","symbol","external_gene_name","hgnc_symbol")
+    #   prefer_tx_syms   <- c("transcript_name","tx_name")
+    #
+    #   maps <- lapply(m$path, function(p) {
+    #     df <- read_cached(p) |> as.data.frame()
+    #     if (lvl == "genes") {
+    #       id_col <- if ("ensembl_gene_id" %in% names(df)) "ensembl_gene_id"
+    #       else if (!is.null(rownames(df))) { df[["__tmp_id"]] <- rownames(df); "__tmp_id" }
+    #       else NA_character_
+    #       sym_col <- intersect(prefer_gene_syms, names(df))
+    #     } else {
+    #       id_col <- if ("transcript_id" %in% names(df)) "transcript_id"
+    #       else if (!is.null(rownames(df))) { df[["__tmp_id"]] <- rownames(df); "__tmp_id" }
+    #       else NA_character_
+    #       sym_col <- intersect(prefer_tx_syms, names(df))
+    #     }
+    #     if (is.na(id_col)) return(NULL)
+    #     ids <- norm_id(df[[id_col]])
+    #     sym <- if (length(sym_col)) df[[sym_col[1]]] else ids
+    #     tibble::tibble(id = ids, symbol = as.character(sym))
+    #   })
+    #
+    #   d <- dplyr::bind_rows(Filter(Negate(is.null), maps)) |>
+    #     dplyr::distinct(id, .keep_all = TRUE)
+    #   d[!is.na(d$id) & nzchar(d$id), , drop = FALSE]
+    # })
 
 
 
@@ -478,22 +487,51 @@ degVennServer <- function(id, pkg = utils::packageName()) {
     }, server = TRUE)
 
     # keep combo list in sync with overlaps table
+    # observe({
+    #   tbl <- overlaps_tbl()
+    #   combos <- tbl$`Dataset Combination`
+    #
+    #   # preserve current selection if still valid; else fall back to first
+    #   sel <- isolate(input$combo_pick)
+    #   if (is.null(sel) || !nzchar(sel) || !(sel %in% combos)) {
+    #     sel <- combos[[1]] %||% ""
+    #   }
+    #
+    #   updateSelectizeInput(
+    #     session,
+    #     "combo_pick",
+    #     choices  = combos,
+    #     selected = sel,
+    #     server   = TRUE
+    #   )
+    # })
     observe({
       tbl <- overlaps_tbl()
       combos <- tbl$`Dataset Combination`
 
-      # preserve current selection if still valid; else fall back to first
+      if (!length(combos)) {
+        updateSelectizeInput(
+          session,
+          "combo_pick",
+          choices = character(0),
+          selected = character(0),
+          server = TRUE
+        )
+        return()
+      }
+
       sel <- isolate(input$combo_pick)
+
       if (is.null(sel) || !nzchar(sel) || !(sel %in% combos)) {
-        sel <- combos[[1]] %||% ""
+        sel <- combos[1]
       }
 
       updateSelectizeInput(
         session,
         "combo_pick",
-        choices  = combos,
+        choices = combos,
         selected = sel,
-        server   = TRUE
+        server = TRUE
       )
     })
 
@@ -513,10 +551,19 @@ degVennServer <- function(id, pkg = utils::packageName()) {
 
 
     combo_items <- reactive({
-      s <- sets_list(); req(length(s) >= 2)
+      s <- sets_list()
+      req(length(s) >= 2)
 
       # Universe + membership matrix
       Universe <- unique(unlist(s, use.names = FALSE))
+      if (!length(Universe)) {
+        return(tibble::tibble(
+          ID = character(0),
+          Symbol = character(0),
+          Sum = integer(0)
+        ))
+      }
+
       M <- vapply(s, function(v) Universe %in% v, logical(length(Universe)))
       colnames(M) <- names(s)
 

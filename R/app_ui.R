@@ -35,7 +35,8 @@ get_css_path <- function() {
 }
 
 
-app_ui <- function() {
+app_ui <- function(data_mode = "cloud") {
+  data_mode <- match.arg(data_mode, c("cloud", "local"))
 
   fluidPage(
     theme = bslib::bs_theme(version = 4, bootswatch = "pulse"),

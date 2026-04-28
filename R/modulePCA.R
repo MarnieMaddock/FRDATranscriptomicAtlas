@@ -37,7 +37,9 @@ PCAMainUI <- function(id) {
   )
 }
 
-pcaServer <- function(id, pkg = utils::packageName()) {
+pcaServer <- function(id, pkg = utils::packageName(), data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -77,44 +79,46 @@ pcaServer <- function(id, pkg = utils::packageName()) {
 
 
     # ---- ensure PCA (DESeq2 objects) are available ----
-    ensure_atlas_data(
-      keys    = "pca_input",
-      package = pkg
-    )
+    manifest <- reactiveVal(NULL)
 
-    cache_root <- tools::R_user_dir(pkg, which = "cache")
+    observeEvent(TRUE, {
+      m <- if (identical(data_mode, "cloud")) {
+        get_pca_manifest_cloud()
+      } else {
+        # local fallback
+        cache_root <- tools::R_user_dir(pkg, "cache")
+        paths <- list.files(
+          file.path(cache_root, "pca_input"),
+          pattern = "_pca_input\\.rds$",
+          full.names = TRUE
+        )
 
-    dir_use <- reactive({
-      d <- file.path(cache_root, "pca_input")
-
-      # descend into single subdir if ZIP contains one
-      subs <- list.dirs(d, recursive = FALSE, full.names = TRUE)
-      if (length(subs) == 1L && dir.exists(subs[[1L]])) {
-        d <- subs[[1L]]
+        tibble::tibble(
+          label = sub("_pca_input\\.rds$", "", basename(paths)),
+          path = paths,
+          filename = basename(paths)
+        )
       }
 
-      validate(
-        need(
-          dir.exists(d),
-          paste(
-            "PCA data not available yet.\nExpected under:",
-            normalizePath(file.path(cache_root, "pca_input"), winslash = "/", mustWork = FALSE)
-          )
-        )
-      )
+      manifest(m)
+    }, once = TRUE)
 
-      d
-    })
-
-
-    # List available PCA inputs
     pca_files <- reactive({
-      paths <- list.files(dir_use(), pattern = "_pca_input\\.rds$", full.names = TRUE)
-      tibble::tibble(
-        label = sub("_pca_input\\.rds$", "", basename(paths)),
-        path  = paths
-      ) |>
-        dplyr::arrange(label)
+      req(manifest())
+
+      m <- manifest()
+
+      if (identical(data_mode, "cloud")) {
+        tibble::tibble(
+          label = m$dataset,
+          value = m$filename
+        )
+      } else {
+        tibble::tibble(
+          label = m$label,
+          value = m$path
+        )
+      }
     })
 
     output$pick_files_ui <- renderUI({
@@ -139,27 +143,46 @@ pcaServer <- function(id, pkg = utils::packageName()) {
 
 
       # Named vector: values = file paths, names = pretty labels
-      choices_named <- stats::setNames(pf$path, pretty_label)
+      choices_named <- stats::setNames(pf$value, pretty_label)
 
-      wanted <- c("Lai_iPSC_FRDA_vs_IC", "Lai_CNS_FRDA_vs_IC", "Lai_PNS_FRDA_vs_IC")
-      sel <- pf$path[match(wanted, pf$label, nomatch = 0)]
-      if (length(sel) == 0) sel <- pf$path[1]
+      # wanted <- c("Indelicato_FRDA_vs_CTRL")
+      # sel <- pf$value[match(wanted, pf$label, nomatch = 0)]
+      # if (length(sel) == 0) sel <- pf$value[1]
 
       selectizeInput(
         ns("picked"), "Comparison(s)",
         choices  = choices_named,
-        selected = sel,
+        selected = character(0),
         multiple = TRUE,
-        options  = list(plugins = list("remove_button"))
+        options  = list(
+          plugins = list("remove_button"),
+          placeholder = "Choose one or more PCA datasets..."
+        )
       )
+
+
     })
+
 
     # Load and merge (intersect genes across selections)
     merged_input <- reactive({
-      req(input$picked)
+      validate(
+        need(length(input$picked) >= 1, "Select at least one PCA dataset.")
+      )
+
       paths  <- as.character(input$picked)
-      objs   <- lapply(paths, readRDS)
-      labels <- sub("_pca_input\\.rds$", "", basename(paths))
+      objs <- lapply(paths, function(p) {
+
+        if (identical(data_mode, "cloud")) {
+          get_pca_data_cloud_cached(p)
+        } else {
+          readRDS(p)
+        }
+
+      })
+      labels <- basename(paths)
+      labels <- sub("_pca_input\\.rds$", "", labels)
+      labels <- sub("\\.rds$", "", labels)
 
       # parent study inferred from dataset label
       parent_studies <- sub("_.*$", "", labels)

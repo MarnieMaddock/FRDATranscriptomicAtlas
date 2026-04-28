@@ -6,3 +6,4 @@
 .quarto
 /.quarto/
 /zenodo_upload/
+renv/staging/

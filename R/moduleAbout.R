@@ -25,8 +25,12 @@ aboutUI <- function(id,
         "that provides open access to harmonised transcriptomic analyses across publicly available FRDA RNA-seq datasets. ",
         "This resource was developed to enable researchers, clinicians, and students to explore and compare genes, differential expression, isoforms etc across a broad range of human FRDA models. The Atlas serves as a central reference for transcriptome-wide alterations in FRDA,
         supporting hypothesis generation, candidate gene prioritisation, and data reuse for downstream integrative analyses. ",
-        "All analyses were performed using a consistent bioinformatic framework to ensure comparability across studies. Details of the datasets, quality control, and analytical pipelines are available in the associated publication <GIVE LINK HERE>.
-        Users are encouraged to consult the paper for methodological details and to cite it in any work derived from or informed by this resource."
+        "All analyses were performed using a consistent bioinformatic framework to ensure comparability across studies.",
+          HTML(
+    "Details of the datasets, quality control, and analytical pipelines are available in the associated publication <a href='https://doi.org/10.64898/2026.03.18.712785' target='_blank'>here</a>. "
+  ),
+
+        "Users are encouraged to consult the paper for methodological details and to cite it in any work derived from or informed by this resource."
       ),
 
       h3("Features"),
@@ -59,7 +63,7 @@ aboutUI <- function(id,
       ),
 
       h3("How to Use"),
-      p("All instructions on how to download the app and use its features can be found here: ",
+      p("All instructions on how to use the app and its features can be found here: ",
         tags$a(
           href = "https://marniemaddock.github.io/FRDATranscriptomicAtlas/",
           "Instructions"
@@ -68,7 +72,7 @@ aboutUI <- function(id,
       h3("Authorship and Acknowledgements"),
       p(HTML(
         paste0(
-          "<b>Developed by:</b> Marnie Maddock, Prof. Mirella Dottori, XXXX, XXXXX University of Wollongong, Australia<br/>",
+          "<b>Developed by:</b> Marnie Maddock, Prof. Mirella Dottori, University of Wollongong, Australia<br/>",
           "<b>Funding:</b> Friedreich's Ataxia Research Alliance (FARA)<br/>",
           "<b>We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis.</b> "
         )
@@ -79,7 +83,7 @@ aboutUI <- function(id,
         "please cite the associated publication:"),
       tags$blockquote(
         HTML(
-          "Maddock, M. <i>et&nbsp;al.</i> (2025). <i>XXXXXXXXXXXXXXXXXX</i>. [Journal details forthcoming]."
+          "Maddock, M. L. <i>et&nbsp;al.</i> (2026). <i>Friedreich ataxia transcriptomic dysregulation and identification of cell type-specific biomarkers: A systematic review and meta-analysis</i>. bioRxiv. https://doi.org/10.64898/2026.03.18.712785"
         )
       ),
       p("Users must cite the publication in any derivative analyses, figures, or reports generated from this resource. Users must also cite the original studies from which the data were derived. ",

@@ -5,8 +5,8 @@
 #' @import shiny
 #' @importFrom ggplot2 ggplot aes geom_point
 #' @noRd
-app_server <- function(input, output, session) {
-
+app_server <- function(input, output, session, data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
   # --- make `pkg` robust for both project + installed package modes ----
   pkg <- tryCatch(utils::packageName(), error = function(e) "")
   if (!length(pkg) || !is.character(pkg) || !nzchar(pkg)) pkg <- "FRDATranscriptomicAtlas"
@@ -31,19 +31,18 @@ app_server <- function(input, output, session) {
   # --- Call modules (pass the same `pkg`) -------------------------------
   aboutServer("about", package_name = pkg)
   datasetsServer("datasets")
-  tpmHeatmapServer("tpm_hm", pkg = pkg)
-  volcanoServer("volc", level = "genes", pkg = pkg)
-  GSEAServer("gsea",  pkg = pkg)
-  gseaCompareServer("gsea_compare",  pkg = pkg)
-  genePlotsServer("gene_plots", pkg = pkg)
-  forestPlotsServer("forest", pkg = pkg)
-  biomarkerServer("biomarkers")
-  degTablesServer("deg_tables", pkg = pkg)
-  degVennServer("deg_venn", pkg = pkg)
-  queryGeneAcrossDatasetsServer("gene_query")
-  pcaServer("pca")
+  tpmHeatmapServer("tpm_hm", pkg = pkg, data_mode = data_mode)
+  volcanoServer("volc", level = "genes", pkg = pkg, data_mode = data_mode)
+  GSEAServer("gsea",  pkg = pkg, data_mode = data_mode)
+  gseaCompareServer("gsea_compare",  pkg = pkg, data_mode = data_mode)
+  genePlotsServer("gene_plots", pkg = pkg, data_mode = data_mode)
+  biomarkerServer("biomarkers", data_mode = data_mode)
+  degTablesServer("deg_tables", pkg = pkg, data_mode = data_mode)
+  degVennServer("deg_venn", pkg = pkg, data_mode = data_mode)
+  forestPlotsServer("forest", pkg = pkg, data_mode = data_mode)
+  queryGeneAcrossDatasetsServer("gene_query", data_mode = data_mode)
+  pcaServer("pca", data_mode = data_mode)
   isoformConfidenceServer("isoform_confidence")
-
 
 
   # --- sidebar behavior for SwitchPlots full-width tab ------------------
