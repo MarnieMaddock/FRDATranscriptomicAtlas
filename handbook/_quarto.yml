@@ -11,7 +11,7 @@ website:
       - text: "Overview"
         file: overview.qmd
 
-      - text: "Download"
+      - text: "Launch Atlas Here"
         file: local_access.qmd
 
       - text: "Features"
@@ -23,6 +23,8 @@ website:
       - text: "Feature Requests"
         file: features_issues.qmd
 
+      - text: "Contribute Data"
+        file: contribute.qmd
 format:
   html:
     theme: cosmo

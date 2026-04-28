@@ -1,0 +1,62 @@
+---
+title: "Contribute Data to the FRDA Transcriptomic Atlas"
+format: html
+---
+
+We welcome contributions of new bulk RNA-seq datasets to expand the FRDA Transcriptomic Atlas. At the moment we will only accept data with clear FRDA vs control groups. However, we are working on expanding this framework to include RNA-seq data from other experimental designs (e.g. drug treatments) in the future.
+
+### Data inclusion
+
+We aim to integrate datasets alongside or shortly after publication. Contributing your data allows:
+
+- Increased visibility of your work  
+- Cross-study comparison within a harmonised framework  
+- Immediate accessibility to the research community  
+
+Where possible, datasets can be incorporated into the Atlas **at the time of your publication**. Please contact us early to discuss timelines and requirements. 
+
+---
+
+### 📁 Required data
+
+To ensure compatibility with the Atlas pipeline, contributors should provide:
+
+- **Raw sequencing data**  
+  - FASTQ files  
+
+- **Metadata**  
+  - Sample annotations (e.g. mappings of filenames to sample structure).
+For example:
+2178398123812.fastq.gz --> Sample1, FRDA, replicate1, iPSC-derived neurons
+
+Raw FASTQ files will be reprocessed using a standardised analysis pipeline, as described in the associated publication. As different studies often use distinct alignment, quantification, and normalisation approaches, **gene expression values may vary slightly from those reported in the original publication**. Reprocessing all datasets through a unified pipeline ensures consistency and enables reliable cross-study comparisons. If you would like the data on the atlas to match the original publication exactly, please contact us to request the corresponding processed dataset. This can be arranged as part of a collaborative effort or service.
+
+---
+
+### Data deposition
+
+We prefer datasets that are:
+
+- Already deposited in **GEO (Gene Expression Omnibus)**  
+- Or intended for deposition in GEO as part of publication. In this instance we request files to be transferred to our high performance computer for processing using FileZilla.
+
+We will not store your raw (fastq) data for you.
+
+---
+
+### 📩 How to contribute
+
+If you are interested in contributing data, please contact us with:
+
+- A brief description of the dataset  
+- Data availability (GEO or planned submission)  
+- Expected publication timeline, or link to previous publication
+
+[Contact Us](mailto:mlm715@uowmail.edu.au,mmaddock@uow.edu.au,mdottori@uow.edu.au?subject=FRDA%20Atlas%20Data%20Enquiry&body=Hi Marnie,%20I%20am%20interested%20in%20contributing%20data.){.btn .btn-md style="background:#2a776d;border-color:#2a776d;color:#fff;"}
+---
+
+### Notes
+
+- All datasets are processed using a standardised pipeline to ensure comparability  
+- Data must comply with relevant ethical and data-sharing guidelines  
+

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Online Access –  FRDA Transcriptomic Atlas Handbook</title>
+<title>Contribute Data to the FRDA Transcriptomic Atlas –  FRDA Transcriptomic Atlas Handbook</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -105,7 +105,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Overview</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./local_access.html" aria-current="page"> 
+    <a class="nav-link" href="./local_access.html"> 
 <span class="menu-text">Launch Atlas Here</span></a>
   </li>  
   <li class="nav-item">
@@ -121,7 +121,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Feature Requests</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./contribute.html"> 
+    <a class="nav-link active" href="./contribute.html" aria-current="page"> 
 <span class="menu-text">Contribute Data</span></a>
   </li>  
 </ul>
@@ -135,15 +135,28 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#data-inclusion" id="toc-data-inclusion" class="nav-link active" data-scroll-target="#data-inclusion">Data inclusion</a></li>
+  <li><a href="#required-data" id="toc-required-data" class="nav-link" data-scroll-target="#required-data">📁 Required data</a></li>
+  <li><a href="#data-deposition" id="toc-data-deposition" class="nav-link" data-scroll-target="#data-deposition">Data deposition</a></li>
+  <li><a href="#how-to-contribute" id="toc-how-to-contribute" class="nav-link" data-scroll-target="#how-to-contribute">📩 How to contribute</a></li>
+  <li><a href="#contact-us" id="toc-contact-us" class="nav-link" data-scroll-target="#contact-us">Contact Us</a>
+  <ul class="collapse">
+  <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
+  </ul></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Online Access</h1>
+<h1 class="title">Contribute Data to the FRDA Transcriptomic Atlas</h1>
 </div>
 
 
@@ -160,12 +173,71 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>The FRDA Transcriptomic Atlas is available as a web application:</p>
-<p><a href="https://marniem-frdatranscriptomicatlas.share.connect.posit.cloud/" class="btn btn-md" style="background:#2a776d;border-color:#2a776d;color:#fff;" target="_blank">Open FRDA Transcriptomic Atlas</a></p>
-<p>No installation is required. Simply open the link in your browser.</p>
-<p>👉 <a href="https://marniem-frdatranscriptomicatlas.share.connect.posit.cloud/" class="uri">https://marniem-frdatranscriptomicatlas.share.connect.posit.cloud/</a></p>
+<p>We welcome contributions of new bulk RNA-seq datasets to expand the FRDA Transcriptomic Atlas. At the moment we will only accept data with clear FRDA vs control groups. However, we are working on expanding this framework to include RNA-seq data from other experimental designs (e.g.&nbsp;drug treatments) in the future.</p>
+<section id="data-inclusion" class="level3">
+<h3 class="anchored" data-anchor-id="data-inclusion">Data inclusion</h3>
+<p>We aim to integrate datasets alongside or shortly after publication. Contributing your data allows:</p>
+<ul>
+<li>Increased visibility of your work<br>
+</li>
+<li>Cross-study comparison within a harmonised framework<br>
+</li>
+<li>Immediate accessibility to the research community</li>
+</ul>
+<p>Where possible, datasets can be incorporated into the Atlas <strong>at the time of your publication</strong>. Please contact us early to discuss timelines and requirements.</p>
+<hr>
+</section>
+<section id="required-data" class="level3">
+<h3 class="anchored" data-anchor-id="required-data">📁 Required data</h3>
+<p>To ensure compatibility with the Atlas pipeline, contributors should provide:</p>
+<ul>
+<li><strong>Raw sequencing data</strong>
+<ul>
+<li>FASTQ files</li>
+</ul></li>
+<li><strong>Metadata</strong>
+<ul>
+<li>Sample annotations (e.g.&nbsp;mappings of filenames to sample structure). For example: 2178398123812.fastq.gz –&gt; Sample1, FRDA, replicate1, iPSC-derived neurons</li>
+</ul></li>
+</ul>
+<p>Raw FASTQ files will be reprocessed using a standardised analysis pipeline, as described in the associated publication. As different studies often use distinct alignment, quantification, and normalisation approaches, <strong>gene expression values may vary slightly from those reported in the original publication</strong>. Reprocessing all datasets through a unified pipeline ensures consistency and enables reliable cross-study comparisons. If you would like the data on the atlas to match the original publication exactly, please contact us to request the corresponding processed dataset. This can be arranged as part of a collaborative effort or service.</p>
+<hr>
+</section>
+<section id="data-deposition" class="level3">
+<h3 class="anchored" data-anchor-id="data-deposition">Data deposition</h3>
+<p>We prefer datasets that are:</p>
+<ul>
+<li>Already deposited in <strong>GEO (Gene Expression Omnibus)</strong><br>
+</li>
+<li>Or intended for deposition in GEO as part of publication. In this instance we request files to be transferred to our high performance computer for processing using FileZilla.</li>
+</ul>
+<p>We will not store your raw (fastq) data for you.</p>
+<hr>
+</section>
+<section id="how-to-contribute" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-contribute">📩 How to contribute</h3>
+<p>If you are interested in contributing data, please contact us with:</p>
+<ul>
+<li>A brief description of the dataset<br>
+</li>
+<li>Data availability (GEO or planned submission)<br>
+</li>
+<li>Expected publication timeline, or link to previous publication</li>
+</ul>
+</section>
+<section id="contact-us" class="level2">
+<h2 class="anchored" data-anchor-id="contact-us"><a href="mailto:mlm715@uowmail.edu.au,mmaddock@uow.edu.au,mdottori@uow.edu.au?subject=FRDA%20Atlas%20Data%20Enquiry&amp;body=Hi%20Marnie,%20I%20am%20interested%20in%20contributing%20data." class="btn btn-md" style="background:#2a776d;border-color:#2a776d;color:#fff;">Contact Us</a></h2>
+<section id="notes" class="level3">
+<h3 class="anchored" data-anchor-id="notes">Notes</h3>
+<ul>
+<li>All datasets are processed using a standardised pipeline to ensure comparability<br>
+</li>
+<li>Data must comply with relevant ethical and data-sharing guidelines</li>
+</ul>
 
 
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

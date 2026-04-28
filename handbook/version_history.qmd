@@ -4,6 +4,11 @@ title: "Version History"
 
 FRDA Transcriptomic Atlas was developed in R version 4.5.1, and R Shiny version 1.9.1. All code is available on the GitHub [repository](https://github.com/MarnieMaddock/FRDATranscriptomicAtlas): 
 
+
+**Version 1.1.0**  
+•	Deployed web application for browser-based use  
+•	Removed requirement for local data downloads for standard use  
+
 Version 1.0.0: 
 
 •	Initial publicly available version.
