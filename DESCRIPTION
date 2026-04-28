@@ -38,7 +38,8 @@ Imports:
     glue,
     ComplexHeatmap,
     SummarizedExperiment,
-    magick
+    magick,
+    DESeq2
 Suggests:
     BiocManager
 RoxygenNote: 7.3.3
