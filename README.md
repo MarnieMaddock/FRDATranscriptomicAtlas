@@ -2,10 +2,10 @@
 
 **FRDA Transcriptomic Atlas** is an interactive R/Shiny application for exploring and comparing transcriptomic datasets related to **Friedreich’s ataxia (FRDA)**.  This app was produced as an aid to the publication (Details Coming Soon). The manuscript is currently available on [BioRxiv](https://doi.org/10.64898/2026.03.18.712785) 
 
-[![r-universe version](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/version)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
-[![r-universe status](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas/badges/checks)](https://marniemaddock.r-universe.dev/FRDATranscriptomicAtlas)
 ![Static Badge](https://img.shields.io/badge/License-MIT-brightgreen)
 [![DOI](https://zenodo.org/badge/1074154403.svg)](https://doi.org/10.5281/zenodo.19688845)
+
+[Open FRDA Transcriptomic Atlas](https://marniem-frdatranscriptomicatlas.share.connect.posit.cloud/)
 
 The Atlas integrates multiple publicly available RNA-seq studies. Features include:
 
@@ -19,36 +19,14 @@ The Atlas integrates multiple publicly available RNA-seq studies. Features inclu
 - Download and Export - Tables and plots can be exported for reporting and reuse.
 
 ---
+## Access the App Here:
 
-## Recommended installation (local)
-
-The FRDA Transcriptomic Atlas runs through R. If you are new to R, please use the detailed installation instructions [here](https://marniemaddock.github.io/FRDATranscriptomicAtlas/). 
-
-> ⚠️ **Initial installation may take up to ~15 minutes**  
-> This is expected and occurs because the package installs large cached datasets and dependencies required for interactive analyses. These datasets are cached locally for offline reuse, so this long download is only performed once. Subsequent launches are fast and do not require re-downloading data and will load instantly. The app is ~ 600 MB.
-
-```r
-install.packages('FRDATranscriptomicAtlas', repos = c('https://marniemaddock.r-universe.dev', 'https://cloud.r-project.org'))
-FRDATranscriptomicAtlas::install_deps()
-```
-
-### To run app
-
-```
-library(FRDATranscriptomicAtlas)
-run_app()
-```
-
-## New to R? No problem.
-
-The FRDA Transcriptomic Atlas is designed for users with no programming experience. All analyses and visualisations are accessible through an intuitive point-and-click interface. Trust me - you do not need to know how to use R!
+<https://marniem-frdatranscriptomicatlas.share.connect.posit.cloud/>
 
 
 ## Citation and Acknowledgements
 
-We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis. If you use this Atlas or any underlying data/analyses in your work, please cite the associated publication:
-
-Maddock, M. et al. XXXXXXXXXXXXXXXXXX. [Journal details forthcoming].
+We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis. If you use this Atlas or any underlying data/analyses in your work, please cite the associated publication.
 
 The manuscript is currently on **BioRxiv**!
 
@@ -56,7 +34,7 @@ Friedreich ataxia transcriptomic dysregulation and identification of cell type-s
 Marnie L Maddock, Sara Miellet, Anjila Dongol, Amy J Hulme, Chloe K Kennedy, Louise A Corben, Rocio K Finol-Urdaneta, Alberto Nettel-Aguirre, Chiara Dionsi, Martin B Delatycki, Joel M Gottesfeld, Massimo Pandolfo, Elisabetta Soragni, Sanjay I Bidichandani, Jarmon G Lees, Shiang Y Lim, Jill S Napierala, Marek Napierala, Mirella Dottori
 bioRxiv 2026.03.18.712785; doi: [https://doi.org/10.64898/2026.03.18.712785]
 
-Users must cite the publication in any derivative analyses, figures, or reports generated from this resource. Users must also cite the original studies from which the data were derived. Please refer to the 'Datasets' section within the app for details on each dataset and its original publication.
+Users must cite the publication in any derivative analyses, figures, or reports generated from this resource. Users must also cite the **original studies** from which the data were derived. Please refer to the 'Datasets' section within the app for details on each dataset and its original publication.
 
 ## Future Updates and Contributions
 
