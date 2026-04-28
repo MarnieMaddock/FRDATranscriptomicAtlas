@@ -56,7 +56,9 @@ forestPlotMainUI <- function(id) {
 
 
 ## SERVER ----
-forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL, data_mode = "local") {
+forestPlotsServer <- function(id, pkg = utils::packageName(), data_dir = NULL, data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 

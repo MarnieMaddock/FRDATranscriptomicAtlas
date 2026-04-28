@@ -56,19 +56,11 @@ GSEAMainUI <- function(id) {
 # R/modules/goGSEA_module.R
 # -------------------------
 # Server for GSEA (CSV/RDS-on-disk, on-demand)
-GSEAServer <- function(id, base_dir = NULL, pkg = NULL, data_mode = "local") {
+GSEAServer <- function(id, base_dir = NULL, pkg = NULL, data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
-    # dose_ok <- tryCatch({
-    #   "DOSE" %in% loadedNamespaces() || requireNamespace("DOSE", quietly = TRUE)
-    # }, error = function(e) FALSE)
-    #
-    # if (!dose_ok) {
-    #   shiny::validate(shiny::need(FALSE,
-    #                               "GSEA features are not available in this deployment."
-    #   ))
-    # }
 
     # --- maps (tx2gene) ---
     tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)

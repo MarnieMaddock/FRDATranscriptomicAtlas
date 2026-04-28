@@ -48,7 +48,9 @@ genePlotsMainUI <- function(id) {
 
 #' Gene Plots server - multi-dataset (checkboxes)
 #' @noRd
-genePlotsServer <- function(id, pkg = "FRDATranscriptomicAtlas", data_mode = "local") {
+genePlotsServer <- function(id, pkg = "FRDATranscriptomicAtlas", data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
 
     pkg <- tryCatch(pkg, error = function(e) "")

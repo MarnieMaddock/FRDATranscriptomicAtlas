@@ -90,7 +90,9 @@ degTablesMainUI <- function(id) {
 #' Server logic for DEG-by-dataset (robust for package + project)
 #' @noRd
 #'
-degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local") {
+degTablesServer <- function(id, pkg = utils::packageName(), data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -221,30 +223,6 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
         x <- dplyr::rename(x, padj = qvalue)
       }
 
-      # Local mode only: filtering happens after loading local RDS
-      # Cloud mode already filters in Arrow/S3 before collect()
-      if (identical(data_mode, "local")) {
-
-        # p-value filter
-        if (!is.na(thr) && "padj" %in% names(x)) {
-          x <- x[!is.na(x$padj) & x$padj <= thr, , drop = FALSE]
-        }
-
-        # |log2FC| + direction
-        if ("log2FoldChange" %in% names(x)) {
-          if (identical(dir, "up")) {
-            x <- x[x$log2FoldChange >= lfc_min, , drop = FALSE]
-          }
-
-          if (identical(dir, "down")) {
-            x <- x[x$log2FoldChange <= -lfc_min, , drop = FALSE]
-          }
-
-          if (identical(dir, "both")) {
-            x <- x[abs(x$log2FoldChange) >= lfc_min, , drop = FALSE]
-          }
-        }
-      }
 
       # symbols mapping
       if (identical(lvl, "genes")) {

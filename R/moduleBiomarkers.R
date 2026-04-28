@@ -129,7 +129,9 @@ biomarkerMainUI <- function(id, pkg = utils::packageName()) {
 biomarkerServer <- function(id,
                             pkg = utils::packageName(),
                             data_dir = NULL,
-                            data_mode = "local") {
+                            data_mode = c("cloud", "local")) {
+  data_mode <- match.arg(data_mode)
+
 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns

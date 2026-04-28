@@ -90,9 +90,12 @@ tpmHeatmapServer <- function(
     id,
     pkg = utils::packageName(),
     sample_meta = NULL,   # pass a data.frame or leave NULL to auto-load from extdata
-    data_mode = "local"
+    data_mode = c("cloud", "local")
 ) {
+  data_mode <- match.arg(data_mode)
   moduleServer(id, function(input, output, session) {
+
+
     ns <- session$ns
 
     # ---- make pkg robust ----

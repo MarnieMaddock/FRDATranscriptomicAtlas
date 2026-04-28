@@ -114,8 +114,10 @@ volcanoServer <- function(
     id,
     level = "genes",                    # "genes" or "transcripts"
     pkg   = utils::packageName(),
-    data_mode = "local"
+    data_mode = c("cloud", "local")
 ) {
+  data_mode <- match.arg(data_mode)
+
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     `%||%` <- function(a, b) if (is.null(a)) b else a

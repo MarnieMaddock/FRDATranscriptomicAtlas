@@ -4,7 +4,10 @@
 \alias{run_app}
 \title{Launch the FRDA Transcriptomic Atlas app}
 \usage{
-run_app()
+run_app(data_mode = "cloud")
+}
+\arguments{
+\item{data_mode}{Data access mode. Defaults to "cloud". Use "local" for local access of data for Developers}
 }
 \value{
 A shiny.appobj that runs the app
