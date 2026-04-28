@@ -16,9 +16,6 @@ aboutUI <- function(id,
     div(
       class = "container-fluid",
       h2(title, class = "mb-3"),
-      uiOutput(ns("pkg_version")),
-      uiOutput(ns("data_updates")),
-      actionButton(ns("check_updates"), "Check for new datasets"),
 
       p(
         "The Friedreich's Ataxia (FRDA) Transcriptomic Atlas is an interactive Shiny application ",
@@ -122,97 +119,3 @@ aboutUI <- function(id,
     )
   )
 }
-
-aboutServer <- function(id, package_name = "FRDATranscriptomicAtlas") {
-  moduleServer(id, function(input, output, session) {
-
-    output$pkg_version <- renderUI({
-      v <- tryCatch(utils::packageDescription(package_name)$Version, error = function(e) NULL)
-      if (is.null(v)) return(NULL)
-      shiny::tags$span(
-        class = "text-muted",
-        style = "display:block;margin-bottom:10px;",
-        paste0("Version: ", v)
-      )
-    })
-
-    # Cache results so we don't keep re-checking
-    updates <- shiny::reactiveVal(NULL)
-    check_err <- shiny::reactiveVal(NULL)
-    checked_manually <- shiny::reactiveVal(FALSE)
-
-    # Run ONCE when About tab module initializes
-    shiny::observeEvent(TRUE, {
-      out <- tryCatch(
-        check_atlas_updates(package = package_name),
-        error = function(e) { check_err(conditionMessage(e)); NULL }
-      )
-      updates(out)
-    }, once = TRUE)
-
-    # Optional: manual re-check button
-    shiny::observeEvent(input$check_updates, {
-      check_err(NULL)
-      checked_manually(TRUE)
-      out <- tryCatch(
-        check_atlas_updates(package = package_name),
-        error = function(e) {
-          check_err(conditionMessage(e))
-          NULL
-          }
-      )
-      updates(out)
-    })
-
-
-    output$data_updates <- shiny::renderUI({
-
-      # 1) Error
-      if (!is.null(check_err())) {
-        return(shiny::tags$div(
-          class = "text-warning",
-          paste0("Could not check for atlas data updates: ", check_err())
-        ))
-      }
-
-      up <- updates()
-
-      # 2) Loading / not checked yet (initial state)
-      if (is.null(up) && !checked_manually()) {
-        return(shiny::tags$div(
-          class = "text-muted",
-          "Checking for atlas data updates..."
-        ))
-      }
-
-      # 3) Updates available
-      if (!is.null(up) && nrow(up) > 0) {
-        # Show key + description when available
-        has_desc <- "description" %in% names(up) && any(nzchar(up$description))
-        if (has_desc) {
-          items <- paste0(up$key, " - ", up$description)
-          return(shiny::tags$div(
-            class = "text-warning",
-            shiny::tags$strong("Atlas data updates available:"),
-            shiny::tags$ul(lapply(items, shiny::tags$li))
-          ))
-        } else {
-          return(shiny::tags$div(
-            class = "text-warning",
-            shiny::tags$strong("Atlas data updates available: "),
-            paste(up$key, collapse = ", ")
-          ))
-        }
-      }
-
-      # 4) No updates (either auto-check completed or manual check completed)
-      shiny::tags$div(
-        class = "text-success",
-        "Atlas data is up to date."
-      )
-    })
-
-
-  })
-}
-
