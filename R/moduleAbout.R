@@ -63,7 +63,7 @@ aboutUI <- function(id,
       ),
 
       h3("How to Use"),
-      p("All instructions on how to use the app its features can be found here: ",
+      p("All instructions on how to use the app and its features can be found here: ",
         tags$a(
           href = "https://marniemaddock.github.io/FRDATranscriptomicAtlas/",
           "Instructions"
