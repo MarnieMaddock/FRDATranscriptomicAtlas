@@ -80,7 +80,7 @@ tpmHeatmapMainUI <- function(id) {
 
 
 missing_heatmap_deps <- function() {
-  pkgs <- c("ComplexHeatmap", "SummarizedExperiment")
+  pkgs <- c("ComplexHeatmap", "SummarizedExperiment", "DESeq2")
   pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
 }
 
