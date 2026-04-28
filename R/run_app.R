@@ -4,8 +4,6 @@
 #'
 #' @return A shiny.appobj that runs the app
 #' @export
-run_app <- function(data_mode = "cloud") {
-  data_mode <- match.arg(data_mode, c("cloud", "local"))
 run_app <- function(data_mode = c("cloud", "local")) {
   data_mode <- match.arg(data_mode)
 
