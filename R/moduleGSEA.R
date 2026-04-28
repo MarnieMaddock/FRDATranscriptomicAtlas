@@ -60,16 +60,6 @@ GSEAServer <- function(id, base_dir = NULL, pkg = NULL, data_mode = "local") {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # dose_ok <- tryCatch({
-    #   "DOSE" %in% loadedNamespaces() || requireNamespace("DOSE", quietly = TRUE)
-    # }, error = function(e) FALSE)
-    #
-    # if (!dose_ok) {
-    #   shiny::validate(shiny::need(FALSE,
-    #                               "GSEA features are not available in this deployment."
-    #   ))
-    # }
-
     # --- maps (tx2gene) ---
     tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
     if (!nzchar(tx2_path)) tx2_path <- file.path("inst", "extdata", "maps", "tx2gene.tsv")

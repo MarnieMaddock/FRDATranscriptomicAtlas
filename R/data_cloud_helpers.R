@@ -141,63 +141,6 @@ get_deg_manifest_cloud <- function(pkg = "FRDATranscriptomicAtlas") {
     dplyr::select(path, dataset, p_str, level, p, threshold)
 }
 
-get_deg_data_cloud <- function(
-    dataset_id,
-    feature_level,
-    padj_max = NULL,
-    lfc_min = 0,
-    direction = "both"
-) {
-  threshold <- padj_max_to_threshold(padj_max)
-
-  path <- paste0(
-    "s3://frda-transcriptomic-atlas-835050295613-ap-southeast-2-an/deg_results/",
-    "level=", feature_level,
-    "/dataset=", dataset_id,
-    "/threshold=", threshold
-  )
-
-  ds <- arrow::open_dataset(path)
-  q <- ds
-
-  if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all") {
-    q <- q |>
-      dplyr::filter(!is.na(.data$padj), .data$padj <= !!padj_max)
-  }
-
-  # Safety filter. This is useful if padj_max is not one of the prebuilt thresholds.
-  if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all") {
-    q <- q |>
-      dplyr::filter(!is.na(.data$padj), .data$padj <= !!padj_max)
-  }
-
-  if (identical(direction, "up")) {
-    q <- q |>
-      dplyr::filter(.data$log2FoldChange >= !!lfc_min)
-  } else if (identical(direction, "down")) {
-    q <- q |>
-      dplyr::filter(.data$log2FoldChange <= -!!lfc_min)
-  } else {
-    q <- q |>
-      dplyr::filter(abs(.data$log2FoldChange) >= !!lfc_min)
-  }
-
-  x <- q |>
-    dplyr::select(-dplyr::any_of(c("dataset", "level", "threshold", "p_str", "p"))) |>
-    dplyr::collect()
-
-  if (feature_level == "genes" && "transcript_id" %in% names(x)) {
-    x <- dplyr::select(x, -transcript_id)
-  }
-
-  if (feature_level == "transcripts" && "ensembl_gene_id" %in% names(x)) {
-    x <- dplyr::select(x, -ensembl_gene_id)
-  }
-
-  return(x)
-}
-
-
 padj_max_to_threshold <- function(padj_max) {
   if (is.null(padj_max) || is.na(padj_max)) {
     return("all")
@@ -240,6 +183,11 @@ get_deg_data_cloud_rds <- function(
   )
 
   x <- readRDS(tf)
+
+  # Apply padj filter when a non-standard threshold falls back to the "all" file.
+  if (!is.null(padj_max) && !is.na(padj_max) && threshold == "all" && "padj" %in% names(x)) {
+    x <- x[!is.na(x$padj) & x$padj <= padj_max, , drop = FALSE]
+  }
 
   if ("log2FoldChange" %in% names(x)) {
     if (identical(direction, "up")) {
@@ -332,8 +280,9 @@ get_tpm_gene_cloud <- function(filename) {
   )
 
   tmp <- tempfile(fileext = ".rds")
+  on.exit(unlink(tmp), add = TRUE)
 
-  download.file(
+  utils::download.file(
     url,
     destfile = tmp,
     mode = "wb",
@@ -369,8 +318,9 @@ get_tpm_transcript_cloud <- function(filename) {
   )
 
   tmp <- tempfile(fileext = ".rds")
+  on.exit(unlink(tmp), add = TRUE)
 
-  download.file(url, tmp, mode = "wb", quiet = TRUE)
+  utils::download.file(url, tmp, mode = "wb", quiet = TRUE)
 
   readRDS(tmp)
 }
@@ -400,8 +350,9 @@ get_vsd_cloud <- function(filename) {
   )
 
   tmp <- tempfile(fileext = ".rds")
+  on.exit(unlink(tmp), add = TRUE)
 
-  download.file(url, tmp, mode = "wb", quiet = TRUE)
+  utils::download.file(url, tmp, mode = "wb", quiet = TRUE)
 
   readRDS(tmp)
 }
@@ -417,7 +368,6 @@ get_vsd_cloud_cached <- memoise::memoise(
 )
 
 
-# GSEA -----------------------------------------------------------
 # GSEA -----------------------------------------------------------
 
 gsea_cache <- cachem::cache_mem(max_size = 500 * 1024^2)

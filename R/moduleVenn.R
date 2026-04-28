@@ -119,20 +119,6 @@ degVennServer <- function(
       data_mode = data_mode
     )
 
-    # --- paths + cached reader ---
-    # cache_root <- tools::R_user_dir(pkg, which = "cache")
-    #
-    # deg_dir_genes <- file.path(cache_root, "genes")
-    # deg_dir_transcripts <- file.path(cache_root, "txs")
-    #
-    # validate(
-    #   need(dir.exists(deg_dir_genes), "Gene-level DEG data not available."),
-    #   need(dir.exists(deg_dir_transcripts), "Transcript-level DEG data not available.")
-    # )
-    # # --- cached RDS reader ---
-    # read_cached <- memoise::memoise(readRDS)
-
-
     # --- maps (tx2gene) ---
     tx2_path <- system.file("extdata/maps/tx2gene.tsv", package = pkg, mustWork = FALSE)
     if (!nzchar(tx2_path)) tx2_path <- file.path("inst", "extdata", "maps", "tx2gene.tsv")
@@ -148,17 +134,6 @@ degVennServer <- function(
     norm_id <- function(x) sub("\\.\\d+$","", as.character(x))
 
     # --- manifest ---
-    # manifest <- reactive({
-    #   files <- c(
-    #     if (nzchar(deg_dir_genes))       list.files(deg_dir_genes,       full.names = TRUE) else character(0),
-    #     if (nzchar(deg_dir_transcripts)) list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
-    #   )
-    #   if (!length(files)) return(tibble::tibble())
-    #   rx <- "^.*/DESEQ2_res_(.+)_(0\\.[0-9]+)_all_(genes|transcripts)\\.rds$"
-    #   tibble::tibble(path = files) |>
-    #     tidyr::extract(path, into = c("dataset","p_str","level"), regex = rx, remove = FALSE) |>
-    #     dplyr::mutate(p = suppressWarnings(as.numeric(p_str)))
-    # })
     manifest <- reactiveVal(NULL)
 
     observeEvent(TRUE, {
@@ -194,7 +169,6 @@ degVennServer <- function(
 
     # Select all (for current feature level)
     observeEvent(input$datasets_all, {
-      #m   <- manifest()
       m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
 
@@ -207,76 +181,6 @@ degVennServer <- function(
       updateCheckboxGroupInput(session, "datasets", selected = character(0))
     })
 
-    # --- helper: read + filter IDs ---
-    # Return the filtered ID vector for one dataset (genes or transcripts)
-    # one_set_ids <- function(dataset_id, lvl = c("genes","transcripts"),
-    #                         thr, lfc_min = 0, direction = c("both","up","down")) {
-    #   lvl       <- match.arg(lvl)
-    #   direction <- match.arg(direction)
-    #
-    #   # normalise Ensembl-style IDs: ENSGxxxx.xx -> ENSGxxxx
-    #   norm_id <- function(x) sub("\\.\\d+$", "", as.character(x))
-    #
-    #   #m <- manifest()
-    #   m <- req(manifest())
-    #   f <- dplyr::filter(m, dataset == dataset_id, level == lvl)
-    #   if (!nrow(f)) return(character(0))
-    #
-    #   # if multiple p-threshold files exist, pick the most permissive (min p)
-    #   f <- f[which.min(f$p), , drop = FALSE]
-    #
-    #   x <- read_cached(f$path[1]) |> as.data.frame()
-    #
-    #   # --- harmonise common column names ---
-    #   # log2FC
-    #   if (!"log2FoldChange" %in% names(x)) {
-    #     if ("log2FC" %in% names(x))        x$log2FoldChange <- x$log2FC
-    #     else if ("beta" %in% names(x))     x$log2FoldChange <- x$beta
-    #   }
-    #   # padj
-    #   if (!"padj" %in% names(x)) {
-    #     if ("qvalue" %in% names(x))        x$padj <- x$qvalue
-    #     else if ("adj.P.Val" %in% names(x)) x$padj <- x$adj.P.Val
-    #   }
-    #
-    #   # ID column per level (accept several variants; fallback to rownames)
-    #   id_candidates <- if (lvl == "genes") {
-    #     c("ensembl_gene_id", "gene_id", "EnsemblGeneID")
-    #   } else {
-    #     c("transcript_id", "ensembl_transcript_id", "tx_id")
-    #   }
-    #   id_col <- id_candidates[id_candidates %in% names(x)][1]
-    #   if (is.na(id_col) || is.null(id_col)) {
-    #     if (!is.null(rownames(x))) {
-    #       x[["__tmp_id"]] <- rownames(x)
-    #       id_col <- "__tmp_id"
-    #     } else {
-    #       return(character(0))
-    #     }
-    #   }
-    #
-    #   # --- apply filters ---
-    #   # p-value / FDR
-    #   thr_num <- suppressWarnings(as.numeric(thr))
-    #   if (!is.na(thr_num) && "padj" %in% names(x)) {
-    #     x <- subset(x, !is.na(padj) & padj <= thr_num)
-    #   }
-    #
-    #   # LFC / direction
-    #   if ("log2FoldChange" %in% names(x) && is.finite(lfc_min) && lfc_min >= 0) {
-    #     if (direction == "up") {
-    #       x <- subset(x, !is.na(log2FoldChange) & log2FoldChange >=  lfc_min)
-    #     } else if (direction == "down") {
-    #       x <- subset(x, !is.na(log2FoldChange) & log2FoldChange <= -lfc_min)
-    #     } else { # both
-    #       x <- subset(x, !is.na(log2FoldChange) & abs(log2FoldChange) >= lfc_min)
-    #     }
-    #   }
-    #
-    #   ids_raw <- x[[id_col]]
-    #   ids <- ids_raw[!is.na(ids_raw) & nzchar(ids_raw)]
-    #   unique(norm_id(ids))
-    # }
     one_set_ids <- function(dataset_id,
                             lvl = c("genes", "transcripts"),
                             thr,
@@ -292,19 +196,6 @@ degVennServer <- function(
 
       thr_num <- suppressWarnings(as.numeric(thr))
 
-      # if (identical(data_mode, "local")) {
-      #   if (is.na(thr_num)) {
-      #     f <- f[which.max(f$p), , drop = FALSE]
-      #   } else {
-      #     f <- dplyr::filter(f, p == thr_num)
-      #     if (!nrow(f)) return(character(0))
-      #     f <- f[1, , drop = FALSE]
-      #   }
-      #
-      #   file_path <- f$path[1]
-      # } else {
-      #   file_path <- NULL
-      # }
       if (identical(data_mode, "local")) {
 
         # Local files may only exist for one threshold, often p = 0.05.

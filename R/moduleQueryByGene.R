@@ -145,17 +145,6 @@ queryGeneAcrossDatasetsServer <- function(
       data_mode = data_mode
     )
 
-    # cache_root <- tools::R_user_dir(pkg, which = "cache")
-    # deg_dir_genes <- file.path(cache_root, "genes")
-    # deg_dir_transcripts <- file.path(cache_root, "txs")
-    #
-    # if (!dir.exists(deg_dir_genes)) {
-    #   stop("Gene-level DEG data not found: ", deg_dir_genes, call. = FALSE)
-    # }
-    # if (!dir.exists(deg_dir_transcripts)) {
-    #   stop("Transcript-level DEG data not found: ", deg_dir_transcripts, call. = FALSE)
-    # }
-
     # ---- pretty names ----
     pretty_map <- tryCatch(
       get("pretty_map", envir = asNamespace(pkg)),
@@ -189,24 +178,7 @@ queryGeneAcrossDatasetsServer <- function(
         dplyr::rename(symbol = gene_name)
     } else NULL
 
-    #read_cached <- memoise::memoise(readRDS)
-
     # ---- manifest of DEG files ----
-    # manifest <- shiny::reactive({
-    #   files <- c(
-    #     if (nzchar(deg_dir_genes)       && dir.exists(deg_dir_genes))
-    #       list.files(deg_dir_genes,       full.names = TRUE) else character(0),
-    #     if (nzchar(deg_dir_transcripts) && dir.exists(deg_dir_transcripts))
-    #       list.files(deg_dir_transcripts, full.names = TRUE) else character(0)
-    #   )
-    #   if (!length(files)) return(tibble::tibble())
-    #
-    #   rx <- "^.*[\\\\/]{1}DESEQ2_res_(.+)_(0\\.[0-9]+)_all_(genes|transcripts)\\.rds$"
-    #   tibble::tibble(path = files) |>
-    #     tidyr::extract(path, into = c("dataset", "p_str", "level"), regex = rx, remove = FALSE) |>
-    #     dplyr::mutate(p = suppressWarnings(as.numeric(p_str)))
-    # })
-
     manifest <- reactiveVal(NULL)
 
     observeEvent(TRUE, {
@@ -215,7 +187,6 @@ queryGeneAcrossDatasetsServer <- function(
     }, once = TRUE)
 
     output$datasets_ui <- shiny::renderUI({
-      #m   <- manifest()
       m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
 
@@ -241,7 +212,6 @@ queryGeneAcrossDatasetsServer <- function(
 
 
     observeEvent(input$datasets_all, {
-      #m   <- manifest()
       m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
       avail <- sort(unique(m$dataset[m$level == lvl]))

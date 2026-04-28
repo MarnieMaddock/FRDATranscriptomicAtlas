@@ -2,7 +2,7 @@
 #'
 #' @return A shiny.appobj that runs the app
 #' @export
-run_app <- function(data_mode = c("local", "cloud")) {
+run_app <- function(data_mode = c("cloud", "local")) {
   data_mode <- match.arg(data_mode)
 
   options(FRDATranscriptomicAtlas.data_mode = data_mode)
