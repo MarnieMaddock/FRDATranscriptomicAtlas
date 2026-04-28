@@ -140,7 +140,7 @@ degTablesServer <- function(id, pkg = utils::packageName(), data_mode = "local")
 
     observeEvent(input$feature_level, {
 
-      m <- manifest()
+      m <- req(manifest())
       lvl <- input$feature_level %||% "genes"
 
       avail_ids <- sort(unique(m$dataset[m$level == lvl]))
