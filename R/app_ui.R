@@ -41,7 +41,23 @@ app_ui <- function(data_mode = "cloud") {
   fluidPage(
     theme = bslib::bs_theme(version = 4, bootswatch = "pulse"),
 
-    tags$head(includeCSS(get_css_path())),
+    tags$head(
+      includeCSS(get_css_path()),
+
+      tags$script(
+        async = NA,
+        src = "https://www.googletagmanager.com/gtag/js?id=G-G7LP80W47V"
+      ),
+
+      tags$script(HTML("
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-G7LP80W47V', {
+          'page_title': 'FRDA Transcriptomic Atlas'
+        });
+      "))
+    ),
 
     # --- Logos / header branding -----------------------------------------
     div(id = "logo", bslib::card_image(file = get_logo_path(), fill = FALSE, width = "70px")),
