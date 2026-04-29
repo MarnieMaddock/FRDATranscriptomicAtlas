@@ -196,8 +196,7 @@ tpmHeatmapServer <- function(
     dataset_colors <- c(
       "#00B7C7", "#DC267F", "#FFB000", "#FE6100", "#785EF0",
       "#648FFF", "#00359C", "#009E73", "#E377C2", "#1F77B4",
-      "#D62728", "#2CA02C", "#9467BD", "#F564E3", "#A6761D",
-      "#BCBD22", "#8C564B"
+      "#D62728", "#2CA02C", "#9467BD", "#F564E3", "#A6761D"
     )
 
     harmonize_maddock_names <- function(vsd_names, tpm_names) {
@@ -765,11 +764,7 @@ tpmHeatmapServer <- function(
 
           # Row names -> pretty key (gene_name (gene_id))
           map_sub <- annot[match(keep_ids, annot$gene_id), ]
-          key <- ifelse(
-            !is.na(map_sub$gene_name) & nzchar(map_sub$gene_name),
-            paste0(map_sub$gene_name, " (", map_sub$gene_id, ")"),
-            map_sub$gene_id
-          )
+          key <- map_sub$gene_id
 
           # Long-format entry for this ONE vsd file
           lng <- as.data.frame(sub_mat)
@@ -947,8 +942,27 @@ tpmHeatmapServer <- function(
 
         rng <- range(mat, na.rm = TRUE)
         if (length(input$datasets) == 1) {
-          col_fun <- circlize::colorRamp2(c(rng[1], rng[2]), c("white", "#030058"))
-          legend_title <- if ((input$transform_mode %||% "log2p1") == "log2p1") "log2(TPM+1)" else "Row Z-score"
+          if ((input$transform_mode %||% "log2p1") == "zscore") {
+
+            zlim <- max(abs(rng), na.rm = TRUE)
+
+            col_fun <- circlize::colorRamp2(
+              c(-zlim, 0, zlim),
+              c("#2166AC", "white", "#B2182B")
+            )
+
+            legend_title <- "Row Z-score"
+
+          } else {
+
+            col_fun <- circlize::colorRamp2(
+              c(rng[1], rng[2]),
+              c("white", "#030058")
+            )
+
+            legend_title <- "log2(TPM+1)"
+          }
+
         } else {
           col_fun <- circlize::colorRamp2(c(-3, 0, 3), c("#2166AC", "white", "#B2182B"))
           legend_title <- "Z-score (VST)"
