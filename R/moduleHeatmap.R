@@ -762,9 +762,9 @@ tpmHeatmapServer <- function(
 
           sub_mat <- vsd_mat[keep_ids, sc_use, drop = FALSE]
 
-          # Row names -> pretty key (gene_name (gene_id))
+          # Row names -> pretty key
           map_sub <- annot[match(keep_ids, annot$gene_id), ]
-          key <- map_sub$gene_id
+          key <- map_sub$gene_name
 
           # Long-format entry for this ONE vsd file
           lng <- as.data.frame(sub_mat)
@@ -984,7 +984,7 @@ tpmHeatmapServer <- function(
           column_names_side = "top",
           show_row_names    = dims$show_row_names,
           show_column_names = dims$show_col_names,
-          row_names_gp      = grid::gpar(fontsize = dims$row_cex),
+          row_names_gp      = grid::gpar(fontsize = dims$row_cex, fontface = "italic"),
           column_names_gp   = grid::gpar(fontsize = dims$col_cex),
           na_col            = "grey80",
           border            = TRUE,
