@@ -38,6 +38,11 @@ tpmHeatmapSidebarUI <- function(id) {
       shiny::column(6, shiny::checkboxInput(ns("cluster_rows"), "Cluster rows", value = TRUE)),
       shiny::column(6, shiny::checkboxInput(ns("cluster_cols"), "Cluster columns", value = TRUE))
     ),
+    shiny::checkboxInput(
+      ns("show_sample_labels"),
+      "Show sample labels",
+      value = TRUE
+    ),
     conditionalPanel(
       condition = sprintf("!input['%s'] && input['%s'].length > 1",
                           ns("cluster_cols"), ns("datasets")),
@@ -196,8 +201,7 @@ tpmHeatmapServer <- function(
     dataset_colors <- c(
       "#00B7C7", "#DC267F", "#FFB000", "#FE6100", "#785EF0",
       "#648FFF", "#00359C", "#009E73", "#E377C2", "#1F77B4",
-      "#D62728", "#2CA02C", "#9467BD", "#F564E3", "#A6761D",
-      "#BCBD22", "#8C564B"
+      "#D62728", "#2CA02C", "#9467BD", "#F564E3", "#A6761D"
     )
 
     harmonize_maddock_names <- function(vsd_names, tpm_names) {
@@ -577,13 +581,43 @@ tpmHeatmapServer <- function(
     # --- utility: infer dataset from sample name ---
     dataset_from_sample <- function(samples, selected_ids) {
       vapply(samples, function(s) {
+
+        # Maddock cell-type-specific datasets
+        if ("Maddock_SN" %in% selected_ids && grepl("^Maddock_.*SN_", s)) {
+          return("Maddock_SN")
+        }
+
+        if ("Maddock_LMN" %in% selected_ids && grepl("^Maddock_.*LMN_", s)) {
+          return("Maddock_LMN")
+        }
+
+        if ("Maddock_NCC" %in% selected_ids && grepl("^Maddock_.*NCC_", s)) {
+          return("Maddock_NCC")
+        }
+
+        # Lai cell-type-specific datasets
+        if ("Lai_CNS" %in% selected_ids && grepl("^Lai_.*_CNS_", s)) {
+          return("Lai_CNS")
+        }
+
+        if ("Lai_PNS" %in% selected_ids && grepl("^Lai_.*_PNS_", s)) {
+          return("Lai_PNS")
+        }
+
+        if ("Lai_iPSC" %in% selected_ids && grepl("^Lai_.*_iPSC_", s)) {
+          return("Lai_iPSC")
+        }
+
+        # Default exact prefix matching
         pref <- paste0(selected_ids, "_")
         idx <- which(startsWith(s, pref))
+
         if (length(idx)) {
           selected_ids[idx[1]]
         } else {
           sub("_.*$", "", s)
         }
+
       }, character(1))
     }
 
@@ -763,13 +797,9 @@ tpmHeatmapServer <- function(
 
           sub_mat <- vsd_mat[keep_ids, sc_use, drop = FALSE]
 
-          # Row names -> pretty key (gene_name (gene_id))
+          # Row names -> pretty key
           map_sub <- annot[match(keep_ids, annot$gene_id), ]
-          key <- ifelse(
-            !is.na(map_sub$gene_name) & nzchar(map_sub$gene_name),
-            paste0(map_sub$gene_name, " (", map_sub$gene_id, ")"),
-            map_sub$gene_id
-          )
+          key <- map_sub$gene_name
 
           # Long-format entry for this ONE vsd file
           lng <- as.data.frame(sub_mat)
@@ -865,10 +895,13 @@ tpmHeatmapServer <- function(
       nr <- nrow(mat)
       nc <- ncol(mat)
 
-      cell_h_pt <- 16
-      cell_w_pt <- 16
+      scale_factor <- 0.7
+
+      cell_h_pt <- 16 * scale_factor
+      cell_w_pt <- 16 * scale_factor
       extra_pad <- if (nr < 30) 700 else if (nr < 60) 800 else if (nr > 100) 1200 else 1000
-      extra_w_pad <- 450  # <- add this (space for legends / margins)
+      extra_pad <- extra_pad * scale_factor
+      extra_w_pad <- 450 * scale_factor # <- add this (space for legends / margins)
 
       list(
         dev_h_px = max(500, round(nr * (cell_h_pt * 96/72)) + extra_pad),
@@ -924,7 +957,7 @@ tpmHeatmapServer <- function(
 
         ds_levels <- unique(ann_df$Dataset)
         ds_pal <- stats::setNames(
-          dataset_colors[seq_along(ds_levels) %% length(dataset_colors)],
+          rep(dataset_colors, length.out = length(ds_levels)),
           ds_levels
         )
 
@@ -947,8 +980,27 @@ tpmHeatmapServer <- function(
 
         rng <- range(mat, na.rm = TRUE)
         if (length(input$datasets) == 1) {
-          col_fun <- circlize::colorRamp2(c(rng[1], rng[2]), c("white", "#030058"))
-          legend_title <- if ((input$transform_mode %||% "log2p1") == "log2p1") "log2(TPM+1)" else "Row Z-score"
+          if ((input$transform_mode %||% "log2p1") == "zscore") {
+
+            zlim <- max(abs(rng), na.rm = TRUE)
+
+            col_fun <- circlize::colorRamp2(
+              c(-zlim, 0, zlim),
+              c("#2166AC", "white", "#B2182B")
+            )
+
+            legend_title <- "Row Z-score"
+
+          } else {
+
+            col_fun <- circlize::colorRamp2(
+              c(rng[1], rng[2]),
+              c("white", "#030058")
+            )
+
+            legend_title <- "log2(TPM+1)"
+          }
+
         } else {
           col_fun <- circlize::colorRamp2(c(-3, 0, 3), c("#2166AC", "white", "#B2182B"))
           legend_title <- "Z-score (VST)"
@@ -969,8 +1021,8 @@ tpmHeatmapServer <- function(
           row_names_side    = "left",
           column_names_side = "top",
           show_row_names    = dims$show_row_names,
-          show_column_names = dims$show_col_names,
-          row_names_gp      = grid::gpar(fontsize = dims$row_cex),
+          show_column_names = isTRUE(input$show_sample_labels) && dims$show_col_names,
+          row_names_gp      = grid::gpar(fontsize = dims$row_cex, fontface = "italic"),
           column_names_gp   = grid::gpar(fontsize = dims$col_cex),
           na_col            = "grey80",
           border            = TRUE,
