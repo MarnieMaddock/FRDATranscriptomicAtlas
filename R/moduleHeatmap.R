@@ -860,10 +860,13 @@ tpmHeatmapServer <- function(
       nr <- nrow(mat)
       nc <- ncol(mat)
 
-      cell_h_pt <- 16
-      cell_w_pt <- 16
+      scale_factor <- 0.7
+
+      cell_h_pt <- 16 * scale_factor
+      cell_w_pt <- 16 * scale_factor
       extra_pad <- if (nr < 30) 700 else if (nr < 60) 800 else if (nr > 100) 1200 else 1000
-      extra_w_pad <- 450  # <- add this (space for legends / margins)
+      extra_pad <- extra_pad * scale_factor
+      extra_w_pad <- 450 * scale_factor # <- add this (space for legends / margins)
 
       list(
         dev_h_px = max(500, round(nr * (cell_h_pt * 96/72)) + extra_pad),
