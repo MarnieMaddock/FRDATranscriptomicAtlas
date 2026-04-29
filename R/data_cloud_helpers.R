@@ -293,16 +293,12 @@ get_tpm_gene_cloud <- function(filename) {
   readRDS(tmp)
 }
 
+tpm_gene_cache <- cachem::cache_mem(max_size = 500 * 1024^2)
+
 get_tpm_gene_cloud_cached <- memoise::memoise(
   get_tpm_gene_cloud,
-  cache = cachem::cache_disk(
-    file.path(
-      tools::R_user_dir("FRDATranscriptomicAtlas", "cache"),
-      "cloud_tpm_gene"
-    )
-  )
+  cache = tpm_gene_cache
 )
-
 
 get_tpm_transcript_manifest_cloud <- function() {
   readr::read_csv(
@@ -326,14 +322,11 @@ get_tpm_transcript_cloud <- function(filename) {
   readRDS(tmp)
 }
 
+tpm_transcript_cache <- cachem::cache_mem(max_size = 500 * 1024^2)
+
 get_tpm_transcript_cloud_cached <- memoise::memoise(
   get_tpm_transcript_cloud,
-  cache = cachem::cache_disk(
-    file.path(
-      tools::R_user_dir("FRDATranscriptomicAtlas", "cache"),
-      "cloud_tpm_transcript"
-    )
-  )
+  cache = tpm_transcript_cache
 )
 
 get_vsd_manifest_cloud <- function() {
@@ -358,14 +351,11 @@ get_vsd_cloud <- function(filename) {
   readRDS(tmp)
 }
 
+vsd_cache <- cachem::cache_mem(max_size = 500 * 1024^2)
+
 get_vsd_cloud_cached <- memoise::memoise(
   get_vsd_cloud,
-  cache = cachem::cache_disk(
-    file.path(
-      tools::R_user_dir("FRDATranscriptomicAtlas", "cache"),
-      "cloud_vsd"
-    )
-  )
+  cache = vsd_cache
 )
 
 
