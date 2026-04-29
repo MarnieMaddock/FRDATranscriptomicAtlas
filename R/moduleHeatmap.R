@@ -38,6 +38,11 @@ tpmHeatmapSidebarUI <- function(id) {
       shiny::column(6, shiny::checkboxInput(ns("cluster_rows"), "Cluster rows", value = TRUE)),
       shiny::column(6, shiny::checkboxInput(ns("cluster_cols"), "Cluster columns", value = TRUE))
     ),
+    shiny::checkboxInput(
+      ns("show_sample_labels"),
+      "Show sample labels",
+      value = TRUE
+    ),
     conditionalPanel(
       condition = sprintf("!input['%s'] && input['%s'].length > 1",
                           ns("cluster_cols"), ns("datasets")),
@@ -576,13 +581,43 @@ tpmHeatmapServer <- function(
     # --- utility: infer dataset from sample name ---
     dataset_from_sample <- function(samples, selected_ids) {
       vapply(samples, function(s) {
+
+        # Maddock cell-type-specific datasets
+        if ("Maddock_SN" %in% selected_ids && grepl("^Maddock_.*SN_", s)) {
+          return("Maddock_SN")
+        }
+
+        if ("Maddock_LMN" %in% selected_ids && grepl("^Maddock_.*LMN_", s)) {
+          return("Maddock_LMN")
+        }
+
+        if ("Maddock_NCC" %in% selected_ids && grepl("^Maddock_.*NCC_", s)) {
+          return("Maddock_NCC")
+        }
+
+        # Lai cell-type-specific datasets
+        if ("Lai_CNS" %in% selected_ids && grepl("^Lai_.*_CNS_", s)) {
+          return("Lai_CNS")
+        }
+
+        if ("Lai_PNS" %in% selected_ids && grepl("^Lai_.*_PNS_", s)) {
+          return("Lai_PNS")
+        }
+
+        if ("Lai_iPSC" %in% selected_ids && grepl("^Lai_.*_iPSC_", s)) {
+          return("Lai_iPSC")
+        }
+
+        # Default exact prefix matching
         pref <- paste0(selected_ids, "_")
         idx <- which(startsWith(s, pref))
+
         if (length(idx)) {
           selected_ids[idx[1]]
         } else {
           sub("_.*$", "", s)
         }
+
       }, character(1))
     }
 
@@ -922,7 +957,7 @@ tpmHeatmapServer <- function(
 
         ds_levels <- unique(ann_df$Dataset)
         ds_pal <- stats::setNames(
-          dataset_colors[seq_along(ds_levels) %% length(dataset_colors)],
+          rep(dataset_colors, length.out = length(ds_levels)),
           ds_levels
         )
 
@@ -986,7 +1021,7 @@ tpmHeatmapServer <- function(
           row_names_side    = "left",
           column_names_side = "top",
           show_row_names    = dims$show_row_names,
-          show_column_names = dims$show_col_names,
+          show_column_names = isTRUE(input$show_sample_labels) && dims$show_col_names,
           row_names_gp      = grid::gpar(fontsize = dims$row_cex, fontface = "italic"),
           column_names_gp   = grid::gpar(fontsize = dims$col_cex),
           na_col            = "grey80",
