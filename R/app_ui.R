@@ -59,6 +59,7 @@ app_ui <- function(data_mode = "cloud") {
       "))
     ),
 
+
     # --- Logos / header branding -----------------------------------------
     div(id = "logo", bslib::card_image(file = get_logo_path(), fill = FALSE, width = "70px")),
     div(id = "logo2", bslib::card_image(file = get_UOW_path(), fill = FALSE, width = "220px")),
@@ -73,8 +74,8 @@ app_ui <- function(data_mode = "cloud") {
       sidebarPanel(
         style = "height: 85vh; overflow-y: auto;", # Set the sidebar height and add a scroll bar
         id = "sidebar",
-        conditionalPanel(
-          condition = "input.tabselected == 1",
+
+        conditionalPanel(condition = "input.tabselected == 1",
           PCASidebarUI("pca")
         ),
         conditionalPanel(condition = "input.tabselected==2 && input.degs_tabs == 2.1",
@@ -124,7 +125,7 @@ app_ui <- function(data_mode = "cloud") {
           tabPanel("Home", icon = icon("home", lib = "font-awesome"), #display home icon in the tab
                    value = 0,
                    tabsetPanel(
-                     id = "degs_tabs",
+                     id = "home_tab",
                      type = "tabs",
                      tabPanel("About",
                               value = 0.1,
