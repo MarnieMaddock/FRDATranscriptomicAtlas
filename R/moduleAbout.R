@@ -30,34 +30,18 @@ aboutUI <- function(id,
         "Users are encouraged to consult the paper for methodological details and to cite it in any work derived from or informed by this resource."
       ),
 
-      h3("Features"),
-      tags$ul(
-        tags$li(
-          strong("Principal Component Analysis (PCA)"), " - Inspect global sample structure and separation by condition, tissue/cell type, or other metadata."
-        ),
-        tags$li(
-          strong("Differential Expression (DEG/DEI) Tables"), " - Gene- and isoform-level results ",
-          "with log2 fold-change and adjusted p-values, filterable by direction and significance."
-        ),
-        tags$li(
-          strong("Volcano Plots"), " - Fold-change vs. significance visualisation with options to highlight genes and adjust thresholds."
-        ),
-        tags$li(
-          strong("Venn Diagrams"), " - Overlap of differentially expressed genes or isoforms across datasets."
-        ),
-        tags$li(
-          strong("Expression Heatmaps"), " - Compare transcript abundance patterns across conditions and datasets."
-        ),
-        tags$li(
-          strong("Gene TPM Plots (Gene Plots)"), " - Visualise expression of selected genes (TPM) by condition, replicate, and dataset for direct comparison."
-        ),
-        tags$li(
-          strong("Cross-Dataset Forest Plots"), " - Compare per-dataset effect sizes for selected genes to assess concordance and heterogeneity across studies."
-        ),
-        tags$li(
-          strong("Download and Export"), " - Tables and plots can be exported for reporting and reuse."
-        )
-      ),
+  div(
+    style = "
+      background-color: #e8f4f8;
+      border-left: 4px solid #2a776d;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 13px;
+    ",
+    strong("Data loading notice"),
+    br(),
+    "Datasets are retrieved from external servers and may take 20 seconds to 3 minutes to load, with longer delays possible during periods of high demand."
+  ),
 
       h3("How to Use"),
       p("All instructions on how to use the app and its features can be found here: ",
@@ -65,15 +49,6 @@ aboutUI <- function(id,
           href = "https://marniemaddock.github.io/FRDATranscriptomicAtlas/",
           "Instructions"
         )),
-
-      h3("Authorship and Acknowledgements"),
-      p(HTML(
-        paste0(
-          "<b>Developed by:</b> Marnie Maddock, Prof. Mirella Dottori, University of Wollongong, Australia<br/>",
-          "<b>Funding:</b> Friedreich's Ataxia Research Alliance (FARA)<br/>",
-          "<b>We thank all researchers who generated and made publicly available the original datasets used in this meta-analysis.</b> "
-        )
-      )),
 
       h3("Citation and Use"),
       p("If you use this Atlas or any underlying data/analyses in your work, ",
@@ -89,13 +64,13 @@ aboutUI <- function(id,
 
       h3("Future Updates and Contributions"),
       p(
-        "This resource may be updated as new FRDA RNA-seq datasets become available. ",
-        "Researchers who wish to contribute data or suggest additions are encouraged to contact the authors ",
+        "If you are interested in contributing data to the FRDA Transcriptomic Atlas, please get in touch.",
+        "For contribution guidelines and further information, see the ",
         tags$a(
-          href = "mailto:mlm715@uowmail.edu.au,mmaddock@uow.edu.au,mdottori@uow.edu.au?subject=FRDA%20RNA-seq%20Atlas%20Contribution",
-          "via email"
-        ),
-        ". "
+          href = "https://marniemaddock.github.io/FRDATranscriptomicAtlas/contribute.html",
+          "contribution page",
+          target = "_blank"
+        )
       ),
 
       h3("Contact and Bug Reports"),
@@ -104,6 +79,15 @@ aboutUI <- function(id,
         tags$li(HTML(paste0("<b>Project GitHub:</b> <a href='", github_url, "' target='_blank'>", github_url, "</a>"))),
         tags$li(HTML(paste0("<b>Report an issue or request features:</b> <a href='", issues_url, "' target='_blank'>", issues_url, "</a>")))
       ),
+
+      h3("Authorship and Acknowledgements"),
+      p(HTML(
+        paste0(
+          "Developed by: Marnie Maddock, Prof. Mirella Dottori, University of Wollongong, Australia<br/>",
+          "<b>We thank all researchers who generated and made publicly available the original datasets used in this atlas.</b> "
+        )
+      )),
+
       br(),
       #add footer.svg
       div(
@@ -119,3 +103,5 @@ aboutUI <- function(id,
     )
   )
 }
+
+
