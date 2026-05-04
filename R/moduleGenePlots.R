@@ -37,9 +37,9 @@ genePlotsMainUI <- function(id) {
   tagList(
     # if you don't have shinycssloaders installed yet, use plotOutput directly
     if (requireNamespace("shinycssloaders", quietly = TRUE)) {
-      shinycssloaders::withSpinner(plotOutput(ns("gp_plot"), height = 620), type = 4,  color = "#005249")
+      shinycssloaders::withSpinner(plotOutput(ns("gp_plot"), height = "60vh", width = "90vh"), type = 4,  color = "#005249")
     } else {
-      plotOutput(ns("gp_plot"), height = 620)
+      plotOutput(ns("gp_plot"), height = "60vh", width= "90vh")
     },
     br(),
     DT::dataTableOutput(ns("gp_table"))
